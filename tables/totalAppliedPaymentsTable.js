@@ -5,7 +5,7 @@ exports.totalAppliedPaymentsTable = (date, clientPayments, clientHours, supervis
         title: "Applied Payments Total",
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
-            { label: "Client Payments", renderer: null },
+            { label: "Client Payments", renderer: null, align: "center" },
             { label: "Client Hours", renderer: null, align: "center" },
             { label: "Payments From Supervisee's clients", renderer: null, align: "center" },
             { label: "Hours From Supervisee's clients", renderer: null, align: "center" },

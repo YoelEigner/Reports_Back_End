@@ -5,7 +5,7 @@ exports.transactionsTable = (date, paymentData) => {
         title: "Transactions",
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
-            { label: "Superviser", property: 'superviser', renderer: null },
+            { label: "Superviser", property: 'superviser', renderer: null, align: "center" },
             { label: "Record ID", property: 'rec_id', renderer: null, align: "center" },
             { label: "Reason Type", property: 'reason_type', renderer: null, align: "center" },
             { label: "Qty", property: 'quantity', renderer: null, align: "center" },

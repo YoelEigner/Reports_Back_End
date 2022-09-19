@@ -9,7 +9,7 @@ exports.reportedItemsTable = (data, date, subtotal, non_chargeables) => {
         title: "All reported items",
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
-            { label: "Service Name", property: 'event_service_item_name', renderer: null },
+            { label: "Service Name", property: 'event_service_item_name', renderer: null , align: "center"},
             { label: "Reported Items", property: 'COUNT', renderer: null, align: "center" },
             { label: "Item Total", property: 'itemTotal', renderer: null, align: "center" },
             { label: "Paymment Type", property: 'receipt_reason', renderer: null, align: "center" },
@@ -17,7 +17,6 @@ exports.reportedItemsTable = (data, date, subtotal, non_chargeables) => {
         ],
         datas: [...data],
         rows: [
-            [''],
             ['Total', reportedItemsCount, "", "", formatter.format(subtotal.toFixed(2))],
         ]
     };

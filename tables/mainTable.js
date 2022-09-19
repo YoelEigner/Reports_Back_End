@@ -5,7 +5,7 @@ exports.mainTable = (data, date) => {
         title: "Invoice",
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
-            { label: "Date", property: 'FULLDATE', renderer: null, align: "left" },
+            { label: "Date", property: 'FULLDATE', renderer: null, align: "center" },
             { label: "Name", property: 'individual_name', renderer: null, align: "center" },
             { label: "Invoice ID", property: 'invoice_id', renderer: null, align: "center" },
             { label: "Service Name", property: 'event_service_item_name', renderer: null, align: "center" },

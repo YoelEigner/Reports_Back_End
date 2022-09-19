@@ -22,7 +22,7 @@ exports.associateFees = async (worker, count, date, workerId, videoFee, finalPro
         title: "Associate Fees",
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
-            { label: "Worker", renderer: null },
+            { label: "Worker", renderer: null, align: "center" },
             { label: "Quantity", renderer: null, align: "center" },
             { label: "Fee Base Rate", renderer: null, align: "center" },
             { label: "Video Fee", renderer: null, align: "center" },

@@ -7,7 +7,6 @@ exports.superviseeTotalTable = async (date, worker) => {
         subtitle: "From " + date.start + " To " + date.end,
         headers: ["Quantity", "Total"],
         rows: [
-            [''],
             ['Total', 'superviseeTotal'],
         ]
     }

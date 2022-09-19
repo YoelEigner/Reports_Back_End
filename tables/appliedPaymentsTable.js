@@ -7,7 +7,7 @@ exports.appliedPaymentsTable = (date, paymentData) => {
         title: "Applied Payments",
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
-            { label: "Date", property: 'FULLDATE', renderer: null },
+            { label: "Date", property: 'FULLDATE', renderer: null, align: "center" },
             { label: "Service Name", property: 'description', renderer: null, align: "center" },
             { label: "Invoice ID", property: 'inv_no', renderer: null, align: "center" },
             { label: "Worker", property: 'worker', renderer: null, align: "center" },

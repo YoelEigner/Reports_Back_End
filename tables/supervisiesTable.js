@@ -1,5 +1,5 @@
 const { getSupervisers, getReportedItems, getAssociateFeeBaseRate, getAssociateVideoFee } = require("../sql/sql")
-const { calculateAssociateFeeForSupervisee } = require("./calculateAssociateFeeForSupervisee,js")
+const { calculateAssociateFeeForSupervisee } = require("./calculateAssociateFeeForSupervisee.js")
 // const { getRate } = require("./associateFees")
 
 exports.getRates = async (count, workerId) => {
@@ -46,7 +46,7 @@ exports.supervisiesTable = (data, date, supervisee, subtotal, non_chargeablesArr
         title: "Supervisee - " + supervisee,
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
-            { label: "Supervisee", property: 'event_primary_worker_name', renderer: null },
+            { label: "Supervisee", property: 'event_primary_worker_name', renderer: null , align: "center"},
             { label: "Service Name", property: 'event_service_item_name', renderer: null, align: "center" },
             { label: "Reported Items", property: 'COUNT', renderer: null, align: "center" },
             { label: "Item Total", property: 'itemTotal', renderer: null, align: "center" },
@@ -54,7 +54,6 @@ exports.supervisiesTable = (data, date, supervisee, subtotal, non_chargeablesArr
         ],
         datas: [...data],
         rows: [
-            [''],
             ['Total', "", reportedItemsCount, "", '$' + subtotal],
         ],
         // superviseeAssociateFee: calculateAssociateFeeForSupervisee(reportedItemsCount, rate, videoFee)

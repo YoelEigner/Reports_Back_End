@@ -1,6 +1,6 @@
 const { getReportedItems, getAssociateProfileById } = require("../sql/sql")
 const { getRate } = require("../tables/associateFees")
-const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee,js")
+const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js")
 const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees")
 
 

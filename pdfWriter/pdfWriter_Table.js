@@ -4,7 +4,7 @@ const { sendEmail } = require("../email/sendEmail");
 const { getData, getDataDate, getDataUser, getReportedItems, getNonChargeables, getAssociateVideoFee, getPaymentTypes, getProcessingFee, getTablesToShow, getAssociateProfileById, getSupervisers } = require("../sql/sql");
 const { adjustmentFeeTable } = require("../tables/adjustmentTable");
 const { associateFees, getRate } = require("../tables/associateFees");
-const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee,js");
+const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js");
 const { duplicateTable } = require("../tables/duplicateTable");
 const { footerTable } = require("../tables/footerTables");
 const { mainTable } = require("../tables/mainTable");
@@ -87,7 +87,7 @@ exports.createInvoiceTable = async (res, date, worker, workerId, netAppliedTotal
                 let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
                 let blocksBiWeeklyCharge = parseFloat(workerProfile.map(x => x.blocksBiWeeklyCharge)[0])
                 let tablesToShow = await getTablesToShow(workerId)
-                let showAdjustmentFeeTable = adjustmentFee.length !== 1 && adjustmentFee[0].name !== ''
+                let showAdjustmentFeeTable = adjustmentFee.length >= 1 && adjustmentFee[0].name !== ''
 
                 //***********calculate supervisee fee********************/
                 let superviseeFeeCalculation = respSuperviser.length >= 0 ? await calculateSuperviseeFeeFunc(date, respSuperviser, non_chargeablesArr, nonChargeableItems,
@@ -98,7 +98,7 @@ exports.createInvoiceTable = async (res, date, worker, workerId, netAppliedTotal
                 let qty = associateFeeTableQty
                 if (associateType === 'L1 (Supervised Practice)') { qty = duration_hrs }
                 let associateFeeBaseRateTables = await associateFees(worker, qty, date, workerId, videoFee, finalProccessingFee, blocksBiWeeklyCharge,
-                    Number(adjustmentFeeTableData.rows[1][1].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee)
+                    Number(adjustmentFeeTableData.rows[0][1].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee)
 
 
                 let finalTotalRemittence = associateFeeBaseRateTables.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
