@@ -215,6 +215,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
+                indexColumn === 4 && doc.addBackground(rectCell, 'red', 0.15);
                 doc.font("Helvetica").fontSize(8);
 
             },

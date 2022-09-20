@@ -1,6 +1,5 @@
 const nodemailer = require('nodemailer');
 
-// async..await is not allowed in global scope, must use a wrapper
 exports.sendEmail = async (email, worker, pdfData, pass, type) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -18,8 +17,7 @@ exports.sendEmail = async (email, worker, pdfData, pass, type) => {
             // send mail with defined transport object
             let info = await transporter.sendMail({
                 from: 'accounting@cfir.ca', // sender address
-                to: email, // list of receivers
-                // to: email, // list of receivers
+                to: email,
                 subject: `CFIR ${type} Report`, // Subject line
                 html: "<b>Please see your attached report!</b>", // html body
                 attachments: [{
