@@ -81,6 +81,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
                 doc.font("Helvetica").fontSize(8);
             },
         });
+        doc.moveDown()
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
         await doc.table(reportedItemsTable, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
