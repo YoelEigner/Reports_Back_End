@@ -1,6 +1,5 @@
 
 exports.mainTable = (data, date) => {
-    // data.map(x => x.FULLDATE = x.FULLDATE.split("/")[1] + "/" + x.FULLDATE.split("/")[0] + "/" + x.FULLDATE.split("/")[2])
     return {
         title: "Invoice",
         subtitle: "From " + date.start + " To " + date.end,

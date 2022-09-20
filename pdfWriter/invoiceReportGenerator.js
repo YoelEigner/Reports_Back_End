@@ -1,4 +1,4 @@
-const { createInvoiceTable } = require("./pdfWriter_Table");
+const { createInvoiceTable } = require("./InvoiceReport");
 
 exports.InvoicePromiseGenerator = (res, date, users, netAppliedTotal, reportType, duration_hrs, videoFee) => {
 

@@ -1,91 +1,131 @@
-var CryptoJS = require("crypto-js");
-
+const fs = require("fs");
 const PDFDocument = require("pdfkit-table");
-const fs = require('fs');
-const { createZip } = require('../zipFiles/createZip');
-const { createInvoiceTable } = require('./pdfWriter_Table');
-const archiver = require("archiver");
-const { getEmailPassword } = require("../sql/sql");
-const { createPaymentReportTable } = require("./PaymentReport");
-const { InvoicePromise, InvoicePromiseGenerator } = require("./invoiceReportGenerator");
-const { paymentReportGenerator } = require("./paymentReportGenerator");
+const { sendEmail } = require("../email/sendEmail");
+const { getData, getDataDate, getDataUser, getReportedItems, getNonChargeables, getAssociateVideoFee, getPaymentTypes, getProcessingFee, getTablesToShow, getAssociateProfileById, getSupervisers } = require("../sql/sql");
+const { adjustmentFeeTable } = require("../tables/adjustmentTable");
+const { associateFees, getRate } = require("../tables/associateFees");
+const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js");
+const { duplicateTable } = require("../tables/duplicateTable");
+const { footerTable } = require("../tables/footerTables");
+const { mainTable } = require("../tables/mainTable");
+const { nonChargeables } = require("../tables/nonChargeables");
+const { reportedItemsTable } = require("../tables/reportedItemsTable");
+const { superviseeTotalTable } = require("../tables/superviseeTotalTable");
+const { supervisiesTable, getSupervisiesFunc } = require("../tables/supervisiesTable");
+const { totalRemittance } = require("../tables/totalRemittance");
+const { calculateSuperviseeFeeFunc } = require("./calculateSuperviseeFee");
+const { createInvoiceTableFunc, getNotUnique, getSupervisies, formatter, sortByDate } = require("./pdfKitFunctions");
+const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees");
+
+exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netAppliedTotal, duration_hrs, videoFee, action, associateEmail, emailPassword) => {
+    // console.time('report')
+    return new Promise(async (resolve, reject) => {
+        try {
+            let buffers = [];
+            let doc = new PDFDocument({ bufferPages: true, margins: { printing: 'highResolution', top: 50, bottom: 50, left: 50, right: 50 } });
+            doc.on('data', buffers.push.bind(buffers));
+            doc.on('end', async () => {
+                let pdfData = Buffer.concat(buffers);
+                try {
+                    if (action === 'email') {
+                        let emailResp = await sendEmail(associateEmail, worker, pdfData, emailPassword, 'Invoice')
+                        resolve(emailResp)
+                    }
+                    else { resolve(pdfData) }
+                } catch (error) {
+                    console.log(error)
+                    res.send(500)
+                }
+            });
+            try {
+                let data = await getDataDate(dateUnformatted, worker)
+                sortByDate(data)
+                let reportedItemData = await getReportedItems(dateUnformatted, worker)
+                let non_chargeables = await getNonChargeables()
+                let non_chargeablesArr = non_chargeables.map(x => x.name)
+                let proccessingFeeTypes = await getPaymentTypes()
+                let workerProfile = await getAssociateProfileById(workerId)
+                let respSuperviser = await getSupervisers(worker)
+
+                //*********************Create supervisees Tables *******************
+                let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser)
+
+                //*********************format date *******************/
+                let tempDateStart = dateUnformatted.start.split("/")[1] + "/" + dateUnformatted.start.split("/")[2] + "/" + dateUnformatted.start.split("/")[0]
+                let tempDateEnd = dateUnformatted.end.split("/")[1] + "/" + dateUnformatted.end.split("/")[2] + "/" + dateUnformatted.end.split("/")[0]
+                date = { start: tempDateStart, end: tempDateEnd }
+
+                //******************** REMOVING NON CHARGABLES *********************
+                //check if i need to remove the non charables in the total
+                let subtotal = data.map(x => x.event_service_item_total).reduce((a, b) => a + b, 0)
+                let nonChargeableItems = reportedItemData.filter(x => non_chargeablesArr.find(n => n === x.event_service_item_name) && x.COUNT)
+
+                //******************** REMOVING DUPLICATE & SPLIT FEES (event_id && case_file_name) *********************
+                let { duplicateItems, duplicateItemsId } = removeDuplicateAndSplitFees(data)
+
+                //************** ASSOCIATE FEE BAE RATE CALCULATION **********************
+                /*COUNT ALL DUPLICATE/SPILIT FEES LEAVING ONLY ONE*/
+                let associateFeeTableQty = data.length - Math.max(nonChargeableItems.map(x => x.COUNT).reduce((a, b) => a + b, 0), 0)
+                    - Math.max((duplicateItems.length - getNotUnique(duplicateItemsId.map(x => x.event_id)).length), 0)
 
 
-const getDecryptedPass = async () => {
-    let encryptedPass = await getEmailPassword()
-    const result = CryptoJS.AES.decrypt(encryptedPass[0].password, process.env.KEY);
-    return result.toString(CryptoJS.enc.Utf8);
-}
+                //************calculate processing fee (other fee)******************/
+                //Create associate fees table
+                // make a Set to hold values from namesToDeleteArr
+                const itemsToDelete = new Set(nonChargeableItems.concat(duplicateItems));
+                const reportedItemDataFiltered = reportedItemData.filter((item) => {
+                    return !itemsToDelete.has(item);
+                });
 
-const getNetTotal = (res, date, worker, action) => {
-    return createPaymentReportTable(res, date, worker.associateName, worker.id, '', '', action)
-}
+                reportedItemDataFiltered.map(x => x.proccessingFee =
+            /*add 0.30 cents to proccessing fee*/(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).ammount.split("+")[1].replace(/[^0-9]+/, '')) * x.COUNT)
+            /*calculate percentage */ + (parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).ammount.split("+")[0].replace(/[^0-9.]/, '')) * x.event_service_item_total) / 100)
 
-exports.reports = async (res, date, users, action, videoFee, reportType, actionType) => {
-    let emailPassword = await getDecryptedPass()
 
-    let archive = archiver('zip', {
-        zlib: { level: 9 } // Sets the compression level.
-    });
-    let output = fs.createWriteStream('report.zip');
-    archive.on('error', function (err) {
-        res.sendStatus(500)
-    });
-    output.on('finish', function () {
-        res.download('report.zip');
-    });
-    archive.on('warning', function (err) {
-        if (err.code === 'ENOENT') {
-            // log warning
-        } else {
-            // throw error
-            res.sendStatus(500)
+
+                //***************adjustment fees ****************************/
+                let adjustmentFee = JSON.parse(workerProfile.map(x => x.adjustmentFee))
+                let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFee)
+                let finalProccessingFee = reportedItemDataFiltered.map(x => x.proccessingFee).reduce((a, b) => a + b, 0)
+                let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
+                let blocksBiWeeklyCharge = parseFloat(workerProfile.map(x => x.blocksBiWeeklyCharge)[0])
+                let tablesToShow = await getTablesToShow(workerId)
+                let showAdjustmentFeeTable = adjustmentFee.length >= 1 && adjustmentFee[0].name !== ''
+
+                //***********calculate supervisee fee********************/
+                let superviseeFeeCalculation = respSuperviser.length >= 0 ? await calculateSuperviseeFeeFunc(dateUnformatted, respSuperviser, non_chargeablesArr, nonChargeableItems,
+                    proccessingFeeTypes, videoFee) : []
+
+                //*******Associate fee table***********
+                let associateType = workerProfile.map(x => x.associateType)
+                let qty = associateFeeTableQty
+                if (associateType === 'L1 (Supervised Practice)') { qty = duration_hrs }
+                let associateFeeBaseRateTables = await associateFees(worker, qty, date, workerId, videoFee, finalProccessingFee, blocksBiWeeklyCharge,
+                    Number(adjustmentFeeTableData.rows[0][1].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee)
+                let finalTotalRemittence = associateFeeBaseRateTables.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
+
+                createInvoiceTableFunc(doc,
+                /*Main Table*/  mainTable(data, date),
+                /*Reported Items Table*/reportedItemsTable(reportedItemData, date, subtotal, non_chargeables),
+                /*Duplicate Items Table*/duplicateTable(duplicateItems, date),
+                /*Non Chargables Table*/nonChargeables(nonChargeableItems, date),
+                /*Adjustment fee table*/adjustmentFeeTableData,
+                /*Total Remittence Table*/totalRemittance(date, finalTotalRemittence, netAppliedTotal, workerProfile),
+                /*Non chargeables Array*/non_chargeablesArr,
+                /*worker name*/worker,
+                /*Associate Fee base rate table*/associateFeeBaseRateTables,
+                /*Supervisees tbale*/ supervisies,
+                /*Duplicate items Array*/duplicateItems,
+                /*tables to shoe*/ tablesToShow,
+                /*show adjustment fee tbale or not*/showAdjustmentFeeTable)
+
+            } catch (error) {
+                console.log(error)
+                return error
+            }
+        } catch (err) {
+            console.log(err)
+            reject(err)
         }
     });
-
-    if (actionType === 'payment' && reportType === 'singlepdf') {
-        paymentReportGenerator(res, date, users, emailPassword, action)
-    }
-    if (actionType === 'invoice' && reportType === 'singlepdf') {
-        let invoice = await getNetTotal(res, date, users[0], action)
-        InvoicePromiseGenerator(res, date, users, invoice.netAppliedTotal, reportType, invoice.duration_hrs, videoFee)
-    }
-
-    if (reportType === 'multipdf') {
-        let promise = users.map(async (worker) => {
-            if (actionType === 'payment') {
-                return createPaymentReportTable(res, date, worker.associateName, worker.id, worker.associateEmail, action, emailPassword).then(async (resp) => {
-                    if (resp !== 200) {
-                        archive.append(resp.pdfData, { name: worker.associateName + '_Payment.pdf' })
-                    }
-                    else {
-                        console.log('resp', resp)
-                    }
-                }).catch(err => {
-                    console.log(err)
-                })
-            }
-            else if (actionType === 'invoice') {
-                let invoice = await getNetTotal(res, date, worker, videoFee, action)
-                return createInvoiceTable(res, date, worker.associateName, worker.id, invoice.netAppliedTotal, invoice.duration_hrs, videoFee, action).then(async (invoicePDF) => {
-                    if (invoicePDF !== 200) {
-                        archive.append(invoicePDF, { name: worker.associateName + '_Invoice.pdf' })
-                    }
-                    else {
-                        // console.log('invoicePDF', invoicePDF)
-                    }
-                }).catch(err => {
-                    console.log(err)
-                })
-
-            }
-        })
-        Promise.all(promise).then(() => {
-            // console.log(data,'dataaaa')
-            // res.writeHead(200)
-
-            archive.pipe(output)
-            archive.finalize();
-        });
-    }
 }

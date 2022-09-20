@@ -2,10 +2,10 @@ var CryptoJS = require("crypto-js");
 const PDFDocument = require("pdfkit-table");
 const fs = require('fs');
 const { createZip } = require('../zipFiles/createZip');
-const { createTable } = require('./pdfWriter_Table');
+const { createTable } = require('./InvoiceReport');
 const archiver = require("archiver");
 const { getEmailPassword } = require("../sql/sql");
-const {  reports } = require("./InvoiceReport");
+const {  reports } = require("./reports");
 const { paymentReport } = require("./PaymentReport");
 
 

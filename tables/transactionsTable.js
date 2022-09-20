@@ -1,6 +1,10 @@
-const { getNotUnique, uniqueValues } = require("../pdfWriter/pdfKitFunctions")
-
 exports.transactionsTable = (date, paymentData) => {
+    let data = paymentData.map(x => x[0])
+    data.sort((a, b) => {
+        var textA = a.superviser.toUpperCase();
+        var textB = b.superviser.toUpperCase();
+        return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+    });
     return {
         title: "Transactions",
         subtitle: "From " + date.start + " To " + date.end,
@@ -13,6 +17,6 @@ exports.transactionsTable = (date, paymentData) => {
             { label: "total", property: 'total_amt', renderer: null, align: "center" },
 
         ],
-        datas: [...paymentData.map(x => x[0])],
+        datas: [...data],
     }
 }

@@ -11,6 +11,5 @@ exports.authToken = ((req, res, next) => {
             req.user = user
             next()
         }
-
     })
 })

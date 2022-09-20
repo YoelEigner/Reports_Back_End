@@ -114,7 +114,7 @@ exports.getAssociateProfileById = async (workerId) => {
 exports.getphysicians = async () => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`SELECT [id],[associateName],[status] FROM [CFIR].[dbo].[profiles]`)
+        let resp = await sql.query(`SELECT [id],[associateName],[status], [associateType] FROM [CFIR].[dbo].[profiles]`)
         return resp.recordset;
     } catch (err) {
         console.log(err); return err
@@ -256,7 +256,6 @@ exports.getSupervisers = async (name) => {
     try {
         await sql.connect(config)
         let resp = await sql.query(`SELECT id, associateName, supervisorGetsMoney FROM [CFIR].[dbo].[profiles] where supervisor1='${name}' OR supervisor2='${name}' `)
-        // let resp = await sql.query(`SELECT associateName, supervisorGetsMoney FROM [CFIR].[dbo].[profiles] where supervisorGetsMoney = 1 and supervisor1='${name}' OR supervisor2='${name}' `)
         return resp.recordset
     } catch (error) {
         console.log(error)
@@ -381,12 +380,9 @@ exports.insertWorkerProfile = async (arr) => {
 exports.getPaymentData = async (tempWorker, superviser, date) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT *,CONVERT(VARCHAR(10), DATEFROMPARTS ( Year1, MONTH(Month1 + '1,1'), Day1) , 101) AS FULLDATE FROM [CFIR].[dbo].[financial_view] 
-                                    WHERE  DATEFROMPARTS ( Year1, MONTH(Month1 + '1,1'), Day1) >= '${date.start}' AND DATEFROMPARTS(Year, MONTH(Month + '1,1'), Day) <= '${date.end}'
-                                    AND superviser = '${superviser}' OR worker = '${tempWorker}'
-                                    ORDER BY CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101)`)
-
-
+        let resp = await sql.query(`SELECT *, CONVERT(VARCHAR(10), CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),101),101) AS FULLDATE from financial_view
+                                    WHERE CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),111) BETWEEN '${date.start}' AND '${date.end}'
+                                    AND (superviser = '${superviser}' OR worker = '${tempWorker}')`)
         return resp.recordset
     } catch (error) {
         console.log(error)

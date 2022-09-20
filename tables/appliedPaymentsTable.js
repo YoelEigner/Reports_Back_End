@@ -1,8 +1,7 @@
 const { formatter } = require("../pdfWriter/pdfKitFunctions")
 
 exports.appliedPaymentsTable = (date, paymentData) => {
-    // paymentData.map(x => x.dateFromParts = new Date(x.dateFromParts).toLocaleDateString().split("-")[1] + "/" +
-    //     new Date(x.dateFromParts).toLocaleDateString().split("-")[2] + "/" + new Date(x.dateFromParts).toLocaleDateString().split("-")[0])
+    paymentData.map(x => x.superviser = x.superviser.split(',')[1] + " " + x.superviser.split(',')[0])
     return {
         title: "Applied Payments",
         subtitle: "From " + date.start + " To " + date.end,

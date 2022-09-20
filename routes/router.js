@@ -2,7 +2,6 @@ const express = require("express");
 const fs = require('fs');
 const router = express.Router();
 const { authMW, authToken } = require("../MidWear/MidWear");
-const { createTable } = require("../pdfWriter/pdfWriter_Table");
 const { getData, getphysicians, getProvinces, getWorkerProfile, insertWorkerProfile, getVideoTech, getServiceTypes, UpdateServiceTypes, UpdateWorkerPreofile, getPaymentTypes, getserviceTypes, getAssociateTypes, getSupervisies, getAssociateLeval, updateEmailPassword, resetAdjustmentFees } = require("../sql/sql");
 const { createReport, filterSupervisies, getSupervisiesFunc } = require("../pdfWriter/pdfKitFunctions");
 const { json } = require("express");

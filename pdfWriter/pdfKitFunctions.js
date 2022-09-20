@@ -1,4 +1,3 @@
-const { x } = require("pdfkit");
 const { getNonChargeables, getSupervisies, getSupervisiesPaymentData, getSupervisers, getReportedItems, getAssociateFeeBaseRate } = require("../sql/sql");
 const { supervisiesTable } = require("../tables/supervisiesTable");
 
@@ -69,19 +68,18 @@ const virticalLines = (doc, rectCell, indexColumn) => {
     doc.fontSize(10).fillColor('#292929');
 }
 
-exports.createInvoiceTableFunc = async (doc, table, reportedItemsTable, duplicateTable, nonChargeables, adjustmentFeeTable, totalRemittance, non_chargeablesArr,
+exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, duplicateTable, nonChargeables, adjustmentFeeTable, totalRemittance, non_chargeablesArr,
     worker, associateFees, supervisies, duplicateItems, tablesToShow, showAdjustmentFeeTable) => {
     try {
         // the magic
         this.generateHeader(doc, worker)
         this.generateLine(doc, 70)
-        await doc.table(table, {
+        await doc.table(mainTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
             },
-
         });
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
         await doc.table(reportedItemsTable, {
@@ -100,7 +98,7 @@ exports.createInvoiceTableFunc = async (doc, table, reportedItemsTable, duplicat
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
-                row && doc.addBackground(rectRow, 'pink', 0.15);
+                row && duplicateTable.datas.length !== 0 && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
         let showNonChargeablesTable = tablesToShow.map(x => x.nonChargeablesTable)[0]
@@ -110,7 +108,7 @@ exports.createInvoiceTableFunc = async (doc, table, reportedItemsTable, duplicat
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
-                row && doc.addBackground(rectRow, 'pink', 0.15);
+                row && nonChargeables.datas.length !== 0 && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
         doc.moveDown();
@@ -173,7 +171,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
-                nonRemittables.includes(row.description) && doc.addBackground(rectRow, 'pink', 0.15);
+                nonRemittables.includes(row.description) && appliedPaymentTable.datas.length !== 0 && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
         doc.moveDown()
@@ -218,6 +216,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
+
             },
         });
     } catch (error) {
