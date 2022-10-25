@@ -5,8 +5,8 @@ var CryptoJS = require("crypto-js");
 
 const config = {
     user: "Node",
-    password: "L0ckheedmartin!",
-    server: "localhost\\SQLEXPRESS01",
+    password: process.env.DBPASS,
+    server: "localhost\\SQLEXPRESS",
     database: "CFIR",
     port: 1433,
     options: {
@@ -105,6 +105,15 @@ exports.getAssociateProfileById = async (workerId) => {
     try {
         await sql.connect(config);
         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
+        return resp.recordset;
+    } catch (err) {
+        console.log(err); return err
+    }
+}
+exports.getAllSuperviseeProfiles = async () => {
+    try {
+        await sql.connect(config);
+        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE supervisorOneGetsMoney = 'true' or supervisorTwoGetsMoney = 'true'`)
         return resp.recordset;
     } catch (err) {
         console.log(err); return err
@@ -255,7 +264,7 @@ exports.getNonChargeables = async () => {
 exports.getSupervisers = async (name) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT id, associateName, supervisorGetsMoney FROM [CFIR].[dbo].[profiles] where supervisor1='${name}' OR supervisor2='${name}' `)
+        let resp = await sql.query(`SELECT id, associateName, supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where supervisor1='${name}' OR supervisor2='${name}' `)
         return resp.recordset
     } catch (error) {
         console.log(error)
@@ -288,7 +297,8 @@ exports.UpdateWorkerPreofile = async (arr, id) => {
         supervisor1Covrage = '${arr.supervisor1Covrage}',
         supervisor2 = '${arr.supervisor2}',
         supervisor2Covrage = '${arr.supervisor2Covrage}',
-        supervisorGetsMoney = '${arr.supervisorGetsMoney}',
+        supervisorOneGetsMoney = '${arr.supervisorOneGetsMoney}',
+        supervisorTwoGetsMoney = '${arr.supervisorTwoGetsMoney}',
         chargesHST = '${arr.chargesHST}',
         associateFeeBaseType = '${arr.associateFeeBaseType}',
         associateFeeBaseType2 = '${arr.associateFeeBaseType2}',
@@ -336,7 +346,8 @@ exports.insertWorkerProfile = async (arr) => {
                 supervisor1Covrage,
                 supervisor2,
                 supervisor2Covrage,
-                supervisorGetsMoney,
+                supervisorOneGetsMoney,
+                supervisorTwoGetsMoney,
                 chargesHST,
                 associateFeeBaseType,
                 associateFeeBaseType2,
@@ -356,8 +367,8 @@ exports.insertWorkerProfile = async (arr) => {
                 adjustmentFee,
                 adjustmentPaymentFee)
             VALUES (${arr.status === true ? 1 : 0} ,'${date}' ,'${arr.site}' ,'${arr.associateType}','${arr.associateEmail}','${arr.associateName}',${arr.isSuperviser === true ? 1 : 0},${arr.isSupervised === true ? 1 : 0}
-                    ,${arr.IsSupervisedByNonDirector === true ? 1 : 0},'${arr.supervisor1}','${arr.supervisor1Covrage}','${arr.supervisor2}','${arr.supervisor2Covrage}',${arr.supervisorGetsMoney === true ? 1 : 0}
-                    ,${arr.chargesHST === true ? 1 : 0},'${arr.associateFeeBaseType}','${arr.associateFeeBaseType2}','${arr.associateFeeBaseRate}',${arr.associateFeeBaseRateOverrideLessThen === true ? 1 : 0}
+                    ,${arr.IsSupervisedByNonDirector === true ? 1 : 0},'${arr.supervisor1}','${arr.supervisor1Covrage}','${arr.supervisor2}','${arr.supervisor2Covrage}',${arr.supervisorOneGetsMoney === true ? 1 : 0},
+                    ${arr.supervisorTwoGetsMoney === true ? 1 : 0},${arr.chargesHST === true ? 1 : 0},'${arr.associateFeeBaseType}','${arr.associateFeeBaseType2}','${arr.associateFeeBaseRate}',${arr.associateFeeBaseRateOverrideLessThen === true ? 1 : 0}
                     ,${arr.associateFeeBaseRateOverrideGreaterThen === true ? 1 : 0},${arr.associateFeeBaseRateOverrideAsseements === true ? 1 : 0},
                     '${arr.inOfficeBlocks}','${arr.inOfficeBlockTimes}','${arr.blocksBiWeeklyCharge}','${arr.videoTech}',${arr.cahrgeVideoFee === true ? 1 : 0},
                     ${arr.duplicateTable === true ? 1 : 0},${arr.nonChargeablesTable === true ? 1 : 0},${arr.associateFeesTable === true ? 1 : 0}, '${arr.comments}',
@@ -383,6 +394,36 @@ exports.getPaymentData = async (tempWorker, superviser, date) => {
         let resp = await sql.query(`SELECT *, CONVERT(VARCHAR(10), CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),101),101) AS FULLDATE from financial_view
                                     WHERE CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),111) BETWEEN '${date.start}' AND '${date.end}'
                                     AND (superviser = '${superviser}' OR worker = '${tempWorker}')`)
+        return resp.recordset
+    } catch (error) {
+        console.log(error)
+    }
+}
+exports.getSuperviseePaymentData = async (superviser, date) => {
+    try {
+        await sql.connect(config)
+        let resp = await sql.query(`SELECT *, CONVERT(VARCHAR(10), CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),101),101) AS FULLDATE from financial_view
+                                    WHERE CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),111) BETWEEN '${date.start}' AND '${date.end}'
+                                    AND (superviser = '${superviser}')`)
+        return resp.recordset
+    } catch (error) {
+        console.log(error)
+    }
+}
+exports.getSuperviseeies = async (superviser) => {
+    try {
+        await sql.connect(config)
+        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE supervisor1 = '${superviser}' and supervisorOneGetsMoney = 'true' 
+                                    or supervisor2 = '${superviser}' AND supervisorTwoGetsMoney = 'true'`)
+        return resp.recordset
+    } catch (error) {
+        console.log(error)
+    }
+}
+exports.getAllPayments = async () => {
+    try {
+        await sql.connect(config)
+        let resp = await sql.query(`SELECT * FROM financial_view `)
         return resp.recordset
     } catch (error) {
         console.log(error)

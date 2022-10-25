@@ -76,7 +76,6 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 const reportedItemDataFiltered = reportedItemData.filter((item) => {
                     return !itemsToDelete.has(item);
                 });
-
                 reportedItemDataFiltered.map(x => x.proccessingFee =
             /*add 0.30 cents to proccessing fee*/(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).ammount.split("+")[1].replace(/[^0-9]+/, '')) * x.COUNT)
             /*calculate percentage */ + (parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).ammount.split("+")[0].replace(/[^0-9.]/, '')) * x.event_service_item_total) / 100)
