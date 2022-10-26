@@ -2,6 +2,9 @@ const { formatter } = require("../pdfWriter/pdfKitFunctions")
 
 exports.appliedPaymentsTable = (date, paymentData) => {
     paymentData.map(x => x.superviser = x.superviser.split(',')[1] + " " + x.superviser.split(',')[0])
+    let totalAppliedAmt = paymentData.map(x => Number(x.applied_amt.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
+    let totalDuration_hrs = paymentData.map(x => Number(x.duration_hrs)).reduce((a, b) => a + b, 0)
+
     return {
         title: "Applied Payments",
         subtitle: "From " + date.start + " To " + date.end,
@@ -15,5 +18,8 @@ exports.appliedPaymentsTable = (date, paymentData) => {
             { label: "Applied Amount", property: 'applied_amt', renderer: null, align: "center" }
         ],
         datas: [...paymentData],
+        rows: [
+            ['Total', "", "", "", "", totalDuration_hrs, formatter.format(totalAppliedAmt)],
+        ]
     }
 }

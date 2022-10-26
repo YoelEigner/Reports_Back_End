@@ -2,7 +2,7 @@ const { formatter } = require("../pdfWriter/pdfKitFunctions")
 
 exports.nonRemittablesTable = (date, non_remittableItems) => {
     let totalHours = non_remittableItems.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
-    let totalAmount = non_remittableItems.map(x => x.applied_amt).reduce((a, b) => a + b, 0)
+    let totalAmount = non_remittableItems.map(x => Number(x.applied_amt.replace(/[^0-9.-]+/g,""))).reduce((a, b) => a + b, 0)
     return {
         title: "Non Remittables",
         subtitle: "From " + date.start + " To " + date.end,

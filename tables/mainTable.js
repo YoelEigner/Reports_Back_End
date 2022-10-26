@@ -1,5 +1,6 @@
 
 exports.mainTable = (data, date) => {
+
     return {
         title: "Invoice",
         subtitle: "From " + date.start + " To " + date.end,

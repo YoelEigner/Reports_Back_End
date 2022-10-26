@@ -264,7 +264,7 @@ exports.getNonChargeables = async () => {
 exports.getSupervisers = async (name) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT id, associateName, supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where supervisor1='${name}' OR supervisor2='${name}' `)
+        let resp = await sql.query(`SELECT id, associateName, supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where supervisor1='${name}' OR supervisor2='${name}'`)
         return resp.recordset
     } catch (error) {
         console.log(error)
@@ -368,8 +368,8 @@ exports.insertWorkerProfile = async (arr) => {
                 adjustmentPaymentFee)
             VALUES (${arr.status === true ? 1 : 0} ,'${date}' ,'${arr.site}' ,'${arr.associateType}','${arr.associateEmail}','${arr.associateName}',${arr.isSuperviser === true ? 1 : 0},${arr.isSupervised === true ? 1 : 0}
                     ,${arr.IsSupervisedByNonDirector === true ? 1 : 0},'${arr.supervisor1}','${arr.supervisor1Covrage}','${arr.supervisor2}','${arr.supervisor2Covrage}',${arr.supervisorOneGetsMoney === true ? 1 : 0},
-                    ${arr.supervisorTwoGetsMoney === true ? 1 : 0},${arr.chargesHST === true ? 1 : 0},'${arr.associateFeeBaseType}','${arr.associateFeeBaseType2}','${arr.associateFeeBaseRate}',${arr.associateFeeBaseRateOverrideLessThen === true ? 1 : 0}
-                    ,${arr.associateFeeBaseRateOverrideGreaterThen === true ? 1 : 0},${arr.associateFeeBaseRateOverrideAsseements === true ? 1 : 0},
+                    ${arr.supervisorTwoGetsMoney === true ? 1 : 0},${arr.chargesHST === true ? 1 : 0},'${arr.associateFeeBaseType}','${arr.associateFeeBaseType2}','${arr.associateFeeBaseRate}',${arr.associateFeeBaseRateOverrideLessThen}
+                    ,${arr.associateFeeBaseRateOverrideGreaterThen},${arr.associateFeeBaseRateOverrideAsseements === true ? 1 : 0},
                     '${arr.inOfficeBlocks}','${arr.inOfficeBlockTimes}','${arr.blocksBiWeeklyCharge}','${arr.videoTech}',${arr.cahrgeVideoFee === true ? 1 : 0},
                     ${arr.duplicateTable === true ? 1 : 0},${arr.nonChargeablesTable === true ? 1 : 0},${arr.associateFeesTable === true ? 1 : 0}, '${arr.comments}',
                     '${arr.adjustmentFee}','${arr.adjustmentPaymentFee}');SELECT SCOPE_IDENTITY() AS new_id;`
@@ -404,7 +404,7 @@ exports.getSuperviseePaymentData = async (superviser, date) => {
         await sql.connect(config)
         let resp = await sql.query(`SELECT *, CONVERT(VARCHAR(10), CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),101),101) AS FULLDATE from financial_view
                                     WHERE CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),111) BETWEEN '${date.start}' AND '${date.end}'
-                                    AND (superviser = '${superviser}')`)
+                                    AND (worker like '%${superviser}%')`)
         return resp.recordset
     } catch (error) {
         console.log(error)

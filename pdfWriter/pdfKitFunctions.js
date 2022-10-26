@@ -74,6 +74,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         // the magic
         this.generateHeader(doc, worker)
         this.generateLine(doc, 70)
+
         await doc.table(mainTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -81,6 +82,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
                 doc.font("Helvetica").fontSize(8);
             },
         });
+
         doc.moveDown()
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
         await doc.table(reportedItemsTable, {
@@ -181,6 +183,8 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
+                indexColumn === 0 && doc.addBackground(rectCell, 'red', 0.15)
+                indexColumn === 2 && doc.addBackground(rectCell, 'red', 0.15)
                 doc.font("Helvetica").fontSize(8);
             },
         });
@@ -240,6 +244,10 @@ exports.sortByDate = (arr) => {
     arr.sort((a, b) => {
         return new Date(a.FULLDATE) - new Date(b.FULLDATE)
     })
+}
+
+exports.sortByName = (arr) => {
+    return arr.sort((a, b) => a.worker.localeCompare(b.worker))
 }
 
 

@@ -70,22 +70,19 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
 
                 //************calculate processing fee (other fee)******************/
-                //Create associate fees table
-                // make a Set to hold values from namesToDeleteArr
                 const itemsToDelete = new Set(nonChargeableItems.concat(duplicateItems));
                 const reportedItemDataFiltered = reportedItemData.filter((item) => {
                     return !itemsToDelete.has(item);
                 });
                 reportedItemDataFiltered.map(x => x.proccessingFee =
-            /*add 0.30 cents to proccessing fee*/(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).ammount.split("+")[1].replace(/[^0-9]+/, '')) * x.COUNT)
-            /*calculate percentage */ + (parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).ammount.split("+")[0].replace(/[^0-9.]/, '')) * x.event_service_item_total) / 100)
+                    /*add 0.30 cents to proccessing fee*/(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)) !== undefined && proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).ammount.replace(/[^0-9]+/, '')) * x.COUNT) +
+                    /*calculate percentage */(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)) !== undefined && proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).percentage.replace(/[^0-9.]+/, '')) * x.event_service_item_total) / 100)
 
 
-
-                //***************adjustment fees ****************************/
+                //***************adjustment fees *****************/
                 let adjustmentFee = JSON.parse(workerProfile.map(x => x.adjustmentFee))
                 let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFee)
-                let finalProccessingFee = reportedItemDataFiltered.map(x => x.proccessingFee).reduce((a, b) => a + b, 0)
+                let finalProccessingFee = reportedItemDataFiltered.map(x => x.proccessingFee !== undefined && x.proccessingFee).reduce((a, b) => a + b, 0)
                 let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
                 let blocksBiWeeklyCharge = parseFloat(workerProfile.map(x => x.blocksBiWeeklyCharge)[0])
                 let tablesToShow = await getTablesToShow(workerId)

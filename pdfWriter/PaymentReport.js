@@ -2,13 +2,14 @@ const { createPaymentTableFunc, formatter, sortByDate } = require("./pdfKitFunct
 const PDFDocument = require("pdfkit-table");
 const { nonRemittablesTable } = require("../tables/nonRemittablesTable");
 const { thirdPartyFeesTable } = require("../tables/thirdPartyFeesTable");
-const { getPaymentData, getNonRemittables, getAssociateProfileById, getAssociateProfileByName, getAllSuperviseeProfiles, getSuperviseePaymentData, getSuperviseeies } = require("../sql/sql");
+const { getPaymentData, getNonRemittables, getAssociateProfileById, getAssociateProfileByName, getAllSuperviseeProfiles, getSuperviseePaymentData, getSuperviseeies, getSupervisers } = require("../sql/sql");
 const { totalAppliedPaymentsTable } = require("../tables/totalAppliedPaymentsTable");
 const { appliedPaymentsTable } = require("../tables/appliedPaymentsTable");
 const { transactionsTable } = require("../tables/transactionsTable");
 const { superviseeClientPaymentsTable } = require("../tables/superviseeClientPaymentsTable");
 const { adjustmentFeeTable } = require("../tables/adjustmentTable");
 const { sendEmail } = require("../email/sendEmail");
+const { getSupervisiesFunc } = require("../tables/supervisiesTable");
 
 exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, associateEmail, emailPassword, action) => {
     return new Promise(async (resolve, reject) => {
@@ -43,32 +44,46 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
             const superviseePaymentData = async (worker) => {
                 let workerPaymentData = await getSuperviseePaymentData(worker, dateUnformatted)
+                console.log(workerPaymentData)
+
                 let superviseePayments = workerPaymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
                 let superviseeHours = workerPaymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 return { superviseePayments, superviseeHours }
             }
+
 
             //*********************format date *******************/
             let tempDateStart = dateUnformatted.start.split("/")[1] + "/" + dateUnformatted.start.split("/")[2] + "/" + dateUnformatted.start.split("/")[0]
             let tempDateEnd = dateUnformatted.end.split("/")[1] + "/" + dateUnformatted.end.split("/")[2] + "/" + dateUnformatted.end.split("/")[0]
             date = { start: tempDateStart, end: tempDateEnd }
 
-            //*************Applied Payments table ****************/
+            //*************Applied Payments total table ****************/
+            const getClientPaymentsFromSupervisee = (data) => { return (data.length === 0 ? 0 : data.map(x => x.superviseePayments).reduce((a, b) => a + b)) }
+            const getlientHoursFromSupervisee = (data) => { return (data.length === 0 ? 0 : data.map(x => x.superviseePayments).reduce((a, b) => a + b)) }
+            const getClientPayments = () => { return (paymentData.filter(x => x.worker.trim() === tempWorker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
+            const getClientHours = () => { return (paymentData.filter(x => x.worker.trim() === tempWorker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
+
             //removing non remittables && !nonRemittableItems.includes(x.description)
             let clientPayments = 0
             let clientHours = 0
             let superviseeClientsPayment = 0
             let superviseeClientsHours = 0
+
             if (workerProfile[0].isSuperviser) {
                 let superviseeies = await getSuperviseeies(worker)
+
                 let mapSuperviseeies = superviseeies.map(async (x) => await superviseePaymentData(x.associateName))
                 await Promise.all(mapSuperviseeies).then((data) => {
-                    let clientPaymentsFromSupervisee = data.map(x => x.superviseePayments).reduce((a, b) => a + b)
-                    let clientHoursFromSupervisee = data.map(x => x.superviseeHours).reduce((a, b) => a + b)
-                    clientPayments = paymentData.filter(x => x.worker.trim() === tempWorker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
-                    clientHours = paymentData.filter(x => x.worker.trim() === tempWorker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
-                    superviseeClientsPayment = clientPaymentsFromSupervisee + paymentData.filter(x => x.worker.trim() !== tempWorker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
-                    superviseeClientsHours = clientHoursFromSupervisee + paymentData.filter(x => x.worker.trim() !== tempWorker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+                    try {
+                        let clientPaymentsFromSupervisee = getClientPaymentsFromSupervisee(data)
+                        let clientHoursFromSupervisee = getlientHoursFromSupervisee(data)
+                        clientPayments = getClientPayments()
+                        clientHours = getClientHours()
+                        superviseeClientsPayment = clientPaymentsFromSupervisee + paymentData.filter(x => x.worker.trim() !== tempWorker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
+                        superviseeClientsHours = clientHoursFromSupervisee + paymentData.filter(x => x.worker.trim() !== tempWorker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+                    } catch (error) {
+
+                    }
                 })
             }
             else {
