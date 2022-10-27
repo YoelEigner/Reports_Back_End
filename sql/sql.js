@@ -6,7 +6,7 @@ var CryptoJS = require("crypto-js");
 const config = {
     user: "Node",
     password: process.env.DBPASS,
-    server: "localhost\\SQLEXPRESS",
+    server: "localhost\\SQLEXPRESS01",
     database: "CFIR",
     port: 1433,
     options: {
@@ -399,12 +399,12 @@ exports.getPaymentData = async (tempWorker, superviser, date) => {
         console.log(error)
     }
 }
-exports.getSuperviseePaymentData = async (superviser, date) => {
+exports.getSuperviseePaymentData = async (supervisee, date) => {
     try {
         await sql.connect(config)
         let resp = await sql.query(`SELECT *, CONVERT(VARCHAR(10), CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),101),101) AS FULLDATE from financial_view
                                     WHERE CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),111) BETWEEN '${date.start}' AND '${date.end}'
-                                    AND (worker like '%${superviser}%')`)
+                                    AND (worker like '%${supervisee}%')`)
         return resp.recordset
     } catch (error) {
         console.log(error)

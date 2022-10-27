@@ -14,9 +14,9 @@ exports.totalAppliedPaymentsTable = (date, clientPayments, clientHours, supervis
         ],
         rows: [[
             formatter.format(clientPayments),
-            clientHours,
+            clientHours.toFixed(0),
             formatter.format(superviseeClientsPayment),
-            superviseeClientsHours,
+            superviseeClientsHours.toFixed(0),
             formatter.format(ajustmentFeesTotal),
             formatter.format(clientPayments + superviseeClientsPayment - ajustmentFeesTotal),
         ]],

@@ -246,6 +246,20 @@ exports.sortByDate = (arr) => {
     })
 }
 
+exports.removeNullStr = (arr) => {
+    arr.map((obj, i) => {
+        Object.keys(obj).forEach((key) => {
+            if (obj[key] === null) {
+                obj[key] = '-';
+            }
+        })
+    });
+    return arr
+}
+exports.removeNaN = (arr) => {
+    return arr.filter(Boolean)
+}
+
 exports.sortByName = (arr) => {
     return arr.sort((a, b) => a.worker.localeCompare(b.worker))
 }

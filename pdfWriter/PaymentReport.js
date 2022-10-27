@@ -43,9 +43,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let nonRemittableItems = non_remittableArr.map(x => x.name)
 
             const superviseePaymentData = async (worker) => {
-                let workerPaymentData = await getSuperviseePaymentData(worker, dateUnformatted)
-                console.log(workerPaymentData)
-
+                let workerPaymentData = await getSuperviseePaymentData(worker.split(',')[1].trim() + " " + worker.split(',')[0].trim(), dateUnformatted)
                 let superviseePayments = workerPaymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
                 let superviseeHours = workerPaymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 return { superviseePayments, superviseeHours }
@@ -71,7 +69,6 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
             if (workerProfile[0].isSuperviser) {
                 let superviseeies = await getSuperviseeies(worker)
-
                 let mapSuperviseeies = superviseeies.map(async (x) => await superviseePaymentData(x.associateName))
                 await Promise.all(mapSuperviseeies).then((data) => {
                     try {
