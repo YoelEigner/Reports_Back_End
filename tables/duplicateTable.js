@@ -12,7 +12,7 @@ exports.duplicateTable = (data, date) => {
         ],
         datas: [...data],
         rows: [
-            ['Total', data.length, "", formatter.format(data.map(x => x.event_service_item_total).reduce((a, b) => a + b, 0).toFixed(2))]
+            ['Total', data.length, "-", formatter.format(data.map(x => x.event_service_item_total).reduce((a, b) => a + b, 0).toFixed(2))]
         ]
     }
 }

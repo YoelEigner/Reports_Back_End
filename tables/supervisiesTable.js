@@ -37,7 +37,10 @@ exports.getSupervisiesFunc = async (date, non_chargeablesArr, respSuperviser) =>
     }
 }
 
-
+const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+});
 
 exports.supervisiesTable = (data, date, supervisee, subtotal, non_chargeablesArr) => {
     let reportedItemsCount = data.map(x => !non_chargeablesArr.find(n => n === x.event_service_item_name) && x.COUNT).reduce((a, b) => a + b, 0)
@@ -46,7 +49,7 @@ exports.supervisiesTable = (data, date, supervisee, subtotal, non_chargeablesArr
         title: "Supervisee - " + supervisee,
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
-            { label: "Supervisee", property: 'event_primary_worker_name', renderer: null , align: "center"},
+            { label: "Supervisee", property: 'event_primary_worker_name', renderer: null, align: "center" },
             { label: "Service Name", property: 'event_service_item_name', renderer: null, align: "center" },
             { label: "Reported Items", property: 'COUNT', renderer: null, align: "center" },
             { label: "Item Total", property: 'itemTotal', renderer: null, align: "center" },
@@ -54,9 +57,8 @@ exports.supervisiesTable = (data, date, supervisee, subtotal, non_chargeablesArr
         ],
         datas: [...data],
         rows: [
-            ['Total', "", reportedItemsCount, "", '$' + subtotal],
+            ['Total', "-", reportedItemsCount, "-", + formatter.format(subtotal)],
         ],
-        // superviseeAssociateFee: calculateAssociateFeeForSupervisee(reportedItemsCount, rate, videoFee)
     };
 }
 

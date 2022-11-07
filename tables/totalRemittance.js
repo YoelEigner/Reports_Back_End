@@ -7,13 +7,15 @@ exports.totalRemittance = (date, associateTotal, netAppliedPayments, workerProfi
     newTotal = netAppliedPayments - fees
 
     //*************#4 calculation L1 supervised practice ***************/
-    if (workerProfile[0].associateType === 'L1 (Supervised Practice)') {
+    if (workerProfile[0].associateType === 'L1 (Sup Prac)') {
         feeHeaders = "HST + Ajustment Fees"
         fees = netAppliedPayments * process.env.HST - netAppliedPayments
         newTotal = netAppliedPayments - fees
     }
     //***************#3 calculation ALL non director supervised ****************/
-    else if (workerProfile[0].associateType !== 'L1 (Supervised Practice)' && workerProfile[0].IsSupervisedByNonDirector === true) {
+    else if (workerProfile[0].associateType !== 'L1 (Sup Prac)' && workerProfile[0].IsSupervisedByNonDirector === true) {
+    }
+    else if (workerProfile[0].associateType === 'L1' || workerProfile[0].associateType === 'L2' && workerProfile[0].isSupervised === false || workerProfile[0].isSuperviser === false) {
     }
     //***************#2 calculation L3 & L4 supervised by director ****************/
 
@@ -23,10 +25,6 @@ exports.totalRemittance = (date, associateTotal, netAppliedPayments, workerProfi
         newTotal = 0
         feeHeaders = 'HST'
     }
-
-
-
-
 
     return {
         title: "Total Remittance",

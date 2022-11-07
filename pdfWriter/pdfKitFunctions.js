@@ -1,5 +1,7 @@
-const { getNonChargeables, getSupervisies, getSupervisiesPaymentData, getSupervisers, getReportedItems, getAssociateFeeBaseRate } = require("../sql/sql");
+var firstBy = require('thenby');
+const { getNonChargeables, getSupervisies, getSupervisiesPaymentData, getSupervisers, getReportedItems, getAssociateFeeBaseRate, getSuperviserOne, getSuperviseeies } = require("../sql/sql");
 const { supervisiesTable } = require("../tables/supervisiesTable");
+
 
 exports.generateHeader = (doc, worker) => {
     doc
@@ -17,7 +19,7 @@ exports.generatePaymentHeader = (doc, worker) => {
 }
 
 exports.generateLine = (doc, y) => {
-    doc.strokeColor("#aaaaaa")
+    doc.strokeColor("black")
         .lineWidth(1)
         .moveTo(50, y)
         .lineTo(550, y)
@@ -45,6 +47,19 @@ exports.getNotUnique = (array) => {
 
 exports.uniqueValues = (value, index, self) => {
     return self.indexOf(value) === index;
+}
+exports.getUniqueByMulti = (data) => {
+    var resArr = [];
+
+    data.filter(function (item) {
+        var i = resArr.findIndex(x => (x.inv_no == item.inv_no));
+        if (i <= -1) {
+            resArr.push(item);
+        }
+        return null;
+    });
+    return resArr
+
 }
 
 const virticalLines = (doc, rectCell, indexColumn) => {
@@ -91,9 +106,9 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
                 doc.font("Helvetica").fontSize(8);
                 non_chargeablesArr.find(x => x === row.event_service_item_name) && doc.addBackground(rectRow, 'pink', 0.15);
                 duplicateItems.find(x => x.event_service_item_name === row.event_service_item_name) && doc.addBackground(rectRow, 'pink', 0.15);
-
             },
         });
+
         let showduplicateTable = tablesToShow.map(x => x.duplicateTable)[0]
         showduplicateTable && doc.moveDown();
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
@@ -131,6 +146,13 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
                 doc.font("Helvetica").fontSize(8);
             },
         });
+        // if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        // supervisies.length > 0 && await doc.table(subPracTable, {
+        //     prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+        //         virticalLines(doc, rectCell, indexColumn)
+        //         doc.font("Helvetica").fontSize(8);
+        //     },
+        // });
         doc.moveDown();
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
         await doc.table(totalRemittance, {
@@ -140,8 +162,11 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
                 indexColumn === 1 && doc.addBackground(rectCell, 'red', 0.15);
             },
         });
-        await supervisies.length !== 0 && doc.addPage();
+        doc.moveDown();
+        doc.moveDown();
+
         await supervisies.forEach(async (t) => {
+            if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
             await doc.table(t, {
                 prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                     virticalLines(doc, rectCell, indexColumn)
@@ -240,17 +265,14 @@ exports.formatter = new Intl.NumberFormat('en-US', {
     currency: 'USD',
 });
 
-exports.sortByDate = (arr) => {
-    arr.sort((a, b) => {
-        return new Date(a.FULLDATE) - new Date(b.FULLDATE)
-    })
-}
 
-exports.removeNullStr = (arr) => {
+
+exports.removeNullStr = (arr, funderName) => {
     arr.map((obj, i) => {
         Object.keys(obj).forEach((key) => {
+            // console.log(obj)
             if (obj[key] === null) {
-                obj[key] = '-';
+                obj[key] = funderName;
             }
         })
     });
@@ -261,9 +283,16 @@ exports.removeNaN = (arr) => {
 }
 
 exports.sortByName = (arr) => {
-    return arr.sort((a, b) => a.worker.localeCompare(b.worker))
+    arr.sort(
+        firstBy(function (a, b) { return a.worker.localeCompare(b.worker); })
+            .thenBy((a, b) => { return new Date(a.FULLDATE) - new Date(b.FULLDATE) })
+    );
 }
-
+exports.sortByDate = (arr) => {
+    arr.sort((a, b) => {
+        return new Date(a.FULLDATE) - new Date(b.FULLDATE)
+    })
+}
 
 exports.addNumberTotPages = (doc) => {
     //Global Edits to All Pages (Header/Footer, etc)
@@ -307,3 +336,25 @@ exports.addDateToPages = (doc) => {
         doc.page.margins.top = oldBottomMargin; // ReProtect bottom margin
     }
 }
+
+exports.removeSupPrac = async (arr, worker) => {
+    let superviseies = await getSuperviseeies(worker)
+    let mapedSupervisees = (superviseies.map(x => x.associateName = String(x.associateName.split(",")[1] + " " + x.associateName.split(",")[0]).trim()))
+    let removedArr = arr.filter(x => mapedSupervisees.includes(x.worker))
+    console.log("gggg", removedArr.length)
+    return removedArr
+}
+
+exports.getUniqueItemsMultiKey = (arr, keyProps) => {
+    const kvArray = arr.map(entry => {
+        const key = keyProps.map(k => entry[k]).join('|');
+        return [key, entry];
+    });
+    const map = new Map(kvArray);
+    return Array.from(map.values());
+}
+
+// exports.isSuperviserOne = async (worker, superviser) => {
+//     let resp = await getSuperviserOne(worker, superviser)
+//     console.log(resp)
+// }

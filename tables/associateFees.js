@@ -1,22 +1,69 @@
-const { formatter } = require("../pdfWriter/pdfKitFunctions")
+const { formatter, isSuperviserOne, removeNaN } = require("../pdfWriter/pdfKitFunctions")
 const { getAssociateFeeBaseRate, getProcessingFee, getPaymentTypes } = require("../sql/sql")
 
-exports.getRate = async (count, workerId) => {
+const isNum = (num) => {
+    if (isNaN(num)) { return 0 }
+    else { return num }
+
+}
+
+exports.getRate = async (count, workerId, getSubPrac) => {
     const associateFees = await getAssociateFeeBaseRate(workerId)
+    // const isSUperviserOne = await isSuperviserOne(worker)
     if (associateFees[0] !== undefined) {
-        if (count >= 34) {
-            return associateFees[0].associateFeeBaseRateOverrideGreaterThen
+        if (getSubPrac) {
+            if (associateFees[0].associateType === 'L1 (Sup Prac)' && associateFees[0].supervisorOneGetsMoney) {
+                return { one: true, superviser: associateFees[0].associateFeeBaseRate, CFIR: associateFees[0].associateFeeBaseRateOverrideGreaterThen }
+            }
+            else if (associateFees[0].associateType === 'L1 (Sup Prac)' && associateFees[0].supervisorTwoGetsMoney) {
+                return { one: false, superviser: associateFees[0].associateFeeBaseRateTwo, worker: associateFees[0].associateFeeBaseRateOverrideLessThenTwo }
+            }
+            else {
+                return { one: false, superviser: 0, worker: 0, CFIR: 0 }
+            }
         }
-        else if (parseFloat(associateFees[0].associateFeeBaseRateOverrideLessThen) !== 0 && count <= 33) {
-            return associateFees[0].associateFeeBaseRateOverrideLessThen
+        if (associateFees[0].associateType === 'L1 (Sup Prac)') {
+            return 0
         }
         else {
-            return associateFees[0].associateFeeBaseRate
+            if (associateFees[0].supervisorOneGetsMoney) {
+                if (count >= 34) {
+                    return isNum(associateFees[0].associateFeeBaseRateOverrideGreaterThen)
+                }
+                else if (parseFloat(associateFees[0].associateFeeBaseRateOverrideLessThen) !== 0 && count <= 33) {
+                    return isNum(associateFees[0].associateFeeBaseRateOverrideLessThen)
+                }
+                else {
+                    return isNum(associateFees[0].associateFeeBaseRate)
+                }
+            }
+            else if (associateFees[0].supervisorTwoGetsMoney) {
+                if (count >= 34) {
+                    return isNum(associateFees[0].associateFeeBaseRateOverrideGreaterThenTwo)
+                }
+                else if (parseFloat(associateFees[0].associateFeeBaseRateOverrideLessThenTwo) !== 0 && count <= 33) {
+                    return isNum(associateFees[0].associateFeeBaseRateOverrideLessThenTwo)
+                }
+                else {
+                    return isNum(associateFees[0].associateFeeBaseRateTwo)
+                }
+            }
+            else {
+                if (count >= 34) {
+                    return isNum(associateFees[0].associateFeeBaseRateOverrideGreaterThen)
+                }
+                else if (parseFloat(associateFees[0].associateFeeBaseRateOverrideLessThen) !== 0 && count <= 33) {
+                    return isNum(associateFees[0].associateFeeBaseRateOverrideLessThen)
+                }
+                else {
+                    return isNum(associateFees[0].associateFeeBaseRate)
+                }
+            }
         }
     }
 }
 exports.associateFees = async (worker, count, date, workerId, videoFee, finalProccessingFee, blocksBiWeeklyCharge, ajustmentFees, superviseeFeeCalculation, chargeVideoFee) => {
-    let rate = await this.getRate(count, workerId)
+    let rate = await this.getRate(count, workerId, false)
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
     return {
         title: "Associate Fees",

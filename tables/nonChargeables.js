@@ -12,7 +12,7 @@ exports.nonChargeables = (data, date) => {
         ],
         datas: [...data],
         rows: [
-            ['Total', data.map(x => x.COUNT).reduce((a, b) => a + b, 0), "", formatter.format(data.map(x => x.event_service_item_total).reduce((a, b) => a + b, 0).toFixed(2))],
+            ['Total', data.map(x => x.COUNT).reduce((a, b) => a + b, 0), "-", formatter.format(data.map(x => x.event_service_item_total).reduce((a, b) => a + b, 0).toFixed(2))],
         ]
     }
 }

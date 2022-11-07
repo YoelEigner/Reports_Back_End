@@ -5,11 +5,12 @@ exports.transactionsTable = (date, paymentData) => {
         var textB = b.superviser.toUpperCase();
         return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
     });
+    // console.log(data)
     return {
         title: "Transactions",
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
-            { label: "Superviser", property: 'superviser', renderer: null, align: "center" },
+            { label: "Worker", property: 'worker', renderer: null, align: "center" },
             { label: "Record ID", property: 'rec_id', renderer: null, align: "center" },
             { label: "Reason Type", property: 'reason_type', renderer: null, align: "center" },
             { label: "Qty", property: 'quantity', renderer: null, align: "center" },

@@ -9,7 +9,7 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
     let arr = []
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
-            let superviseeReportedItemdData = removeNullStr(await getReportedItems(date, worker.associateName))
+            let superviseeReportedItemdData = removeNullStr(await getReportedItems(date, worker.associateName), '-')
             let { duplicateItems } = removeDuplicateAndSplitFees(superviseeReportedItemdData)
 
             let superviseeWorkerProfile = await getAssociateProfileById(worker.id)
