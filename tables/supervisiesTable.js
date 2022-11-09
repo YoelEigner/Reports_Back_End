@@ -42,6 +42,7 @@ const formatter = new Intl.NumberFormat('en-US', {
     currency: 'USD',
 });
 
+
 exports.supervisiesTable = (data, date, supervisee, subtotal, non_chargeablesArr) => {
     let reportedItemsCount = data.map(x => !non_chargeablesArr.find(n => n === x.event_service_item_name) && x.COUNT).reduce((a, b) => a + b, 0)
 

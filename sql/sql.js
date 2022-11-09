@@ -6,7 +6,7 @@ var CryptoJS = require("crypto-js");
 const config = {
     user: "Node",
     password: process.env.DBPASS,
-    server: "localhost\\SQLEXPRESS",
+    server: "localhost\\SQLEXPRESS01",
     database: "CFIR",
     port: 1433,
     options: {
@@ -430,6 +430,16 @@ exports.getSuperviseeies = async (superviser) => {
         console.log(error)
     }
 }
+exports.getSuperviseeiesL1 = async (superviser) => {
+    try {
+        await sql.connect(config)
+        let resp = await sql.query(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] WHERE (supervisor1 = '${superviser}' AND supervisorOneGetsMoney = 'true' AND associateType = 'L1 (Sup Prac)')
+                                    or (supervisor2 = '${superviser}' AND supervisorTwoGetsMoney = 'true' AND associateType = 'L1 (Sup Prac)')`)
+        return resp.recordset
+    } catch (error) {
+        console.log(error)
+    }
+}
 exports.getAllPayments = async () => {
     try {
         await sql.connect(config)
@@ -455,6 +465,17 @@ exports.getSubPrac = async (date, superviser) => {
                                     WHERE CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),111) BETWEEN '${date.start}' AND '${date.end}'
                                     AND (worker like '%${superviser}%'AND associateType = 'L1 (Sub Prac)')`)
 
+        return resp.recordset
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+exports.getWorkerId = async (partialName) => {
+    console.log(partialName.slice(1).join(',').replace(",", " "))
+    try {
+        await sql.connect(config)
+        let resp = await sql.query(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] where associateName like '%${partialName}%'`)
         return resp.recordset
     } catch (error) {
         console.log(error)

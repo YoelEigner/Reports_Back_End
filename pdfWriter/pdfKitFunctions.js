@@ -187,9 +187,8 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
 }
 
 exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, appliedPaymentTable, totalAppliedPaymentsTable, nonRemittablesTable, transactionsTable, superviseeClientPaymentsTable,
-    adjustmentFeeTable, showAdjustmentFeeTable) => {
+    adjustmentFeeTable, showAdjustmentFeeTable, l1SupPrac) => {
     let nonRemittables = non_remittableItems.map(x => x.name)
-
     try {
         // the magic
         this.generatePaymentHeader(doc, worker)
@@ -240,6 +239,17 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             },
         });
         doc.moveDown()
+        await l1SupPrac.map(async (t) => {
+            if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+            await doc.table(t, {
+                prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
+                prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+                    virticalLines(doc, rectCell, indexColumn)
+                    doc.font("Helvetica").fontSize(8);
+                },
+            });
+        })
+        doc.moveDown()
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
         await doc.table(totalAppliedPaymentsTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
@@ -247,7 +257,6 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
                 virticalLines(doc, rectCell, indexColumn)
                 indexColumn === 4 && doc.addBackground(rectCell, 'red', 0.15);
                 doc.font("Helvetica").fontSize(8);
-
             },
         });
     } catch (error) {
@@ -353,8 +362,3 @@ exports.getUniqueItemsMultiKey = (arr, keyProps) => {
     const map = new Map(kvArray);
     return Array.from(map.values());
 }
-
-// exports.isSuperviserOne = async (worker, superviser) => {
-//     let resp = await getSuperviserOne(worker, superviser)
-//     console.log(resp)
-// }

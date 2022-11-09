@@ -9,12 +9,13 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
     //****************calculate L1 Sup Practice amount***************/
     let rate = await getRate(32, workerId, true)
     let subPracTotal = 0
-    if (rate !== undefined) {
-        let associateRate = Number(rate.superviser) + Number(rate.CFIR)
-        rate.one ?
-            paymentData.map(x => x.subPracAmount = formatter.format(Number(x.applied_amt) - associateRate))
-            : paymentData.map(x => x.subPracAmount = formatter.format(Number(rate.worker)))
-
+    if (rate !== undefined && rate.isZero) {
+        let associateRate = rate.associateRate
+        paymentData.map(x => x.subPracAmount = formatter.format(Number(x.applied_amt) - associateRate)).reduce((a, b) => a + b, 0)
+        subPracTotal = paymentData.map(x => Number(x.subPracAmount.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
+    }
+    else if (rate !== undefined && !rate.isZero) {
+        paymentData.map(x => x.subPracAmount = formatter.format(Number(rate.associateRate))).reduce((a, b) => a + b, 0)
         subPracTotal = paymentData.map(x => Number(x.subPracAmount.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
     }
 

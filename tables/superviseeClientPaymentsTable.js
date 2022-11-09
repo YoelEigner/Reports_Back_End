@@ -1,12 +1,5 @@
 const { sortByName, formatter } = require("../pdfWriter/pdfKitFunctions")
 
-const groupBy = (array, key) => {
-    return array.reduce((result, item) => {
-        (result[item[key]] = result[item[key]] || []).push(item);
-        return result;
-    }, {});
-};
-
 
 exports.superviseeClientPaymentsTable = (date, data) => {
     sortByName(data)
@@ -23,6 +16,6 @@ exports.superviseeClientPaymentsTable = (date, data) => {
             { label: "Total Payments Applied", property: 'total', renderer: null, align: "center" },
         ],
         datas: [...data],
-        rows: [['Total', "-", totalQty, "-", formatter.format(totalAppliedPayments)],]
+        // rows: [['Total', "-", totalQty, "-", formatter.format(totalAppliedPayments)],]
     }
 }

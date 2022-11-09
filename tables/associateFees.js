@@ -7,19 +7,47 @@ const isNum = (num) => {
 
 }
 
+const getRatesForL1 = (arr) => {
+    return arr.map(x => x !== undefined ? Number(x.replace(/[^0-9.-]+/g, "")) : 0).reduce((a, b) => a + b, 0)
+}
+
 exports.getRate = async (count, workerId, getSubPrac) => {
     const associateFees = await getAssociateFeeBaseRate(workerId)
     // const isSUperviserOne = await isSuperviserOne(worker)
     if (associateFees[0] !== undefined) {
         if (getSubPrac) {
             if (associateFees[0].associateType === 'L1 (Sup Prac)' && associateFees[0].supervisorOneGetsMoney) {
-                return { one: true, superviser: associateFees[0].associateFeeBaseRate, CFIR: associateFees[0].associateFeeBaseRateOverrideGreaterThen }
+                let amount = [associateFees[0].associateFeeBaseRate, associateFees[0].associateFeeBaseRateOverrideGreaterThen,
+                associateFees[0].associateFeeBaseRateOverrideLessThen]
+                return {
+                    isSuperviser: false,
+                    isZero: Number(associateFees[0].associateFeeBaseRateOverrideLessThen) == 0,
+                    superviserRate: Number(associateFees[0].associateFeeBaseRate) == 0 ?
+                        getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRate),
+                    associateRate: Number(associateFees[0].associateFeeBaseRateOverrideLessThen) == 0 ?
+                        getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRateOverrideLessThen)
+                }
             }
             else if (associateFees[0].associateType === 'L1 (Sup Prac)' && associateFees[0].supervisorTwoGetsMoney) {
-                return { one: false, superviser: associateFees[0].associateFeeBaseRateTwo, worker: associateFees[0].associateFeeBaseRateOverrideLessThenTwo }
+                let amount = [associateFees[0].associateFeeBaseRateTwo, associateFees[0].associateFeeBaseRateOverrideGreaterThenTwo,
+                associateFees[0].associateFeeBaseRateOverrideLessThenTwo]
+                return {
+                    isSuperviser: false,
+                    isZero: Number(associateFees[0].associateFeeBaseRateOverrideLessThen) == 0,
+                    superviserRate: Number(associateFees[0].associateFeeBaseRateTwo) == 0 ?
+                        getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRateTwo),
+                    associateRate: Number(associateFees[0].associateFeeBaseRateOverrideLessThenTwo) == 0 ?
+                        getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRateOverrideLessThenTwo)
+                }
             }
             else {
-                return { one: false, superviser: 0, worker: 0, CFIR: 0 }
+                return {
+                    isSuperviser: true,
+                    isZero: Number(associateFees[0].associateFeeBaseRateTwo) == 0,
+                    associateRate: 0,
+                    superviserRate: Number(associateFees[0].associateFeeBaseRateTwo) == 0 ?
+                        getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRateTwo)
+                }
             }
         }
         if (associateFees[0].associateType === 'L1 (Sup Prac)') {
