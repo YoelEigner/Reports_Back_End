@@ -41,6 +41,8 @@ exports.getRate = async (count, workerId, getSubPrac) => {
                 }
             }
             else {
+                let amount = [associateFees[0].associateFeeBaseRate, associateFees[0].associateFeeBaseRateOverrideGreaterThen,
+                associateFees[0].associateFeeBaseRateOverrideLessThen]
                 return {
                     isSuperviser: true,
                     isZero: Number(associateFees[0].associateFeeBaseRateTwo) == 0,
