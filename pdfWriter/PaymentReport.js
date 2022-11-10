@@ -2,7 +2,7 @@ const { createPaymentTableFunc, formatter, sortByDate, sortByName, removeSupPrac
 const PDFDocument = require("pdfkit-table");
 const { nonRemittablesTable } = require("../tables/nonRemittablesTable");
 const { thirdPartyFeesTable } = require("../tables/thirdPartyFeesTable");
-const { getPaymentData, getNonRemittables, getAssociateProfileById, getAssociateProfileByName, getAllSuperviseeProfiles, getSuperviseePaymentData, getSuperviseeies, getSupervisers, getWorkerId, getSuperviseeiesL1 } = require("../sql/sql");
+const { getPaymentData, getNonRemittables, getAssociateProfileById, getAssociateProfileByName, getAllSuperviseeProfiles, getSuperviseePaymentData, getSuperviseeies, getSupervisers, getWorkerId, getSuperviseeiesL1, getPaymentDataForWorker } = require("../sql/sql");
 const { totalAppliedPaymentsTable } = require("../tables/totalAppliedPaymentsTable");
 const { appliedPaymentsTable } = require("../tables/appliedPaymentsTable");
 const { transactionsTable } = require("../tables/transactionsTable");
@@ -12,7 +12,7 @@ const { sendEmail } = require("../email/sendEmail");
 const { getSupervisiesFunc } = require("../tables/supervisiesTable");
 const { L1SupPracTable } = require("../tables/L1SupPracTable");
 
-exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, associateEmail, emailPassword, action) => {
+exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, associateEmail, emailPassword, action, reportType) => {
     return new Promise(async (resolve, reject) => {
         let buffers = [];
         let netAppliedTotal = 0
@@ -36,7 +36,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
         try {
             let tempWorker = String(worker.split(",")[1] + " " + worker.split(",")[0]).trim()
-            let paymentData = await getPaymentData(tempWorker, worker, dateUnformatted)
+            let paymentData = reportType === 'singlepdf' ? await getPaymentDataForWorker(tempWorker, dateUnformatted) : await getPaymentData(tempWorker, worker, dateUnformatted)
             // let paymentData = removeSupPrac(paymentDataTemp, worker)
             sortByName(paymentData)
             let workerProfile = await getAssociateProfileById(workerId)
@@ -44,12 +44,12 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let non_remittableArr = await getNonRemittables()
             let nonRemittableItems = non_remittableArr.map(x => x.name)
 
-            const superviseePaymentData = async (worker) => {
-                let workerPaymentData = await getSuperviseePaymentData(worker.split(',')[1].trim() + " " + worker.split(',')[0].trim(), dateUnformatted)
-                let superviseePayments = workerPaymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
-                let superviseeHours = workerPaymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
-                return { superviseePayments, superviseeHours }
-            }
+            // const superviseePaymentData = async (worker) => {
+            //     let workerPaymentData = await getSuperviseePaymentData(worker.split(',')[1].trim() + " " + worker.split(',')[0].trim(), dateUnformatted)
+            //     let superviseePayments = workerPaymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
+            //     let superviseeHours = workerPaymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+            //     return { superviseePayments, superviseeHours }
+            // }
 
 
             //*********************format date *******************/
@@ -162,11 +162,13 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     /*adjustment fee table */ adjustmentFeeTableData,
                     /*show Adjustment Fee Table or not*/showAdjustmentFeeTable,
                     /*L1 Sup PRac tables*/l1SupPrac,
+                    /*type of report*/reportType
                     // /*Transactions table */transactionsTable(date, paymentData.sort((a, b) => (a.superviser > b.superviser) ? 1 : -1))
                 )
 
                 //**********calculations for invoice report ************/
-                netAppliedTotal = clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal
+                netAppliedTotal = reportType === 'singlepdf' ? (clientPayments - ajustmentFeesTotal)
+                    : (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
                 duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
             })
         } catch (error) {

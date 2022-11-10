@@ -1,8 +1,8 @@
 const { createPaymentReportTable } = require("./PaymentReport");
 
-exports.paymentReportGenerator = (res, date, users, emailPassword, action) => {
+exports.paymentReportGenerator = (res, date, users, emailPassword, action, reportType) => {
     users.map(async (worker) => {
-        return createPaymentReportTable(res, date, worker.associateName, worker.id, worker.associateEmail, emailPassword, action).then(async (resp) => {
+        return createPaymentReportTable(res, date, worker.associateName, worker.id, worker.associateEmail, emailPassword, action, reportType).then(async (resp) => {
             res.writeHead(200, {
                 'Content-Length': Buffer.byteLength(resp.pdfData),
                 'Content-Type': 'application/pdf',

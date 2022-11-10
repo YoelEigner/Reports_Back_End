@@ -17,8 +17,8 @@ const getDecryptedPass = async () => {
     return result.toString(CryptoJS.enc.Utf8);
 }
 
-const getNetTotal = (res, date, worker, action) => {
-    return createPaymentReportTable(res, date, worker.associateName, worker.id, '', '', action)
+const getNetTotal = (res, date, worker, action, reportType) => {
+    return createPaymentReportTable(res, date, worker.associateName, worker.id, '', '', action, reportType)
 }
 
 exports.reports = async (res, date, users, action, videoFee, reportType, actionType) => {
@@ -44,10 +44,10 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
     });
 
     if (actionType === 'payment' && reportType === 'singlepdf') {
-        paymentReportGenerator(res, date, users, emailPassword, action)
+        paymentReportGenerator(res, date, users, emailPassword, action, reportType)
     }
     if (actionType === 'invoice' && reportType === 'singlepdf') {
-        let invoice = await getNetTotal(res, date, users[0], action)
+        let invoice = await getNetTotal(res, date, users[0], action, reportType)
         InvoicePromiseGenerator(res, date, users, invoice.netAppliedTotal, reportType, invoice.duration_hrs, videoFee)
     }
 

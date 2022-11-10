@@ -50,15 +50,23 @@ exports.getDataDate = async (date, worker, city) => {
 }
 exports.getAssociateTypes = async (associateType) => {
     let temp = ""
-    if (associateType === 'associateType' || associateType === 'superviser') {
+    let query = ""
+    if (associateType === 'associateType') {
         temp = 'associateType'
+        query = `SELECT * FROM [CFIR].[dbo].[profiles] WHERE associateType=associateType`
+    }
+    else if (associateType === 'supervisers') {
+        temp = 'associateType'
+        query = `SELECT * FROM [CFIR].[dbo].[profiles] WHERE isSuperviser='true'`
     }
     else {
-        temp = "'" + associateType + "'"
+        temp = `'${associateType}'`
+        query = `SELECT * FROM [CFIR].[dbo].[profiles] WHERE associateType=${temp}`
     }
     try {
         await sql.connect(config);
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE associateType=${temp}`)
+        let resp = await sql.query(query)
+        console.log(query)
         return resp.recordset;
     } catch (err) {
         console.log(err); return err
@@ -409,6 +417,18 @@ exports.getPaymentData = async (tempWorker, superviser, date) => {
         console.log(error)
     }
 }
+exports.getPaymentDataForWorker = async (tempWorker, date) => {
+    try {
+        await sql.connect(config)
+        let resp = await sql.query(`SELECT *, CONVERT(VARCHAR(10), CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),101),101) AS FULLDATE from financial_view
+                                    WHERE CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),111) BETWEEN '${date.start}' AND '${date.end}'
+                                    AND worker like '%${tempWorker}%'`)
+        return resp.recordset
+    } catch (error) {
+        console.log(error)
+    }
+}
+
 exports.getSuperviseePaymentData = async (supervisee, date) => {
     try {
         await sql.connect(config)

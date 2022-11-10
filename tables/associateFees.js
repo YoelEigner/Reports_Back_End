@@ -33,7 +33,7 @@ exports.getRate = async (count, workerId, getSubPrac) => {
                 associateFees[0].associateFeeBaseRateOverrideLessThenTwo]
                 return {
                     isSuperviser: false,
-                    isZero: Number(associateFees[0].associateFeeBaseRateOverrideLessThen) == 0,
+                    isZero: Number(associateFees[0].associateFeeBaseRateOverrideLessThenTwo) == 0,
                     superviserRate: Number(associateFees[0].associateFeeBaseRateTwo) == 0 ?
                         getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRateTwo),
                     associateRate: Number(associateFees[0].associateFeeBaseRateOverrideLessThenTwo) == 0 ?

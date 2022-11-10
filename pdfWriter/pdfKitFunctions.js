@@ -187,7 +187,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
 }
 
 exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, appliedPaymentTable, totalAppliedPaymentsTable, nonRemittablesTable, transactionsTable, superviseeClientPaymentsTable,
-    adjustmentFeeTable, showAdjustmentFeeTable, l1SupPrac) => {
+    adjustmentFeeTable, showAdjustmentFeeTable, l1SupPrac, reportType) => {
     let nonRemittables = non_remittableItems.map(x => x.name)
     try {
         // the magic
@@ -239,7 +239,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             },
         });
         doc.moveDown()
-        await l1SupPrac.map(async (t) => {
+        reportType !== 'singlepdf' && await l1SupPrac.map(async (t) => {
             if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
             await doc.table(t, {
                 prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),

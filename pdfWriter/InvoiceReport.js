@@ -1,7 +1,7 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit-table");
 const { sendEmail } = require("../email/sendEmail");
-const { getData, getDataDate, getDataUser, getReportedItems, getNonChargeables, getAssociateVideoFee, getPaymentTypes, getProcessingFee, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData } = require("../sql/sql");
+const { getData, getDataDate, getDataUser, getReportedItems, getNonChargeables, getAssociateVideoFee, getPaymentTypes, getProcessingFee, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker } = require("../sql/sql");
 const { adjustmentFeeTable } = require("../tables/adjustmentTable");
 const { associateFees, getRate } = require("../tables/associateFees");
 const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js");
@@ -17,7 +17,7 @@ const { calculateSuperviseeFeeFunc } = require("./calculateSuperviseeFee");
 const { createInvoiceTableFunc, getNotUnique, getSupervisies, formatter, sortByDate, removeNull, removeNullStr, removeNaN, getUniqueByMulti } = require("./pdfKitFunctions");
 const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees");
 
-exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netAppliedTotal, duration_hrs, videoFee, action, associateEmail, emailPassword) => {
+exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netAppliedTotal, duration_hrs, videoFee, action, associateEmail, emailPassword, reportType) => {
     // console.time('report')
     return new Promise(async (resolve, reject) => {
         try {
@@ -40,7 +40,11 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
             try {
                 let tempWorker = String(worker.split(",")[1] + " " + worker.split(",")[0]).trim()
                 let data = removeNullStr(await getDataDate(dateUnformatted, worker), '-')
-                let paymentData = removeNullStr(await getPaymentData(tempWorker, tempWorker, dateUnformatted), '-')
+                // let paymentData = removeNullStr(await getPaymentDataForWorker(tempWorker, dateUnformatted), '-')
+                let paymentData = reportType === 'singlepdf' ? removeNullStr(await getPaymentDataForWorker(tempWorker, dateUnformatted), '-')
+                    : removeNullStr(await getPaymentData(tempWorker, worker, dateUnformatted), '-')
+
+                // let paymentData = removeNullStr(await getPaymentData(tempWorker, worker, dateUnformatted), '-')
                 sortByDate(data)
                 let reportedItemData = removeNullStr(await getReportedItems(dateUnformatted, worker), '-')
                 let non_chargeables = await getNonChargeables()
@@ -65,7 +69,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 //******************** REMOVING DUPLICATE & SPLIT FEES (event_id && case_file_name) *********************
                 let { duplicateItems, duplicateItemsId } = removeDuplicateAndSplitFees(data)
 
-                //************** ASSOCIATE FEE BAE RATE CALCULATION **********************
+                //************** ASSOCIATE FEE BASE RATE CALCULATION **********************
                 /*COUNT ALL DUPLICATE/SPILIT FEES LEAVING ONLY ONE*/
                 let associateFeeTableQty = 0
                 if (workerProfile[0].associateType === 'L1' || workerProfile[0].associateType === 'L2') {
@@ -113,7 +117,6 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let associateFeeBaseRateTables = await associateFees(worker, qty, date, workerId, videoFee, finalProccessingFee, blocksBiWeeklyCharge,
                     Number(adjustmentFeeTableData.rows[0][1].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee, respSuperviser)
                 let finalTotalRemittence = associateFeeBaseRateTables.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
-
                 createInvoiceTableFunc(doc,
                 /*Main Table*/  mainTable(data, date),
                 /*Reported Items Table*/await reportedItemsTable(reportedItemData, date, subtotal, workerId),

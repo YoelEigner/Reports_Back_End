@@ -9,6 +9,7 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
     //****************calculate L1 Sup Practice amount***************/
     let rate = await getRate(32, workerId, true)
     let subPracTotal = 0
+    // console.log(rate)
     if (rate !== undefined && rate.isZero) {
         let associateRate = rate.associateRate
         paymentData.map(x => x.subPracAmount = formatter.format(Number(x.applied_amt) - associateRate)).reduce((a, b) => a + b, 0)
@@ -18,7 +19,6 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
         paymentData.map(x => x.subPracAmount = formatter.format(Number(rate.associateRate))).reduce((a, b) => a + b, 0)
         subPracTotal = paymentData.map(x => Number(x.subPracAmount.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
     }
-
     let headers = [
         { label: "Date", property: 'FULLDATE', renderer: null, align: "center" },
         { label: "Service Name", property: 'description', renderer: null, align: "center" },
@@ -31,7 +31,7 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
 
     let rows = ['Total', "-", "-", "-", "-", totalDuration_hrs, formatter.format(totalAppliedAmt)]
 
-    if (subPracTotal !== 0) {
+    if (subPracTotal !== 0 && !rate.isSuperviser) {
         headers.push({ label: "Sup Prac Total", property: 'subPracAmount', renderer: null, align: "center" })
         rows.push(formatter.format(subPracTotal))
     }
