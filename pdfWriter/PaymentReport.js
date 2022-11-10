@@ -36,7 +36,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
         try {
             let tempWorker = String(worker.split(",")[1] + " " + worker.split(",")[0]).trim()
-            let paymentData = reportType === 'singlepdf' ? await getPaymentDataForWorker(tempWorker, dateUnformatted) : await getPaymentData(tempWorker, worker, dateUnformatted)
+            let paymentData = reportType === 'singlepdf' ? await getPaymentDataForWorker(worker, dateUnformatted) : await getPaymentData(worker, dateUnformatted)
             // let paymentData = removeSupPrac(paymentDataTemp, worker)
             sortByName(paymentData)
             let workerProfile = await getAssociateProfileById(workerId)

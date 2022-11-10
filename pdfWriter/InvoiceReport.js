@@ -39,14 +39,16 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
             });
             try {
                 let tempWorker = String(worker.split(",")[1] + " " + worker.split(",")[0]).trim()
+                console.log(worker)
                 let data = removeNullStr(await getDataDate(dateUnformatted, worker), '-')
                 // let paymentData = removeNullStr(await getPaymentDataForWorker(tempWorker, dateUnformatted), '-')
-                let paymentData = reportType === 'singlepdf' ? removeNullStr(await getPaymentDataForWorker(tempWorker, dateUnformatted), '-')
-                    : removeNullStr(await getPaymentData(tempWorker, worker, dateUnformatted), '-')
+                let paymentData = reportType === 'singlepdf' ? removeNullStr(await getPaymentDataForWorker(worker, dateUnformatted), '-')
+                    : removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
 
                 // let paymentData = removeNullStr(await getPaymentData(tempWorker, worker, dateUnformatted), '-')
                 sortByDate(data)
                 let reportedItemData = removeNullStr(await getReportedItems(dateUnformatted, worker), '-')
+                // let reportedItemData = removeNullStr(await getReportedItems(dateUnformatted, worker), '-')
                 let non_chargeables = await getNonChargeables()
                 let non_chargeablesArr = non_chargeables.map(x => x.name)
                 let proccessingFeeTypes = await getPaymentTypes()

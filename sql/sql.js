@@ -406,12 +406,12 @@ exports.insertWorkerProfile = async (arr) => {
 }
 
 //****************Payment querys**********************/
-exports.getPaymentData = async (tempWorker, superviser, date) => {
+exports.getPaymentData = async (worker, date) => {
     try {
         await sql.connect(config)
         let resp = await sql.query(`SELECT *, CONVERT(VARCHAR(10), CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),101),101) AS FULLDATE from financial_view
                                     WHERE CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),111) BETWEEN '${date.start}' AND '${date.end}'
-                                    AND (superviser like '%${superviser}%' OR worker like '%${tempWorker}%')`)
+                                    AND (superviser like '%${worker}%' OR worker like '%${worker}%')`)
         return resp.recordset
     } catch (error) {
         console.log(error)
