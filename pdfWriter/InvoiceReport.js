@@ -17,8 +17,7 @@ const { calculateSuperviseeFeeFunc } = require("./calculateSuperviseeFee");
 const { createInvoiceTableFunc, getNotUnique, getSupervisies, formatter, sortByDate, removeNull, removeNullStr, removeNaN, getUniqueByMulti } = require("./pdfKitFunctions");
 const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees");
 
-exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netAppliedTotal, duration_hrs, videoFee, action, associateEmail, emailPassword, reportType) => {
-    // console.time('report')
+exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netAppliedTotal, duration_hrs, videoFee, qty, proccessingFee, action, associateEmail, emailPassword, reportType) => {
     return new Promise(async (resolve, reject) => {
         try {
             let buffers = [];
@@ -38,17 +37,14 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 }
             });
             try {
-                let tempWorker = String(worker.split(",")[1] + " " + worker.split(",")[0]).trim()
-                console.log(worker)
+                // let tempWorker = String(worker.split(",")[1] + " " + worker.split(",")[0]).trim()
                 let data = removeNullStr(await getDataDate(dateUnformatted, worker), '-')
                 // let paymentData = removeNullStr(await getPaymentDataForWorker(tempWorker, dateUnformatted), '-')
                 let paymentData = reportType === 'singlepdf' ? removeNullStr(await getPaymentDataForWorker(worker, dateUnformatted), '-')
                     : removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
-
-                // let paymentData = removeNullStr(await getPaymentData(tempWorker, worker, dateUnformatted), '-')
                 sortByDate(data)
                 let reportedItemData = removeNullStr(await getReportedItems(dateUnformatted, worker), '-')
-                // let reportedItemData = removeNullStr(await getReportedItems(dateUnformatted, worker), '-')
+
                 let non_chargeables = await getNonChargeables()
                 let non_chargeablesArr = non_chargeables.map(x => x.name)
                 let proccessingFeeTypes = await getPaymentTypes()
@@ -109,16 +105,16 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                     proccessingFeeTypes, videoFee) : []
 
                 //*******Associate fee table***********
-                let associateType = workerProfile.map(x => x.associateType)
-                let qty = associateFeeTableQty
-                if (associateType[0] === 'L1 (Sup Prac)') {
-                    qty = getUniqueByMulti(paymentData).length
-                    // qty = duration_hrs
-                }
-
-                let associateFeeBaseRateTables = await associateFees(worker, qty, date, workerId, videoFee, finalProccessingFee, blocksBiWeeklyCharge,
+                // let associateType = workerProfile.map(x => x.associateType)
+                // let qty = associateFeeTableQty
+                // if (associateType[0] === 'L1 (Sup Prac)') {
+                //     qty = getUniqueByMulti(paymentData).length
+                //     // qty = duration_hrs
+                // }
+                let associateFeeBaseRateTables = await associateFees(worker, qty, date, workerId, videoFee, proccessingFee, blocksBiWeeklyCharge,
                     Number(adjustmentFeeTableData.rows[0][1].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee, respSuperviser)
                 let finalTotalRemittence = associateFeeBaseRateTables.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
+                console.log(netAppliedTotal)
                 createInvoiceTableFunc(doc,
                 /*Main Table*/  mainTable(data, date),
                 /*Reported Items Table*/await reportedItemsTable(reportedItemData, date, subtotal, workerId),

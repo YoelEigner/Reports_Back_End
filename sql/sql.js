@@ -177,12 +177,21 @@ exports.getReportedItems = async (date, worker) => {
                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) >= '${date.start}'
                                     and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <= '${date.end}' AND [event_primary_worker_name]='${worker}'
                                     GROUP BY [event_service_item_name], event_service_item_total,event_primary_worker_name,[receipt_reason]`)
+        return resp.recordset
+    } catch (err) {
+        console.log(err); return err
+    }
+}
+exports.getReasonType = async (date, worker) => {
+    try {
+        await sql.connect(config);
+        let resp = await sql.query(`select worker, applied_amt, reason_type from financial_view WHERE DATEFROMPARTS ( Year1, MONTH(Month1 + '1,1'), Day1) >= '${date.start}'
+                                    and DATEFROMPARTS ( Year1, MONTH(Month1 + '1,1'), Day1) <= '${date.end}' AND worker='${worker}'`)
         return resp.recordset;
     } catch (err) {
         console.log(err); return err
     }
 }
-
 exports.getProvinces = async () => {
     try {
         await sql.connect(config)

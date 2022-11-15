@@ -33,7 +33,7 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
     let rows = ['Total', "-", "-", "-", "-","-", totalDuration_hrs, formatter.format(totalAppliedAmt)]
 
     if (subPracTotal !== 0 && !rate.isSuperviser) {
-        headers.push({ label: "Sup Prac Total", property: 'subPracAmount', renderer: null, align: "center" })
+        headers.push({ label: "Go Home Total", property: 'subPracAmount', renderer: null, align: "center" })
         rows.push(formatter.format(subPracTotal))
     }
 

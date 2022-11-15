@@ -14,6 +14,7 @@ exports.totalRemittance = (date, associateTotal, netAppliedPayments, workerProfi
     }
     //***************#3 calculation ALL non director supervised ****************/
     else if (workerProfile[0].associateType !== 'L1 (Sup Prac)' && workerProfile[0].IsSupervisedByNonDirector === true) {
+        
     }
     else if (workerProfile[0].associateType === 'L1' || workerProfile[0].associateType === 'L2' && workerProfile[0].isSupervised === false || workerProfile[0].isSuperviser === false) {
     }

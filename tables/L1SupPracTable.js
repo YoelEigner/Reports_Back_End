@@ -2,9 +2,7 @@ const { formatter } = require("../pdfWriter/pdfKitFunctions")
 const { getRate } = require("./associateFees")
 
 exports.L1SupPracTable = async (date, paymentData, workerId, name) => {
-    // filterWorkers.map(x => x.superviser = x.superviser.split(',')[1] + " " + x.superviser.split(',')[0])
-    let tempWorker = name.split(',')[1].trim() + ' ' + name.split(',')[0].trim(0)
-    let filterWorkers = paymentData.filter(x => x.worker === tempWorker)
+    let filterWorkers = paymentData.filter(x => x.worker === name)
 
     let totalAppliedAmt = filterWorkers.map(x => Number(x.applied_amt)).reduce((a, b) => a + b, 0)
     let totalDuration_hrs = filterWorkers.map(x => Number(x.duration_hrs)).reduce((a, b) => a + b, 0)
@@ -12,6 +10,7 @@ exports.L1SupPracTable = async (date, paymentData, workerId, name) => {
     //****************calculate L1 Sup Practice amount***************/
     let rate = await getRate(32, workerId, true)
     let subPracTotal = 0
+    let superviserRate = rate.superviserRate * filterWorkers.length
     if (rate !== undefined && rate.isZero) {
         filterWorkers.map(x => x.subPracAmount = formatter.format(Number(x.applied_amt.replace(/[^0-9.-]+/g, "")) - rate.associateRate)).reduce((a, b) => a + b, 0)
         subPracTotal = filterWorkers.map(x => Number(x.subPracAmount.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
@@ -32,12 +31,12 @@ exports.L1SupPracTable = async (date, paymentData, workerId, name) => {
             { label: "Superviser", property: 'superviser', renderer: null, align: "center" },
             { label: "Duration Hours", property: 'duration_hrs', renderer: null, align: "center" },
             { label: "Applied Amount", property: 'applied_amt', renderer: null, align: "center" },
-            { label: "Sup Prac Total", property: 'subPracAmount', renderer: null, align: "center" }
+            { label: "Go Home Total", property: 'subPracAmount', renderer: null, align: "center" }
         ],
         datas: [...filterWorkers],
         rows: [
             ['Total', "-", "-", "-", "-", totalDuration_hrs, formatter.format(totalAppliedAmt), formatter.format(subPracTotal)],
         ],
-        amountForSuperviser: subPracTotal,
+        amountForSuperviser: superviserRate,
     }
 }

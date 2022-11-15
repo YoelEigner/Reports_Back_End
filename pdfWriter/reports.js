@@ -48,7 +48,7 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
     }
     if (actionType === 'invoice' && reportType === 'singlepdf') {
         let invoice = await getNetTotal(res, date, users[0], action, reportType)
-        InvoicePromiseGenerator(res, date, users, invoice.netAppliedTotal, reportType, invoice.duration_hrs, videoFee)
+        InvoicePromiseGenerator(res, date, users, invoice.netAppliedTotal, reportType, invoice.duration_hrs, videoFee, invoice.qty, invoice.proccessingFee)
     }
 
     if (reportType === 'multipdf') {
@@ -67,7 +67,8 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
             }
             else if (actionType === 'invoice') {
                 let invoice = await getNetTotal(res, date, worker, videoFee, action)
-                return createInvoiceTable(res, date, worker.associateName, worker.id, invoice.netAppliedTotal, invoice.duration_hrs, videoFee, action, worker.associateEmail, emailPassword).then(async (invoicePDF) => {
+                console.log(invoice)
+                return createInvoiceTable(res, date, worker.associateName, worker.id, invoice.netAppliedTotal, invoice.duration_hrs, videoFee, invoice.qty, invoice.proccessingFee, action, worker.associateEmail, emailPassword).then(async (invoicePDF) => {
                     if (invoicePDF !== 200) {
                         archive.append(invoicePDF, { name: worker.associateName + '_Invoice.pdf' })
                     }
