@@ -224,10 +224,12 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
         doc.moveDown()
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
         await doc.table(superviseeClientPaymentsTable, {
+
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
+                nonRemittables.includes(row.description) && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
         doc.moveDown();
@@ -350,7 +352,6 @@ exports.removeSupPrac = async (arr, worker) => {
     let superviseies = await getSuperviseeies(worker)
     let mapedSupervisees = (superviseies.map(x => x.associateName = String(x.associateName.split(",")[1] + " " + x.associateName.split(",")[0]).trim()))
     let removedArr = arr.filter(x => mapedSupervisees.includes(x.worker))
-    console.log("gggg", removedArr.length)
     return removedArr
 }
 
@@ -361,4 +362,15 @@ exports.getUniqueItemsMultiKey = (arr, keyProps) => {
     });
     const map = new Map(kvArray);
     return Array.from(map.values());
+}
+exports.getFeeAmount = (arr, type) => {
+    if (type === undefined) { return { name: '', percentage: '0.0%', ammount: '$0.00' } }
+    return arr.find(i => type === i.name) !== undefined && arr.find(i => type === i.name)
+}
+
+exports.calculateProccessingFee = (workerPaymentData, proccessingFeeTypes) => {
+    // console.log(workerPaymentData.map(x => parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).percentage.replace(/[^0-9.]+/, '') / 100) * x.applied_amt))
+
+    return workerPaymentData.map(x => x.proccessingFee = parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).ammount.replace(/[^0-9]+/, '')) +
+        parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).percentage.replace(/[^0-9.]+/, '') / 100) * x.applied_amt)
 }

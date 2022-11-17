@@ -1,7 +1,7 @@
-const { getReportedItems, getAssociateProfileById } = require("../sql/sql")
+const { getReportedItems, getAssociateProfileById, getPaymentDataForWorker } = require("../sql/sql")
 const { getRate } = require("../tables/associateFees")
 const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js")
-const { removeNullStr, removeNaN } = require("./pdfKitFunctions")
+const { removeNullStr, removeNaN, calculateProccessingFee } = require("./pdfKitFunctions")
 const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees")
 
 
@@ -10,6 +10,8 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
             let superviseeReportedItemdData = removeNullStr(await getReportedItems(date, worker.associateName), '-')
+            let workerPaymentData = await getPaymentDataForWorker(worker.associateName, date)
+
             let { duplicateItems } = removeDuplicateAndSplitFees(superviseeReportedItemdData)
 
             let superviseeWorkerProfile = await getAssociateProfileById(worker.id)
@@ -20,15 +22,14 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
             //Create associate fees table
             // make a Set to hold values from namesToDeleteArr
             const itemsToDelete = new Set(nonChargeableItems.concat(duplicateItems));
-            const reportedItemDataFiltered = superviseeReportedItemdData.filter((item) => {
+            const reportedItemDataFiltered = workerPaymentData.filter((item) => {
                 return !itemsToDelete.has(item);
             });
+            // let superviseeFinalProccessingFee = removeNaN(reportedItemDataFiltered.map(x => x.proccessingFee)).reduce((a, b) => a + b, 0)
 
-            reportedItemDataFiltered.map(x => x.proccessingFee =
-                /*add 0.30 cents to proccessing fee*/(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)) !== undefined && proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).ammount.replace(/[^0-9]+/, '')) * x.COUNT) +
-                /*calculate percentage */(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)) !== undefined && proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).percentage.replace(/[^0-9.]+/, '')) * x.event_service_item_total) / 100)
+            let superviseeFinalProccessingFee = calculateProccessingFee(reportedItemDataFiltered, proccessingFeeTypes).reduce((a, b) => a + b, 0)
+            console.log(superviseeFinalProccessingFee)
 
-            let superviseeFinalProccessingFee = removeNaN(reportedItemDataFiltered.map(x => x.proccessingFee)).reduce((a, b) => a + b, 0)
             let superviseeBlocksBiWeeklyCharge = parseFloat(superviseeWorkerProfile.map(x => x.blocksBiWeeklyCharge)[0])
             let superviseeHST = ((superviseeReportedItemsCount * SuperviseeRate) * process.env.HST - (superviseeReportedItemsCount * SuperviseeRate))
             let superviseeAdjustmentFee = JSON.parse(superviseeWorkerProfile.map(x => x.adjustmentFee))

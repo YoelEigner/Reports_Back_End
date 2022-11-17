@@ -66,7 +66,6 @@ exports.getAssociateTypes = async (associateType) => {
     try {
         await sql.connect(config);
         let resp = await sql.query(query)
-        console.log(query)
         return resp.recordset;
     } catch (err) {
         console.log(err); return err

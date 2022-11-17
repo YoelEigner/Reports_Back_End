@@ -67,7 +67,6 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
             }
             else if (actionType === 'invoice') {
                 let invoice = await getNetTotal(res, date, worker, videoFee, action)
-                console.log(invoice)
                 return createInvoiceTable(res, date, worker.associateName, worker.id, invoice.netAppliedTotal, invoice.duration_hrs, videoFee, invoice.qty, invoice.proccessingFee, action, worker.associateEmail, emailPassword).then(async (invoicePDF) => {
                     if (invoicePDF !== 200) {
                         archive.append(invoicePDF, { name: worker.associateName + '_Invoice.pdf' })
@@ -82,9 +81,6 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
             }
         })
         Promise.all(promise).then(() => {
-            // console.log(data,'dataaaa')
-            // res.writeHead(200)
-
             archive.pipe(output)
             archive.finalize();
         });

@@ -1,4 +1,4 @@
-const { createPaymentTableFunc, formatter, sortByDate, sortByName, removeSupPrac, getUniqueItemsMultiKey, matchUser } = require("./pdfKitFunctions")
+const { createPaymentTableFunc, formatter, sortByDate, sortByName, removeSupPrac, getUniqueItemsMultiKey, matchUser, getFeeAmount, removeNaN, calculateProccessingFee } = require("./pdfKitFunctions")
 const PDFDocument = require("pdfkit-table");
 const { nonRemittablesTable } = require("../tables/nonRemittablesTable");
 const { thirdPartyFeesTable } = require("../tables/thirdPartyFeesTable");
@@ -18,6 +18,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
         let netAppliedTotal = 0
         let duration_hrs = 0
         let proccessingFee = 0
+        // let L1AssociateFee = 0
         let qty = 0
         let doc = new PDFDocument({ bufferPages: true, margins: { printing: 'highResolution', top: 50, bottom: 50, left: 50, right: 50 } });
         doc.on('data', buffers.push.bind(buffers));
@@ -64,8 +65,6 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let appliedPaymentsTableTemp = await appliedPaymentsTable(date, paymentData, workerId, nonRemittableItems)
 
             //*************Applied Payments total table ****************/
-            const getClientPaymentsFromSupervisee = (data) => { return (data.length === 0 ? 0 : data.map(x => x.superviseePayments).reduce((a, b) => a + b)) }
-            const getlientHoursFromSupervisee = (data) => { return (data.length === 0 ? 0 : data.map(x => x.superviseeHours).reduce((a, b) => a + b)) }
             const getClientPayments = () => { return (paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
             const getClientHours = () => { return (paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
 
@@ -76,7 +75,8 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let superviseeClientsHours = 0
 
             if (workerProfile[0].associateType === 'L1 (Sup Prac)') {
-                clientPayments = Number(appliedPaymentsTableTemp.rows.map(x => x[7] !== undefined ? x[7] : '$0.00')[0].replace(/[^0-9.-]+/g, ""))//count for unbdefined
+                clientPayments = getClientPayments()
+                // clientPayments = Number(appliedPaymentsTableTemp.rows.map(x => x[7] !== undefined ? x[7] : '$0.00')[0].replace(/[^0-9.-]+/g, ""))//count for unbdefined
                 clientHours = getClientHours()
                 superviseeClientsPayment = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
                 superviseeClientsHours = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
@@ -84,24 +84,9 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
             else if (workerProfile[0].isSuperviser) {
                 clientPayments = getClientPayments()
-                clientHours = getClientHours()
+                clientHours = getClientPayments()
                 superviseeClientsPayment = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
                 superviseeClientsHours = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
-
-                // let superviseeies = await getSuperviseeies(worker)
-                // let mapSuperviseeies = superviseeies.map(async (x) => await superviseePaymentData(x.associateName))
-                // await Promise.all(mapSuperviseeies).then((data) => {
-                //     try {
-                //         let clientPaymentsFromSupervisee = getClientPaymentsFromSupervisee(data)
-                //         let clientHoursFromSupervisee = getlientHoursFromSupervisee(data)
-                //         clientPayments = getClientPayments()
-                //         clientHours = getClientHours()
-                //         superviseeClientsPayment = paymentData.filter(x => x.worker.trim() !== tempWorker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
-                //         superviseeClientsHours = paymentData.filter(x => x.worker.trim() !== tempWorker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
-                //     } catch (error) {
-
-                //     }
-                // })
             }
             else {
                 if (workerProfile[0].supervisorOneGetsMoney === true || workerProfile[0].supervisorTwoGetsMoney === true) {
@@ -111,8 +96,8 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     superviseeClientsHours = 0
                 }
                 else {
-                    clientPayments = paymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
-                    clientHours = paymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+                    clientPayments = getClientPayments()
+                    clientHours = getClientHours()
                     superviseeClientsPayment = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
                     superviseeClientsHours = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 }
@@ -153,10 +138,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             Promise.all(L1Tables).then((l1SupPrac) => {
                 let totalAppliedAmount = l1SupPrac.map(x => x.rows.map(r => r[6])).map(x => Number(x[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
                 let totalSupPracAmount = l1SupPrac.map(x => x.amountForSuperviser).reduce((a, b) => a + b, 0)
-                // l1SupPrac.map(x => console.log(x.amountForSuperviser))
 
-                // console.log(l1SupPrac.map(x => x.amountForSuperviser))
-                // console.log(l1SupPrac.map(x => x.amountForSuperviser))
 
                 createPaymentTableFunc(doc, worker, non_remittableArr,
                     /*Applied PAyments Table*/appliedPaymentsTableTemp,
@@ -171,18 +153,12 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 )
 
                 //**********calculations for invoice report ************/
-                console.log(superviseeClientsPayment, totalSupPracAmount, totalAppliedAmount)
-
                 netAppliedTotal = reportType === 'singlepdf' ? (clientPayments - ajustmentFeesTotal)
                     : (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
-                // paymentData.map(x => console.log(x))
                 duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 qty = workerPaymentData.length
 
-                workerPaymentData.map(x => x.proccessingFee = parseFloat(proccessingFeeTypes.find(i => x.reason_type = i.name) && proccessingFeeTypes.find(i => x.reason_type = i.name).ammount.replace(/[^0-9]+/, '')) +
-                    parseFloat(proccessingFeeTypes.find(i => x.reason_type = i.name) && proccessingFeeTypes.find(i => x.reason_type = i.name).percentage.replace(/[^0-9.]+/, '') * x.applied_amt) / 100)
-
-                proccessingFee = workerPaymentData.map(x => x.proccessingFee !== undefined && x.proccessingFee).reduce((a, b) => a + b, 0)
+                proccessingFee = calculateProccessingFee(workerPaymentData, proccessingFeeTypes).reduce((a, b) => a + b, 0)
             })
         } catch (error) {
             console.log(error)

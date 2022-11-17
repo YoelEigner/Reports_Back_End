@@ -9,14 +9,14 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
     //****************calculate L1 Sup Practice amount***************/
     let rate = await getRate(32, workerId, true)
     let subPracTotal = 0
-    // console.log(rate)
+    let associateFee = rate.superviserRate + rate.cfirRate
     if (rate !== undefined && rate.isZero) {
         let associateRate = rate.associateRate
-        paymentData.map(x => x.subPracAmount = formatter.format(Number(x.applied_amt) - associateRate)).reduce((a, b) => a + b, 0)
+        paymentData.map(x => x.subPracAmount = Number(x.applied_amt) - associateRate <= 0 ? formatter.format(0) : formatter.format(Number(x.applied_amt) - associateRate)).reduce((a, b) => a + b, 0)
         subPracTotal = paymentData.map(x => Number(x.subPracAmount.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
     }
     else if (rate !== undefined && !rate.isZero) {
-        paymentData.map(x => x.subPracAmount = formatter.format(Number(rate.associateRate))).reduce((a, b) => a + b, 0)
+        paymentData.map(x => x.subPracAmount = Number(rate.associateRate) <= 0 ? formatter.format(0) : formatter.format(Number(rate.associateRate))).reduce((a, b) => a + b, 0)
         subPracTotal = paymentData.map(x => Number(x.subPracAmount.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
     }
     let headers = [
@@ -30,7 +30,7 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
         { label: "Applied Amount", property: 'applied_amt', renderer: null, align: "center" },
     ]
 
-    let rows = ['Total', "-", "-", "-", "-","-", totalDuration_hrs, formatter.format(totalAppliedAmt)]
+    let rows = ['Total', "-", "-", "-", "-", "-", totalDuration_hrs, formatter.format(totalAppliedAmt)]
 
     if (subPracTotal !== 0 && !rate.isSuperviser) {
         headers.push({ label: "Go Home Total", property: 'subPracAmount', renderer: null, align: "center" })
@@ -44,6 +44,7 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
         datas: [...paymentData],
         rows: [
             rows,
-        ]
+        ],
+        L1AssociateFee: associateFee
     }
 }

@@ -11,7 +11,7 @@ const getRatesForL1 = (arr) => {
     return arr.map(x => x !== undefined ? Number(x.replace(/[^0-9.-]+/g, "")) : 0).reduce((a, b) => a + b, 0)
 }
 
-exports.getRate = async (count, workerId, getSubPrac) => {
+exports.getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
     const associateFees = await getAssociateFeeBaseRate(workerId)
     // const isSUperviserOne = await isSuperviserOne(worker)
     if (associateFees[0] !== undefined) {
@@ -25,7 +25,8 @@ exports.getRate = async (count, workerId, getSubPrac) => {
                     superviserRate: Number(associateFees[0].associateFeeBaseRate) == 0 ?
                         getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRate),
                     associateRate: Number(associateFees[0].associateFeeBaseRateOverrideLessThen) == 0 ?
-                        getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRateOverrideLessThen)
+                        getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRateOverrideLessThen),
+                    cfirRate: Number(associateFees[0].associateFeeBaseRateOverrideGreaterThen)
                 }
             }
             else if (associateFees[0].associateType === 'L1 (Sup Prac)' && associateFees[0].supervisorTwoGetsMoney) {
@@ -37,7 +38,8 @@ exports.getRate = async (count, workerId, getSubPrac) => {
                     superviserRate: Number(associateFees[0].associateFeeBaseRateTwo) == 0 ?
                         getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRateTwo),
                     associateRate: Number(associateFees[0].associateFeeBaseRateOverrideLessThenTwo) == 0 ?
-                        getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRateOverrideLessThenTwo)
+                        getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRateOverrideLessThenTwo),
+                    cfirRate: Number(associateFees[0].associateFeeBaseRateOverrideGreaterThenTwo)
                 }
             }
             else {
@@ -45,15 +47,17 @@ exports.getRate = async (count, workerId, getSubPrac) => {
                 associateFees[0].associateFeeBaseRateOverrideLessThen]
                 return {
                     isSuperviser: true,
-                    isZero: Number(associateFees[0].associateFeeBaseRateTwo) == 0,
+                    isZero: Number(associateFees[0].associateFeeBaseRate) == 0,
                     associateRate: 0,
-                    superviserRate: Number(associateFees[0].associateFeeBaseRateTwo) == 0 ?
-                        getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRateTwo)
+                    superviserRate: Number(associateFees[0].associateFeeBaseRate) == 0 ?
+                        getRatesForL1(amount) : Number(associateFees[0].associateFeeBaseRate),
+                    cfirRate: Number(associateFees[0].associateFeeBaseRateOverrideGreaterThen)
                 }
             }
         }
         if (associateFees[0].associateType === 'L1 (Sup Prac)') {
-            return 0
+            if (associateFees[0].supervisorOneGetsMoney) { return Number(associateFees[0].associateFeeBaseRate) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThen) }
+            else if (associateFees[0].supervisorTwoGetsMoney) { return Number(associateFees[0].associateFeeBaseRateTwo) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThenTwo) }
         }
         else {
             if (associateFees[0].supervisorOneGetsMoney) {
@@ -92,8 +96,8 @@ exports.getRate = async (count, workerId, getSubPrac) => {
         }
     }
 }
-exports.associateFees = async (worker, count, date, workerId, videoFee, finalProccessingFee, blocksBiWeeklyCharge, ajustmentFees, superviseeFeeCalculation, chargeVideoFee) => {
-    let rate = await this.getRate(count, workerId, false)
+exports.associateFees = async (worker, count, date, workerId, videoFee, finalProccessingFee, blocksBiWeeklyCharge, ajustmentFees, superviseeFeeCalculation, chargeVideoFee, L1AssociateFee) => {
+    let rate = await this.getRate(count, workerId, false, L1AssociateFee)
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
     return {
         title: "Associate Fees",

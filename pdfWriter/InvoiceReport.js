@@ -82,19 +82,19 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
 
                 //************calculate processing fee (other fee)******************/
-                const itemsToDelete = new Set(nonChargeableItems.concat(duplicateItems));
-                const reportedItemDataFiltered = reportedItemData.filter((item) => {
-                    return !itemsToDelete.has(item);
-                });
+                // const itemsToDelete = new Set(nonChargeableItems.concat(duplicateItems));
+                // const reportedItemDataFiltered = reportedItemData.filter((item) => {
+                //     return !itemsToDelete.has(item);
+                // });
 
-                reportedItemDataFiltered.map(x => x.proccessingFee =
-                    /*add 0.30 cents to proccessing fee*/(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)) !== undefined && proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).ammount.replace(/[^0-9]+/, '')) * x.COUNT) +
-                    /*calculate percentage */(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)) !== undefined && proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).percentage.replace(/[^0-9.]+/, '')) * x.event_service_item_total) / 100)
+                // reportedItemDataFiltered.map(x => x.proccessingFee =
+                //     /*add 0.30 cents to proccessing fee*/(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)) !== undefined && proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).ammount.replace(/[^0-9]+/, '')) * x.COUNT) +
+                //     /*calculate percentage */(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)) !== undefined && proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).percentage.replace(/[^0-9.]+/, '')) * x.event_service_item_total) / 100)
 
                 //***************adjustment fees *****************/
                 let adjustmentFee = JSON.parse(workerProfile.map(x => x.adjustmentFee))
                 let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFee)
-                let finalProccessingFee = removeNaN(reportedItemDataFiltered.map(x => x.proccessingFee !== undefined && x.proccessingFee)).reduce((a, b) => a + b, 0)
+                // let finalProccessingFee = removeNaN(reportedItemDataFiltered.map(x => x.proccessingFee !== undefined && x.proccessingFee)).reduce((a, b) => a + b, 0)
                 let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
                 let blocksBiWeeklyCharge = parseFloat(workerProfile.map(x => x.blocksBiWeeklyCharge)[0])
                 let tablesToShow = await getTablesToShow(workerId)
@@ -114,7 +114,6 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let associateFeeBaseRateTables = await associateFees(worker, qty, date, workerId, videoFee, proccessingFee, blocksBiWeeklyCharge,
                     Number(adjustmentFeeTableData.rows[0][1].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee, respSuperviser)
                 let finalTotalRemittence = associateFeeBaseRateTables.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
-                console.log(netAppliedTotal)
                 createInvoiceTableFunc(doc,
                 /*Main Table*/  mainTable(data, date),
                 /*Reported Items Table*/await reportedItemsTable(reportedItemData, date, subtotal, workerId),

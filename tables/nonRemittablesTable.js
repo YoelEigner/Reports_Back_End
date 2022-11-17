@@ -2,7 +2,8 @@ const { formatter } = require("../pdfWriter/pdfKitFunctions")
 
 exports.nonRemittablesTable = (date, non_remittableItems) => {
     let totalHours = non_remittableItems.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
-    let totalAmount = non_remittableItems.map(x => Number(x.applied_amt.replace(/[^0-9.-]+/g,""))).reduce((a, b) => a + b, 0)
+    let totalAmount = non_remittableItems.map(x => Number(x.applied_amt.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
+    let totalL1SupPracAmount = non_remittableItems.map(x => Number(x.subPracAmount.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
     return {
         title: "Non Remittables",
         subtitle: "From " + date.start + " To " + date.end,
@@ -14,6 +15,7 @@ exports.nonRemittablesTable = (date, non_remittableItems) => {
         datas: [...non_remittableItems],
         rows: [
             ['Total', totalHours, formatter.format(totalAmount)],
-        ]
+        ],
+        totalL1SupPracAmount: totalL1SupPracAmount
     }
 }
