@@ -6,7 +6,7 @@ var CryptoJS = require("crypto-js");
 const config = {
     user: "Node",
     password: process.env.DBPASS,
-    server: "localhost\\SQLEXPRESS01",
+    server: "localhost\\SQLEXPRESS",
     database: "CFIR",
     port: 1433,
     options: {
