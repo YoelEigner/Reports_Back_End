@@ -84,7 +84,7 @@ const virticalLines = (doc, rectCell, indexColumn) => {
 }
 
 exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, duplicateTable, nonChargeables, adjustmentFeeTable, totalRemittance, non_chargeablesArr,
-    worker, associateFees, supervisies, duplicateItems, tablesToShow, showAdjustmentFeeTable) => {
+    worker, associateFees, supervisies, duplicateItems, tablesToShow, showAdjustmentFeeTable, blockItemsTable) => {
     try {
         // the magic
         this.generateHeader(doc, worker)
@@ -100,6 +100,8 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
 
         doc.moveDown()
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        reportedItemsTable.datas.map(x => x.event_service_item_total = this.formatter.format(x.event_service_item_total))
+        reportedItemsTable.datas.map(x => x.totalAmt = this.formatter.format(x.totalAmt))
         await doc.table(reportedItemsTable, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -146,13 +148,18 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
                 doc.font("Helvetica").fontSize(8);
             },
         });
-        // if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
-        // supervisies.length > 0 && await doc.table(subPracTable, {
-        //     prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
-        //         virticalLines(doc, rectCell, indexColumn)
-        //         doc.font("Helvetica").fontSize(8);
-        //     },
-        // });
+
+        doc.moveDown();
+        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        blockItemsTable.datas.map(x => x.blocksHourlyRate = this.formatter.format(x.blocksHourlyRate))
+        blockItemsTable.datas.map(x => x.blocksBiWeeklyCharge = this.formatter.format(x.blocksBiWeeklyCharge))
+        doc.table(blockItemsTable, {
+            prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+                virticalLines(doc, rectCell, indexColumn)
+                doc.font("Helvetica").fontSize(8);
+            },
+        });
+
         doc.moveDown();
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
         await doc.table(totalRemittance, {
@@ -162,7 +169,6 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
                 indexColumn === 1 && doc.addBackground(rectCell, 'red', 0.15);
             },
         });
-        doc.moveDown();
         doc.moveDown();
 
         await supervisies.forEach(async (t) => {

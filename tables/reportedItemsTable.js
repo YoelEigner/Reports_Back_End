@@ -3,7 +3,11 @@ const { getRate } = require("./associateFees");
 
 
 exports.reportedItemsTable = async (data, date, subtotal, workerId) => {
-    let reportedItemsCount = data.map(x => x.COUNT).reduce((a, b) => a + b, 0)
+    let reportedItemsCount = data.map(x => x.qty).reduce((a, b) => a + b, 0)
+    data.map(x => {
+        x.totalAmt = x.event_service_item_total * x.qty
+    })
+    // let reportedItemsCount = data.map(x => x.COUNT).reduce((a, b) => a + b, 0)
     // let rate = await getRate(32, workerId, true)
     // let subPracTotal = 0
     // if (rate !== undefined) {
@@ -31,9 +35,9 @@ exports.reportedItemsTable = async (data, date, subtotal, workerId) => {
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
             { label: "Service Name", property: 'event_service_item_name', renderer: null, align: "center" },
-            { label: "Reported Items", property: 'COUNT', renderer: null, align: "center" },
-            { label: "Item Total", property: 'itemTotal', renderer: null, align: "center" },
-            { label: "Total", property: 'TOTAL', renderer: null, align: "center" },
+            { label: "Reported Items", property: 'qty', renderer: null, align: "center" },
+            { label: "Item Total", property: 'event_service_item_total', renderer: null, align: "center" },
+            { label: "Total", property: 'totalAmt', renderer: null, align: "center" },
         ],
         datas: [...data],
         rows: [

@@ -158,7 +158,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
                 //**********calculations for invoice report ************/
                 arrayOftransations.flat().map(x => x.applied_amt = Number(x.applied_amt.replace(/[^0-9.-]+/g, "")))
-                let tempQty = paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description) )
+                let tempQty = paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
                 /*remove non chargables*/
                 let tempArrayOftransations = arrayOftransations.map(x => x[0]).filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
                 /*remove non chargables*/

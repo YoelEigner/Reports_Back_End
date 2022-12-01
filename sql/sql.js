@@ -302,7 +302,7 @@ exports.getSupervisiesPaymentData = async (name) => {
 exports.UpdateWorkerPreofile = async (arr, id) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`UPDATE [CFIR].[dbo].[profiles]
+        await sql.query(`UPDATE [CFIR].[dbo].[profiles]
         SET status = '${arr.status}',
         startDate = '${arr.startDate}',
         site = '${arr.site}',
@@ -321,6 +321,7 @@ exports.UpdateWorkerPreofile = async (arr, id) => {
         chargesHST = '${arr.chargesHST}',
         associateFeeBaseType = '${arr.associateFeeBaseType}',
         associateFeeBaseType2 = '${arr.associateFeeBaseType2}',
+        assessmentRate = '${arr.assessmentRate}',
         associateFeeBaseRate = '${arr.associateFeeBaseRate}',
         associateFeeBaseRateTwo = '${arr.associateFeeBaseRateTwo}',
         associateFeeBaseRateOverrideLessThen = '${arr.associateFeeBaseRateOverrideLessThen}',
@@ -329,8 +330,10 @@ exports.UpdateWorkerPreofile = async (arr, id) => {
         associateFeeBaseRateOverrideGreaterThenTwo = '${arr.associateFeeBaseRateOverrideGreaterThenTwo}',
         associateFeeBaseRateOverrideAsseements = '${arr.associateFeeBaseRateOverrideAsseements}',
         inOfficeBlocks = '${arr.inOfficeBlocks}',
+        inOfficeBlockHours = '${arr.inOfficeBlockHours}',
         inOfficeBlockTimes = '${arr.inOfficeBlockTimes}',
         blocksBiWeeklyCharge = '${arr.blocksBiWeeklyCharge}',
+        blocksHourlyRate = '${arr.blocksHourlyRate}',
         videoTech = '${arr.videoTech}',
         cahrgeVideoFee = '${arr.cahrgeVideoFee}',
         duplicateTable = '${arr.duplicateTable}',
@@ -371,6 +374,7 @@ exports.insertWorkerProfile = async (arr) => {
                 supervisorOneGetsMoney,
                 supervisorTwoGetsMoney,
                 chargesHST,
+                assessmentRate,
                 associateFeeBaseType,
                 associateFeeBaseType2,
                 associateFeeBaseRate,
@@ -381,8 +385,10 @@ exports.insertWorkerProfile = async (arr) => {
                 associateFeeBaseRateOverrideGreaterThenTwo,
                 associateFeeBaseRateOverrideAsseements,
                 inOfficeBlocks,
+                inOfficeBlockHours,
                 inOfficeBlockTimes,
                 blocksBiWeeklyCharge,
+                blocksHourlyRate,
                 videoTech,
                 cahrgeVideoFee,
                 duplicateTable,
@@ -393,10 +399,10 @@ exports.insertWorkerProfile = async (arr) => {
                 adjustmentPaymentFee)
             VALUES (${arr.status === true ? 1 : 0} ,'${date}' ,'${arr.site}' ,'${arr.associateType}','${arr.associateEmail}','${arr.associateName}',${arr.isSuperviser === true ? 1 : 0},${arr.isSupervised === true ? 1 : 0}
                     ,${arr.IsSupervisedByNonDirector === true ? 1 : 0},'${arr.supervisor1}','${arr.supervisor1Covrage}','${arr.supervisor2}','${arr.supervisor2Covrage}',${arr.supervisorOneGetsMoney === true ? 1 : 0},
-                    ${arr.supervisorTwoGetsMoney === true ? 1 : 0},${arr.chargesHST === true ? 1 : 0},'${arr.associateFeeBaseType}','${arr.associateFeeBaseType2}','
+                    ${arr.supervisorTwoGetsMoney === true ? 1 : 0},${arr.chargesHST === true ? 1 : 0},'${arr.assessmentRate}','${arr.associateFeeBaseType}','${arr.associateFeeBaseType2}','
                     ${arr.associateFeeBaseRate}','${arr.associateFeeBaseRateTwo}','${arr.associateFeeBaseRateOverrideLessThen}','${arr.associateFeeBaseRateOverrideLessThenTwo}'
                     ,'${arr.associateFeeBaseRateOverrideGreaterThen}','${arr.associateFeeBaseRateOverrideGreaterThenTwo}',${arr.associateFeeBaseRateOverrideAsseements === true ? 1 : 0},
-                    '${arr.inOfficeBlocks}','${arr.inOfficeBlockTimes}','${arr.blocksBiWeeklyCharge}','${arr.videoTech}',${arr.cahrgeVideoFee === true ? 1 : 0},
+                    '${arr.inOfficeBlocks}','${arr.inOfficeBlockHours}','${arr.inOfficeBlockTimes}','${arr.blocksBiWeeklyCharge}','${arr.blocksHourlyRate}','${arr.videoTech}',${arr.cahrgeVideoFee === true ? 1 : 0},
                     ${arr.duplicateTable === true ? 1 : 0},${arr.nonChargeablesTable === true ? 1 : 0},${arr.associateFeesTable === true ? 1 : 0}, '${arr.comments}',
                     '${arr.adjustmentFee}','${arr.adjustmentPaymentFee}');SELECT SCOPE_IDENTITY() AS new_id;`
             )

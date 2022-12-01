@@ -96,7 +96,8 @@ exports.getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
         }
     }
 }
-exports.associateFees = async (worker, count, date, workerId, videoFee, finalProccessingFee, blocksBiWeeklyCharge, ajustmentFees, superviseeFeeCalculation, chargeVideoFee, L1AssociateFee) => {
+exports.associateFees = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees, superviseeFeeCalculation, chargeVideoFee, L1AssociateFee) => {
+    let blocksBiWeeklyCharge = Number(blockItemFees.datas.map( x=> x.blocksBiWeeklyCharge)[0])
     let rate = await this.getRate(count, workerId, false, L1AssociateFee)
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
     return {
