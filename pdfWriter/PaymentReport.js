@@ -1,8 +1,8 @@
-const { createPaymentTableFunc, formatter, sortByDate, sortByName, removeSupPrac, getUniqueItemsMultiKey, matchUser, getFeeAmount, removeNaN, calculateProccessingFee } = require("./pdfKitFunctions")
+const { createPaymentTableFunc, sortByDate, sortByName, removeSupPrac, getUniqueItemsMultiKey, matchUser, getFeeAmount, removeNaN, calculateProccessingFee, convertToInt } = require("./pdfKitFunctions")
 const PDFDocument = require("pdfkit-table");
 const { nonRemittablesTable } = require("../tables/nonRemittablesTable");
 const { thirdPartyFeesTable } = require("../tables/thirdPartyFeesTable");
-const { getPaymentData, getNonRemittables, getAssociateProfileById, getAssociateProfileByName, getAllSuperviseeProfiles, getSuperviseePaymentData, getSuperviseeies, getSupervisers, getWorkerId, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes } = require("../sql/sql");
+const { getPaymentData, getNonRemittables, getAssociateProfileById, getAssociateProfileByName, getAllSuperviseeProfiles, getSuperviseePaymentData, getSuperviseeies, getSupervisers, getWorkerId, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes, getNonChargeables } = require("../sql/sql");
 const { totalAppliedPaymentsTable } = require("../tables/totalAppliedPaymentsTable");
 const { appliedPaymentsTable } = require("../tables/appliedPaymentsTable");
 const { transactionsTable } = require("../tables/transactionsTable");
@@ -11,6 +11,7 @@ const { adjustmentFeeTable } = require("../tables/adjustmentTable");
 const { sendEmail } = require("../email/sendEmail");
 const { getSupervisiesFunc } = require("../tables/supervisiesTable");
 const { L1SupPracTable } = require("../tables/L1SupPracTable");
+const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees");
 
 exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, associateEmail, emailPassword, action, reportType) => {
     return new Promise(async (resolve, reject) => {
@@ -40,9 +41,9 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
         try {
             // let tempWorker = String(worker.split(",")[1] + " " + worker.split(",")[0]).trim()
             let paymentData = reportType === 'singlepdf' ? await getPaymentDataForWorker(worker, dateUnformatted) : await getPaymentData(worker, dateUnformatted)
+
             let workerPaymentData = await getPaymentDataForWorker(worker, dateUnformatted)
             // let paymentData = removeSupPrac(paymentDataTemp, worker)
-            sortByName(paymentData)
             let workerProfile = await getAssociateProfileById(workerId)
             let proccessingFeeTypes = await getPaymentTypes()
             let non_remittableArr = await getNonRemittables()
@@ -65,6 +66,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let appliedPaymentsTableTemp = await appliedPaymentsTable(date, paymentData, workerId, nonRemittableItems)
 
             //*************Applied Payments total table ****************/
+
             const getClientPayments = () => { return (paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
             const getClientHours = () => { return (paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
 
@@ -84,7 +86,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
             else if (workerProfile[0].isSuperviser) {
                 clientPayments = getClientPayments()
-                clientHours = getClientPayments()
+                clientHours = getClientHours()
                 superviseeClientsPayment = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
                 superviseeClientsHours = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
             }
@@ -113,20 +115,22 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
             const uniqueTransactions = [...new Set(paymentData.map(item => item.rec_id))]
             let arrayOftransations = uniqueTransactions.map(x => paymentData.filter(i => i.rec_id === x))
+
             arrayOftransations.sort()
             arrayOftransations.map((x) => {
                 x.map(i => i.quantity = x.length)
-                x[0].total_amt = formatter.format(x.map(i => i.applied_amt).reduce((a, b) => a + b, 0))
-                x.map(i => i.applied_amt = formatter.format(i.applied_amt))
+                x[0].total_amt = x.map(i => i.applied_amt).reduce((a, b) => a + b, 0)
+                x.map(i => i.applied_amt = i.applied_amt)
             })
+
+
 
             //*************** to be detucted tbale (superviseeClientPaymentsTable) **************/
             let filtered = getUniqueItemsMultiKey(paymentData, ['worker', 'description'])
-
             filtered.map(async (x) => {
                 x.qty = paymentData.filter(i => i.description === x.description && i.worker === x.worker).length
-                x.total = formatter.format(paymentData.filter(i => i.description === x.description && i.worker === x.worker)
-                    .map(i => Number(i.applied_amt.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0))
+                x.total = paymentData.filter(i => i.description === x.description && i.worker === x.worker)
+                    .map(i => i.applied_amt).reduce((a, b) => a + b, 0)
             })
 
             //****************adjustment fee table *************/
@@ -153,12 +157,16 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 )
 
                 //**********calculations for invoice report ************/
+                arrayOftransations.flat().map(x => x.applied_amt = Number(x.applied_amt.replace(/[^0-9.-]+/g, "")))
+                let tempQty = paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description) )
+                /*remove non chargables*/
+                let tempArrayOftransations = arrayOftransations.map(x => x[0]).filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
+                /*remove non chargables*/
                 netAppliedTotal = reportType === 'singlepdf' ? (clientPayments - ajustmentFeesTotal)
                     : (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
                 duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
-                qty = workerPaymentData.length
-
-                proccessingFee = calculateProccessingFee(workerPaymentData, proccessingFeeTypes).reduce((a, b) => a + b, 0)
+                qty = tempQty.length
+                proccessingFee = calculateProccessingFee(tempArrayOftransations, proccessingFeeTypes).reduce((a, b) => a + b, 0)
             })
         } catch (error) {
             console.log(error)

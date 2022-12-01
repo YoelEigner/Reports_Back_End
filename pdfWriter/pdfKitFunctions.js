@@ -193,16 +193,18 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
         // the magic
         this.generatePaymentHeader(doc, worker)
         this.generateLine(doc, 70)
+        appliedPaymentTable.datas.map(x => x.applied_amt = this.formatter.format(x.applied_amt))
         await doc.table(appliedPaymentTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
-                doc.font("Helvetica").fontSize(8);
+                doc.font("Helvetica").fontSize(8)
                 nonRemittables.includes(row.description) && appliedPaymentTable.datas.length !== 0 && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
         doc.moveDown()
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        nonRemittablesTable.datas.map(x => x.applied_amtTemp = this.formatter.format(x.applied_amt))
         await doc.table(nonRemittablesTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -214,6 +216,8 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
         });
         doc.moveDown()
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        transactionsTable.datas.map(x => x.total_amtTemp = this.formatter.format(x.total_amt))
+        transactionsTable.datas.map(x => x.applied_amtTemp = this.formatter.format(x.applied_amt))
         await doc.table(transactionsTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -223,8 +227,9 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
         });
         doc.moveDown()
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        superviseeClientPaymentsTable.datas.map(x => x.totalTemp = this.formatter.format(x.total))
+        superviseeClientPaymentsTable.datas.map(x => x.applied_amtTemp = this.formatter.format(x.applied_amt))
         await doc.table(superviseeClientPaymentsTable, {
-
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -369,8 +374,7 @@ exports.getFeeAmount = (arr, type) => {
 }
 
 exports.calculateProccessingFee = (workerPaymentData, proccessingFeeTypes) => {
-    // console.log(workerPaymentData.map(x => parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).percentage.replace(/[^0-9.]+/, '') / 100) * x.applied_amt))
-
-    return workerPaymentData.map(x => x.proccessingFee = parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).ammount.replace(/[^0-9]+/, '')) +
-        parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).percentage.replace(/[^0-9.]+/, '') / 100) * x.applied_amt)
+    return workerPaymentData.map(x => x.proccessingFee =
+        parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).ammount.replace(/[^0-9]+/, '')) +
+        parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).percentage.replace(/[^0-9.]+/, '') / 100) * x.total_amt)
 }

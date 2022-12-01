@@ -28,7 +28,6 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
             // let superviseeFinalProccessingFee = removeNaN(reportedItemDataFiltered.map(x => x.proccessingFee)).reduce((a, b) => a + b, 0)
 
             let superviseeFinalProccessingFee = calculateProccessingFee(reportedItemDataFiltered, proccessingFeeTypes).reduce((a, b) => a + b, 0)
-            console.log(superviseeFinalProccessingFee)
 
             let superviseeBlocksBiWeeklyCharge = parseFloat(superviseeWorkerProfile.map(x => x.blocksBiWeeklyCharge)[0])
             let superviseeHST = ((superviseeReportedItemsCount * SuperviseeRate) * process.env.HST - (superviseeReportedItemsCount * SuperviseeRate))

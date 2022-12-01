@@ -22,8 +22,7 @@ const getNetTotal = (res, date, worker, action, reportType) => {
 }
 
 exports.reports = async (res, date, users, action, videoFee, reportType, actionType) => {
-    let emailPassword = await getDecryptedPass()
-
+    let emailPassword = 'ABC123456$' //await getDecryptedPass()
     let archive = archiver('zip', {
         zlib: { level: 9 } // Sets the compression level.
     });

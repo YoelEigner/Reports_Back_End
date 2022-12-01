@@ -26,7 +26,7 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
         { label: "Record ID", property: 'rec_id', renderer: null, align: "center" },
         { label: "Worker", property: 'worker', renderer: null, align: "center" },
         { label: "Superviser", property: 'superviser', renderer: null, align: "center" },
-        { label: "Duration Hours", property: 'duration_hrs', renderer: null, align: "center" },
+        { label: "Qty Charged", property: 'duration_hrs', renderer: null, align: "center" },
         { label: "Applied Amount", property: 'applied_amt', renderer: null, align: "center" },
     ]
 
