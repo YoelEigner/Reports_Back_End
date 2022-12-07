@@ -37,15 +37,8 @@ exports.getSupervisiesFunc = async (date, non_chargeablesArr, respSuperviser) =>
     }
 }
 
-const formatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-});
-
-
 exports.supervisiesTable = (data, date, supervisee, subtotal, non_chargeablesArr) => {
     let reportedItemsCount = data.map(x => !non_chargeablesArr.find(n => n === x.event_service_item_name) && x.COUNT).reduce((a, b) => a + b, 0)
-
     return {
         title: "Supervisee - " + supervisee,
         subtitle: "From " + date.start + " To " + date.end,
@@ -58,7 +51,7 @@ exports.supervisiesTable = (data, date, supervisee, subtotal, non_chargeablesArr
         ],
         datas: [...data],
         rows: [
-            ['Total', "-", reportedItemsCount, "-", + formatter.format(subtotal)],
+            ['Total', "-", reportedItemsCount, "-", + subtotal],
         ],
     };
 }

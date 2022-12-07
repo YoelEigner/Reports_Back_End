@@ -6,7 +6,7 @@ var CryptoJS = require("crypto-js");
 const config = {
     user: "Node",
     password: process.env.DBPASS,
-    server: "localhost\\SQLEXPRESS",
+    server: "localhost\\SQLEXPRESS01",
     database: "CFIR",
     port: 1433,
     options: {
@@ -506,10 +506,19 @@ exports.getSubPrac = async (date, superviser) => {
 }
 
 exports.getWorkerId = async (partialName) => {
-    console.log(partialName.slice(1).join(',').replace(",", " "))
     try {
         await sql.connect(config)
         let resp = await sql.query(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] where associateName like '%${partialName}%'`)
+        return resp.recordset
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+exports.getAssessmentItemEquivalent = async () => {
+    try {
+        await sql.connect(config)
+        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[assessmentItemslookup]`)
         return resp.recordset
     } catch (error) {
         console.log(error)

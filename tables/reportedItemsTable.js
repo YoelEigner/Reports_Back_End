@@ -1,5 +1,5 @@
 const { formatter } = require("../pdfWriter/pdfKitFunctions");
-const { getRate } = require("./associateFees");
+const { getRate } = require("./associateFeesTherapy");
 
 
 exports.reportedItemsTable = async (data, date, subtotal, workerId) => {

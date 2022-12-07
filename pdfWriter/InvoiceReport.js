@@ -1,9 +1,10 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit-table");
 const { sendEmail } = require("../email/sendEmail");
-const { getData, getDataDate, getDataUser, getReportedItems, getNonChargeables, getAssociateVideoFee, getPaymentTypes, getProcessingFee, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker } = require("../sql/sql");
+const { getData, getDataDate, getDataUser, getReportedItems, getNonChargeables, getAssociateVideoFee, getPaymentTypes, getProcessingFee, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker, getAssessmentItemEquivalent } = require("../sql/sql");
 const { adjustmentFeeTable } = require("../tables/adjustmentTable");
-const { associateFees, getRate } = require("../tables/associateFees");
+const { associateFeesAssessments } = require("../tables/associateFeesAssessments");
+const { associateFeesTherapy, getRate } = require("../tables/associateFeesTherapy");
 const { blockItemsTable } = require("../tables/blockItemsTable");
 const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js");
 const { duplicateTable } = require("../tables/duplicateTable");
@@ -15,10 +16,10 @@ const { subPracTable } = require("../tables/subPracTable");
 const { supervisiesTable, getSupervisiesFunc } = require("../tables/supervisiesTable");
 const { totalRemittance } = require("../tables/totalRemittance");
 const { calculateSuperviseeFeeFunc } = require("./calculateSuperviseeFee");
-const { createInvoiceTableFunc, getNotUnique, getSupervisies, formatter, sortByDate, removeNull, removeNullStr, removeNaN, getUniqueByMulti, getUniqueItemsMultiKey } = require("./pdfKitFunctions");
+const { createInvoiceTableFunc, getNotUnique, getSupervisies, formatter, sortByDate, removeNull, removeNullStr, removeNaN, getUniqueByMulti, getUniqueItemsMultiKey, calculateWorkerFeeByLeval } = require("./pdfKitFunctions");
 const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees");
 
-exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netAppliedTotal, duration_hrs, videoFee, qty, proccessingFee, action, associateEmail, emailPassword, reportType) => {
+exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netAppliedTotal, duration_hrs, videoFee, paymentQty, proccessingFee, action, associateEmail, emailPassword, reportType) => {
     return new Promise(async (resolve, reject) => {
         try {
             let buffers = [];
@@ -38,7 +39,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 }
             });
             try {
+
                 let data = removeNullStr(await getDataDate(dateUnformatted, worker), '-')
+
                 let paymentData = reportType === 'singlepdf' ? removeNullStr(await getPaymentDataForWorker(worker, dateUnformatted), '-')
                     : removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
                 sortByDate(data)
@@ -57,7 +60,10 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let proccessingFeeTypes = await getPaymentTypes()
                 let workerProfile = await getAssociateProfileById(workerId)
                 let respSuperviser = await getSupervisers(worker)
-
+                let wokrerLeval = workerProfile[0].associateType
+                let associateFeeAssessmentRate = workerProfile[0].assessmentRate
+                let equivalentHours = await getAssessmentItemEquivalent()
+                let invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, false).length
                 //*********************Create supervisees Tables *******************
                 let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser)
 
@@ -87,21 +93,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 }
 
 
-
-                //************calculate processing fee (other fee)******************/
-                // const itemsToDelete = new Set(nonChargeableItems.concat(duplicateItems));
-                // const reportedItemDataFiltered = reportedItemData.filter((item) => {
-                //     return !itemsToDelete.has(item);
-                // });
-
-                // reportedItemDataFiltered.map(x => x.proccessingFee =
-                //     /*add 0.30 cents to proccessing fee*/(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)) !== undefined && proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).ammount.replace(/[^0-9]+/, '')) * x.COUNT) +
-                //     /*calculate percentage */(parseFloat(proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)) !== undefined && proccessingFeeTypes.find(i => x.receipt_reason.includes(i.name)).percentage.replace(/[^0-9.]+/, '')) * x.event_service_item_total) / 100)
-
                 //***************adjustment fees *****************/
                 let adjustmentFee = JSON.parse(workerProfile.map(x => x.adjustmentFee))
                 let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFee)
-                // let finalProccessingFee = removeNaN(reportedItemDataFiltered.map(x => x.proccessingFee !== undefined && x.proccessingFee)).reduce((a, b) => a + b, 0)
                 let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
                 let blocksBiWeeklyCharge = parseFloat(workerProfile.map(x => x.blocksBiWeeklyCharge)[0])
                 let tablesToShow = await getTablesToShow(workerId)
@@ -111,18 +105,13 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let superviseeFeeCalculation = respSuperviser.length >= 0 ? await calculateSuperviseeFeeFunc(dateUnformatted, respSuperviser, non_chargeablesArr, nonChargeableItems,
                     proccessingFeeTypes, videoFee) : []
 
-                //*******Associate fee table***********
-                // let associateType = workerProfile.map(x => x.associateType)
-                // let qty = associateFeeTableQty
-                // if (associateType[0] === 'L1 (Sup Prac)') {
-                //     qty = getUniqueByMulti(paymentData).length
-                //     // qty = duration_hrs
-                // }
-                let blockItemFees = blockItemsTable(dateUnformatted, workerProfile)
+                let blockItemFees = blockItemsTable(dateUnformatted, workerProfile, equivalentHours, calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, true))
 
-                let associateFeeBaseRateTables = await associateFees(worker, qty, date, workerId, videoFee, proccessingFee, blockItemFees,
+                let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, blockItemFees,
                     Number(adjustmentFeeTableData.rows[0][1].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee, respSuperviser)
                 let finalTotalRemittence = associateFeeBaseRateTables.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
+
+                let associateFeeAssessmentTable = await associateFeesAssessments(worker, calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, true), dateUnformatted, associateFeeAssessmentRate)
                 createInvoiceTableFunc(doc,
                 /*Main Table*/  mainTable(data, date),
                 /*Reported Items Table*/await reportedItemsTable(reportedItemDataFiltered, date, subtotal, workerId),
@@ -132,12 +121,13 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 /*Total Remittence Table*/totalRemittance(date, finalTotalRemittence, netAppliedTotal, workerProfile),
                 /*Non chargeables Array*/non_chargeablesArr,
                 /*worker name*/worker,
-                /*Associate Fee base rate table*/associateFeeBaseRateTables,
+                /*Associate Fee base rate table Therapy*/associateFeeBaseRateTables,
                 /*Supervisees tbale*/ supervisies,
                 /*Duplicate items Array*/duplicateItems,
                 /*tables to shoe*/ tablesToShow,
                 /*show adjustment fee tbale or not*/showAdjustmentFeeTable,
-                /* in office block table*/blockItemFees
+                /* in office block table*/blockItemFees,
+                /*AssociateFees Assessments*/ associateFeeAssessmentTable
                     /*L1 supervised pratice table await subPracTable(dateUnformatted, tempWorker)*/
                 )
 

@@ -1,5 +1,5 @@
 const { formatter } = require("../pdfWriter/pdfKitFunctions")
-const { getRate } = require("./associateFees")
+const { getRate } = require("./associateFeesTherapy")
 
 exports.L1SupPracTable = async (date, paymentData, workerId, name) => {
     let filterWorkers = paymentData.filter(x => x.worker === name)

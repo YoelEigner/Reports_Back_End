@@ -84,7 +84,7 @@ const virticalLines = (doc, rectCell, indexColumn) => {
 }
 
 exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, duplicateTable, nonChargeables, adjustmentFeeTable, totalRemittance, non_chargeablesArr,
-    worker, associateFees, supervisies, duplicateItems, tablesToShow, showAdjustmentFeeTable, blockItemsTable) => {
+    worker, associateFees, supervisies, duplicateItems, tablesToShow, showAdjustmentFeeTable, blockItemsTable, associateFeeAssessmentTable) => {
     try {
         // the magic
         this.generateHeader(doc, worker)
@@ -100,8 +100,11 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
 
         doc.moveDown()
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
-        reportedItemsTable.datas.map(x => x.event_service_item_total = this.formatter.format(x.event_service_item_total))
-        reportedItemsTable.datas.map(x => x.totalAmt = this.formatter.format(x.totalAmt))
+        reportedItemsTable.datas.map(x => {
+            x.event_service_item_total = this.formatter.format(x.event_service_item_total)
+            x.totalAmt = this.formatter.format(x.totalAmt)
+        }
+        )
         await doc.table(reportedItemsTable, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -139,6 +142,22 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
                 doc.font("Helvetica").fontSize(8);
             },
         });
+
+        doc.moveDown();
+        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        blockItemsTable.datas.map(x => {
+            x.blocksHourlyRate = this.formatter.format(x.blocksHourlyRate)
+            x.blocksBiWeeklyCharge = this.formatter.format(x.blocksBiWeeklyCharge)
+            x.equivalentHoursFee = this.formatter.format(x.equivalentHoursFee)
+            x.newBiWeeklyRate = this.formatter.format(x.newBiWeeklyRate)
+        }
+        )
+        await doc.table(blockItemsTable, {
+            prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+                virticalLines(doc, rectCell, indexColumn)
+                doc.font("Helvetica").fontSize(8);
+            },
+        });
         let showassociateFeesTableTable = tablesToShow.map(x => x.associateFeesTable)[0]
         showassociateFeesTableTable && doc.moveDown();
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
@@ -151,9 +170,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
 
         doc.moveDown();
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
-        blockItemsTable.datas.map(x => x.blocksHourlyRate = this.formatter.format(x.blocksHourlyRate))
-        blockItemsTable.datas.map(x => x.blocksBiWeeklyCharge = this.formatter.format(x.blocksBiWeeklyCharge))
-        doc.table(blockItemsTable, {
+        await doc.table(associateFeeAssessmentTable, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
@@ -169,10 +186,12 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
                 indexColumn === 1 && doc.addBackground(rectCell, 'red', 0.15);
             },
         });
-        doc.moveDown();
 
+        doc.moveDown();
+        //****************************HERE */
         await supervisies.forEach(async (t) => {
             if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+            t.rows.map(x => x[4] = this.formatter.format(x[4]))
             await doc.table(t, {
                 prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                     virticalLines(doc, rectCell, indexColumn)
@@ -380,7 +399,29 @@ exports.getFeeAmount = (arr, type) => {
 }
 
 exports.calculateProccessingFee = (workerPaymentData, proccessingFeeTypes) => {
-    return workerPaymentData.map(x => x.proccessingFee =
+    let tempArr = this.removeOrAddAssessments(workerPaymentData, false)
+    return tempArr.map(x => x.proccessingFee =
         parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).ammount.replace(/[^0-9]+/, '')) +
         parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).percentage.replace(/[^0-9.]+/, '') / 100) * x.total_amt)
+}
+
+exports.removeOrAddAssessments = (paymentData, assessments) => {
+    return assessments ? paymentData.filter(x => x.description.startsWith('A_') || x.description.startsWith('aa_')) : paymentData.filter(x => !x.description.startsWith('A_') || !x.description.startsWith('aa_'))
+}
+exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments) => {
+    if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && !isSupervised && !isSuperviser) {
+        return assessments ? data.filter(x => x.event_service_item_name.startsWith('A_') || x.event_service_item_name.startsWith('aa_')) : data.filter(x => !x.event_service_item_name.startsWith('A_') || !x.event_service_item_name.startsWith('aa_'))
+    }
+    else if (wokrerLeval === 'L3' || wokrerLeval === 'L4' && !IsSupervisedByNonDirector) {
+        return assessments ? paymentData.filter(x => x.description.startsWith('A_') || x.description.startsWith('aa_')) : paymentData.filter(x => !x.description.startsWith('A_') || x.description.startsWith('aa_'))
+    }
+    else if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && isSuperviser) {
+        return assessments ? data.filter(x => x.event_service_item_name.startsWith('A_') || x.event_service_item_name.startsWith('aa_')) : data.filter(x => !x.event_service_item_name.startsWith('A_') || !x.event_service_item_name.startsWith('aa_'))
+    }
+    else if (wokrerLeval === 'L1 (Sup Prac)') {
+        return assessments ? paymentData.filter(x => x.description.startsWith('A_') || x.description.startsWith('aa_')) : paymentData.filter(x => !x.description.startsWith('A_') || x.description.startsWith('aa_'))
+    }
+    else {
+        return assessments ? data.filter(x => x.event_service_item_name.startsWith('A_') || x.event_service_item_name.startsWith('aa_')) : data.filter(x => !x.event_service_item_name.startsWith('A_') || !x.event_service_item_name.startsWith('aa_'))
+    }
 }

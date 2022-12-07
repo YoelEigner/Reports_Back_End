@@ -66,11 +66,9 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let appliedPaymentsTableTemp = await appliedPaymentsTable(date, paymentData, workerId, nonRemittableItems)
 
             //*************Applied Payments total table ****************/
-
             const getClientPayments = () => { return (paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
             const getClientHours = () => { return (paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
 
-            //removing non remittables && !nonRemittableItems.includes(x.description)
             let clientPayments = 0
             let clientHours = 0
             let superviseeClientsPayment = 0
@@ -78,7 +76,6 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
             if (workerProfile[0].associateType === 'L1 (Sup Prac)') {
                 clientPayments = getClientPayments()
-                // clientPayments = Number(appliedPaymentsTableTemp.rows.map(x => x[7] !== undefined ? x[7] : '$0.00')[0].replace(/[^0-9.-]+/g, ""))//count for unbdefined
                 clientHours = getClientHours()
                 superviseeClientsPayment = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
                 superviseeClientsHours = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
@@ -166,7 +163,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     : (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
                 duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 qty = tempQty.length
-                proccessingFee = calculateProccessingFee(tempArrayOftransations, proccessingFeeTypes).reduce((a, b) => a + b, 0)
+                proccessingFee = calculateProccessingFee(tempArrayOftransations, proccessingFeeTypes, workerProfile[0].associateType).reduce((a, b) => a + b, 0)
             })
         } catch (error) {
             console.log(error)

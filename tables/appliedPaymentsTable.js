@@ -1,5 +1,5 @@
 const { formatter } = require("../pdfWriter/pdfKitFunctions")
-const { getRate } = require("./associateFees")
+const { getRate } = require("./associateFeesTherapy")
 
 exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
     paymentData.map(x => x.superviser = x.superviser.split(',')[1] + " " + x.superviser.split(',')[0])
