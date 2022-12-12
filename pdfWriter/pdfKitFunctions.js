@@ -84,7 +84,7 @@ const virticalLines = (doc, rectCell, indexColumn) => {
 }
 
 exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, duplicateTable, nonChargeables, adjustmentFeeTable, totalRemittance, non_chargeablesArr,
-    worker, associateFees, supervisies, duplicateItems, tablesToShow, showAdjustmentFeeTable, blockItemsTable, associateFeeAssessmentTable) => {
+    worker, associateFees, supervisies, duplicateItems, tablesToShow, showAdjustmentFeeTable, associateFeeAssessmentTable) => {
     try {
         // the magic
         this.generateHeader(doc, worker)
@@ -143,21 +143,21 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
             },
         });
 
-        doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
-        blockItemsTable.datas.map(x => {
-            x.blocksHourlyRate = this.formatter.format(x.blocksHourlyRate)
-            x.blocksBiWeeklyCharge = this.formatter.format(x.blocksBiWeeklyCharge)
-            x.equivalentHoursFee = this.formatter.format(x.equivalentHoursFee)
-            x.newBiWeeklyRate = this.formatter.format(x.newBiWeeklyRate)
-        }
-        )
-        await doc.table(blockItemsTable, {
-            prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
-                virticalLines(doc, rectCell, indexColumn)
-                doc.font("Helvetica").fontSize(8);
-            },
-        });
+        // doc.moveDown();
+        // if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        // blockItemsTable.datas.map(x => {
+        //     x.blocksHourlyRate = this.formatter.format(x.blocksHourlyRate)
+        //     x.blocksBiWeeklyCharge = this.formatter.format(x.blocksBiWeeklyCharge)
+        //     x.equivalentHoursFee = this.formatter.format(x.equivalentHoursFee)
+        //     x.newBiWeeklyRate = this.formatter.format(x.newBiWeeklyRate)
+        // }
+        // )
+        // await doc.table(blockItemsTable, {
+        //     prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+        //         virticalLines(doc, rectCell, indexColumn)
+        //         doc.font("Helvetica").fontSize(8);
+        //     },
+        // });
         let showassociateFeesTableTable = tablesToShow.map(x => x.associateFeesTable)[0]
         showassociateFeesTableTable && doc.moveDown();
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
@@ -425,3 +425,4 @@ exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments
         return assessments ? data.filter(x => x.event_service_item_name.startsWith('A_') || x.event_service_item_name.startsWith('aa_')) : data.filter(x => !x.event_service_item_name.startsWith('A_') || !x.event_service_item_name.startsWith('aa_'))
     }
 }
+

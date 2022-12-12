@@ -2,7 +2,7 @@ const { createPaymentTableFunc, sortByDate, sortByName, removeSupPrac, getUnique
 const PDFDocument = require("pdfkit-table");
 const { nonRemittablesTable } = require("../tables/nonRemittablesTable");
 const { thirdPartyFeesTable } = require("../tables/thirdPartyFeesTable");
-const { getPaymentData, getNonRemittables, getAssociateProfileById, getAssociateProfileByName, getAllSuperviseeProfiles, getSuperviseePaymentData, getSuperviseeies, getSupervisers, getWorkerId, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes, getNonChargeables } = require("../sql/sql");
+const { getPaymentData, getNonRemittables, getAssociateProfileById, getAssociateProfileByName, getAllSuperviseeProfiles, getSuperviseePaymentData, getSuperviseeies, getSupervisers, getWorkerId, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes, getNonChargeables, getAdjustmentsFees } = require("../sql/sql");
 const { totalAppliedPaymentsTable } = require("../tables/totalAppliedPaymentsTable");
 const { appliedPaymentsTable } = require("../tables/appliedPaymentsTable");
 const { transactionsTable } = require("../tables/transactionsTable");
@@ -12,6 +12,7 @@ const { sendEmail } = require("../email/sendEmail");
 const { getSupervisiesFunc } = require("../tables/supervisiesTable");
 const { L1SupPracTable } = require("../tables/L1SupPracTable");
 const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees");
+const { json } = require("express");
 
 exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, associateEmail, emailPassword, action, reportType) => {
     return new Promise(async (resolve, reject) => {
@@ -40,7 +41,8 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
         try {
             // let tempWorker = String(worker.split(",")[1] + " " + worker.split(",")[0]).trim()
-            let paymentData = reportType === 'singlepdf' ? await getPaymentDataForWorker(worker, dateUnformatted) : await getPaymentData(worker, dateUnformatted)
+            let paymentData = await getPaymentData(worker, dateUnformatted)
+            // let paymentData = reportType === 'singlepdf' ? await getPaymentDataForWorker(worker, dateUnformatted) : await getPaymentData(worker, dateUnformatted)
 
             let workerPaymentData = await getPaymentDataForWorker(worker, dateUnformatted)
             // let paymentData = removeSupPrac(paymentDataTemp, worker)
@@ -48,7 +50,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let proccessingFeeTypes = await getPaymentTypes()
             let non_remittableArr = await getNonRemittables()
             let nonRemittableItems = non_remittableArr.map(x => x.name)
-
+            let adjustmentFees = await getAdjustmentsFees(worker)
             // const superviseePaymentData = async (worker) => {
             //     let workerPaymentData = await getSuperviseePaymentData(worker.split(',')[1].trim() + " " + worker.split(',')[0].trim(), dateUnformatted)
             //     let superviseePayments = workerPaymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
@@ -131,10 +133,9 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             })
 
             //****************adjustment fee table *************/
-            let adjustmentFee = JSON.parse(workerProfile.map(x => x.adjustmentPaymentFee))
-            let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFee)
-            let showAdjustmentFeeTable = adjustmentFee.length >= 1 && adjustmentFee[0].name !== ''
-            let ajustmentFeesTotal = Number(adjustmentFeeTableData.rows[0][1].replace(/[^0-9.-]+/g, ""))
+            let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFees)
+            let showAdjustmentFeeTable = !adjustmentFeeTableData.datas.every(x => x.name === "-")
+            let ajustmentFeesTotal = Number(adjustmentFeeTableData.rows[0][2].replace(/[^0-9.-]+/g, ""))
 
             Promise.all(L1Tables).then((l1SupPrac) => {
                 let totalAppliedAmount = l1SupPrac.map(x => x.rows.map(r => r[6])).map(x => Number(x[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
@@ -159,8 +160,9 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 /*remove non chargables*/
                 let tempArrayOftransations = arrayOftransations.map(x => x[0]).filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
                 /*remove non chargables*/
-                netAppliedTotal = reportType === 'singlepdf' ? (clientPayments - ajustmentFeesTotal)
-                    : (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
+                netAppliedTotal = (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
+                // netAppliedTotal = reportType === 'singlepdf' ? (clientPayments - ajustmentFeesTotal)
+                //     : (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
                 duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 qty = tempQty.length
                 proccessingFee = calculateProccessingFee(tempArrayOftransations, proccessingFeeTypes, workerProfile[0].associateType).reduce((a, b) => a + b, 0)

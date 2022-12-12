@@ -42,8 +42,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 let data = removeNullStr(await getDataDate(dateUnformatted, worker), '-')
 
-                let paymentData = reportType === 'singlepdf' ? removeNullStr(await getPaymentDataForWorker(worker, dateUnformatted), '-')
-                    : removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
+                let paymentData = removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
+                // let paymentData = reportType === 'singlepdf' ? removeNullStr(await getPaymentDataForWorker(worker, dateUnformatted), '-')
+                //     : removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
                 sortByDate(data)
 
                 let reportedItemData = removeNullStr(await getReportedItems(dateUnformatted, worker), '-')
@@ -51,9 +52,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let reportedItemDataFiltered = getUniqueItemsMultiKey(data, ['event_service_item_name'])
                 reportedItemDataFiltered.map(x => {
                     x.qty = data.filter(i => i.event_service_item_name === x.event_service_item_name).length
-                    // x.qty = reportedItemData.filter(i => i.event_service_item_name === x.event_service_item_name).length
                 })
-                // console.log(data)
 
                 let non_chargeables = await getNonChargeables()
                 let non_chargeablesArr = non_chargeables.map(x => x.name)
@@ -63,7 +62,6 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let wokrerLeval = workerProfile[0].associateType
                 let associateFeeAssessmentRate = workerProfile[0].assessmentRate
                 let equivalentHours = await getAssessmentItemEquivalent()
-                let invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, false).length
                 //*********************Create supervisees Tables *******************
                 let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser)
 
@@ -74,8 +72,14 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 //******************** REMOVING NON CHARGABLES *********************
                 //check if i need to remove the non charables in the total
-                let subtotal = data.map(x => x.event_service_item_total).reduce((a, b) => a + b, 0)
                 let nonChargeableItems = reportedItemData.filter(x => non_chargeablesArr.find(n => n === x.event_service_item_name) && x.COUNT)
+                let nonRemittableItemsNames = nonChargeableItems.map(x => x.event_service_item_name)
+                let subtotal = data.map(x => !nonRemittableItemsNames.includes(x.event_service_item_name) && x.event_service_item_total).reduce((a, b) => a + b, 0)
+
+                //*******************calculate worker fee by leval *****************
+                let removedNonChargablesArr = data.filter(x => !nonRemittableItemsNames.includes(x.event_service_item_name))
+                let invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, paymentData, false).length
+
 
                 //******************** REMOVING DUPLICATE & SPLIT FEES (event_id && case_file_name) *********************
                 let { duplicateItems, duplicateItemsId } = removeDuplicateAndSplitFees(data)
@@ -97,7 +101,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let adjustmentFee = JSON.parse(workerProfile.map(x => x.adjustmentFee))
                 let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFee)
                 let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
-                let blocksBiWeeklyCharge = parseFloat(workerProfile.map(x => x.blocksBiWeeklyCharge)[0])
+                // let blocksBiWeeklyCharge = parseFloat(workerProfile.map(x => x.blocksBiWeeklyCharge)[0])
                 let tablesToShow = await getTablesToShow(workerId)
                 let showAdjustmentFeeTable = adjustmentFee.length >= 1 && adjustmentFee[0].name !== ''
 
@@ -105,20 +109,21 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let superviseeFeeCalculation = respSuperviser.length >= 0 ? await calculateSuperviseeFeeFunc(dateUnformatted, respSuperviser, non_chargeablesArr, nonChargeableItems,
                     proccessingFeeTypes, videoFee) : []
 
-                let blockItemFees = blockItemsTable(dateUnformatted, workerProfile, equivalentHours, calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, true))
+                // let blockItemFees = blockItemsTable(dateUnformatted, workerProfile, equivalentHours, calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, true))
 
-                let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, blockItemFees,
-                    Number(adjustmentFeeTableData.rows[0][1].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee, respSuperviser)
+                let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, workerProfile[0].blocksBiWeeklyCharge,
+                    Number(adjustmentFeeTableData.rows[0][2].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee, respSuperviser)
                 let finalTotalRemittence = associateFeeBaseRateTables.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
 
                 let associateFeeAssessmentTable = await associateFeesAssessments(worker, calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, true), dateUnformatted, associateFeeAssessmentRate)
+                let finalAssociateAssessmentFees = associateFeeAssessmentTable.rows.map(x => Number(x[4].replace(/[^0-9.-]+/g, "")))
                 createInvoiceTableFunc(doc,
                 /*Main Table*/  mainTable(data, date),
                 /*Reported Items Table*/await reportedItemsTable(reportedItemDataFiltered, date, subtotal, workerId),
                 /*Duplicate Items Table*/duplicateTable(duplicateItems, date),
                 /*Non Chargables Table*/nonChargeables(nonChargeableItems, date),
                 /*Adjustment fee table*/adjustmentFeeTableData,
-                /*Total Remittence Table*/totalRemittance(date, finalTotalRemittence, netAppliedTotal, workerProfile),
+                /*Total Remittence Table*/totalRemittance(date, finalTotalRemittence, netAppliedTotal, finalAssociateAssessmentFees[0]),
                 /*Non chargeables Array*/non_chargeablesArr,
                 /*worker name*/worker,
                 /*Associate Fee base rate table Therapy*/associateFeeBaseRateTables,
@@ -126,7 +131,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 /*Duplicate items Array*/duplicateItems,
                 /*tables to shoe*/ tablesToShow,
                 /*show adjustment fee tbale or not*/showAdjustmentFeeTable,
-                /* in office block table*/blockItemFees,
+                // /* in office block table*/blockItemFees,
                 /*AssociateFees Assessments*/ associateFeeAssessmentTable
                     /*L1 supervised pratice table await subPracTable(dateUnformatted, tempWorker)*/
                 )

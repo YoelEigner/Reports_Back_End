@@ -98,7 +98,7 @@ exports.getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
     }
 }
 exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees, superviseeFeeCalculation, chargeVideoFee, L1AssociateFee) => {
-    let blocksBiWeeklyCharge = Number(blockItemFees.datas.map(x => x.newBiWeeklyRate)[0])
+    // let blocksBiWeeklyCharge = Number(blockItemFees.datas.map(x => x.newBiWeeklyRate)[0])
     let rate = await this.getRate(count, workerId, false, L1AssociateFee)
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
     return {
@@ -123,9 +123,9 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
                 formatter.format(vidFee),
                 formatter.format(finalProccessingFee.toFixed(2)),
                 formatter.format(ajustmentFees.toFixed(2)),
-                formatter.format(blocksBiWeeklyCharge.toFixed(2)),
+                formatter.format(blockItemFees),
                 formatter.format(((count * rate) * process.env.HST - (count * rate)).toFixed(2)),
-                formatter.format((count * rate) * process.env.HST + vidFee + finalProccessingFee + blocksBiWeeklyCharge + ajustmentFees)
+                formatter.format((count * rate) * process.env.HST + vidFee + finalProccessingFee + blockItemFees + ajustmentFees)
             ],
             ...superviseeFeeCalculation
         ],
