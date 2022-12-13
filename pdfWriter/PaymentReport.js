@@ -41,8 +41,8 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
         try {
             // let tempWorker = String(worker.split(",")[1] + " " + worker.split(",")[0]).trim()
-            let paymentData = await getPaymentData(worker, dateUnformatted)
-            // let paymentData = reportType === 'singlepdf' ? await getPaymentDataForWorker(worker, dateUnformatted) : await getPaymentData(worker, dateUnformatted)
+            // let paymentData = await getPaymentData(worker, dateUnformatted)
+            let paymentData = reportType === 'singlepdf' ? await getPaymentDataForWorker(worker, dateUnformatted) : await getPaymentData(worker, dateUnformatted)
 
             let workerPaymentData = await getPaymentDataForWorker(worker, dateUnformatted)
             // let paymentData = removeSupPrac(paymentDataTemp, worker)
@@ -160,9 +160,9 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 /*remove non chargables*/
                 let tempArrayOftransations = arrayOftransations.map(x => x[0]).filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
                 /*remove non chargables*/
-                netAppliedTotal = (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
-                // netAppliedTotal = reportType === 'singlepdf' ? (clientPayments - ajustmentFeesTotal)
-                //     : (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
+                // netAppliedTotal = (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
+                netAppliedTotal = reportType === 'singlepdf' ? (clientPayments - ajustmentFeesTotal)
+                    : (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
                 duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 qty = tempQty.length
                 proccessingFee = calculateProccessingFee(tempArrayOftransations, proccessingFeeTypes, workerProfile[0].associateType).reduce((a, b) => a + b, 0)

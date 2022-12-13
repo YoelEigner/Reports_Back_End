@@ -42,9 +42,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 let data = removeNullStr(await getDataDate(dateUnformatted, worker), '-')
 
-                let paymentData = removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
-                // let paymentData = reportType === 'singlepdf' ? removeNullStr(await getPaymentDataForWorker(worker, dateUnformatted), '-')
-                //     : removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
+                // let paymentData = removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
+                let paymentData = reportType === 'singlepdf' ? removeNullStr(await getPaymentDataForWorker(worker, dateUnformatted), '-')
+                    : removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
                 sortByDate(data)
 
                 let reportedItemData = removeNullStr(await getReportedItems(dateUnformatted, worker), '-')
