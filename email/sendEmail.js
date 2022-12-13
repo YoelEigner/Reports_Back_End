@@ -1,7 +1,6 @@
 const nodemailer = require('nodemailer');
 
 exports.sendEmail = async (email, worker, pdfData, pass, type) => {
-    console.log(pass)
     return new Promise(async (resolve, reject) => {
         try {
             let transporter = nodemailer.createTransport({
