@@ -60,6 +60,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let workerProfile = await getAssociateProfileById(workerId)
                 let respSuperviser = await getSupervisers(worker)
                 let wokrerLeval = workerProfile[0].associateType
+                let isSupervised = workerProfile[0].isSupervised
+                let isSuperviser = workerProfile[0].isSuperviser
+                let IsSupervisedByNonDirector = workerProfile[0].IsSupervisedByNonDirector
                 let associateFeeAssessmentRate = workerProfile[0].assessmentRate
                 let equivalentHours = await getAssessmentItemEquivalent()
                 //*********************Create supervisees Tables *******************
@@ -78,7 +81,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 //*******************calculate worker fee by leval *****************
                 let removedNonChargablesArr = data.filter(x => !nonRemittableItemsNames.includes(x.event_service_item_name))
-                let invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, paymentData, false).length
+                let invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
 
 
                 //******************** REMOVING DUPLICATE & SPLIT FEES (event_id && case_file_name) *********************

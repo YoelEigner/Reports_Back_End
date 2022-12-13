@@ -408,7 +408,7 @@ exports.calculateProccessingFee = (workerPaymentData, proccessingFeeTypes) => {
 exports.removeOrAddAssessments = (paymentData, assessments) => {
     return assessments ? paymentData.filter(x => x.description.startsWith('A_') || x.description.startsWith('aa_')) : paymentData.filter(x => !x.description.startsWith('A_') || !x.description.startsWith('aa_'))
 }
-exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments) => {
+exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments, isSuperviser, isSupervised, IsSupervisedByNonDirector) => {
     if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && !isSupervised && !isSuperviser) {
         return assessments ? data.filter(x => x.event_service_item_name.startsWith('A_') || x.event_service_item_name.startsWith('aa_')) : data.filter(x => !x.event_service_item_name.startsWith('A_') || !x.event_service_item_name.startsWith('aa_'))
     }
