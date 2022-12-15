@@ -53,7 +53,7 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
     if (reportType === 'multipdf') {
         let promise = users.map(async (worker) => {
             if (actionType === 'payment') {
-                return createPaymentReportTable(res, date, worker.associateName, worker.id, worker.associateEmail, emailPassword, action).then(async (resp) => {
+                return createPaymentReportTable(res, date, worker.associateName, worker.id, worker.associateEmail, emailPassword, action, reportType).then(async (resp) => {
                     if (resp !== 200) {
                         archive.append(resp.pdfData, { name: worker.associateName + '_Payment.pdf' })
                     }
@@ -66,7 +66,7 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
             }
             else if (actionType === 'invoice') {
                 let invoice = await getNetTotal(res, date, worker, videoFee, action)
-                return createInvoiceTable(res, date, worker.associateName, worker.id, invoice.netAppliedTotal, invoice.duration_hrs, videoFee, invoice.qty, invoice.proccessingFee, action, worker.associateEmail, emailPassword).then(async (invoicePDF) => {
+                return createInvoiceTable(res, date, worker.associateName, worker.id, invoice.netAppliedTotal, invoice.duration_hrs, videoFee, invoice.qty, invoice.proccessingFee, action, worker.associateEmail, emailPassword, reportType).then(async (invoicePDF) => {
                     if (invoicePDF !== 200) {
                         archive.append(invoicePDF, { name: worker.associateName + '_Invoice.pdf' })
                     }

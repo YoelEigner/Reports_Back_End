@@ -1,6 +1,8 @@
 const nodemailer = require('nodemailer');
+const { getEmailPassword } = require('../sql/sql');
 
 exports.sendEmail = async (email, worker, pdfData, pass, type) => {
+    let emailTemplate = await getEmailPassword()
     return new Promise(async (resolve, reject) => {
         try {
             let transporter = nodemailer.createTransport({
@@ -12,14 +14,13 @@ exports.sendEmail = async (email, worker, pdfData, pass, type) => {
                     pass: pass,
                 },
             });
-
-
+        
             // send mail with defined transport object
             let info = await transporter.sendMail({
                 from: 'accounting@cfir.ca', // sender address
                 to: email,
                 subject: `CFIR ${type} Report`, // Subject line
-                html: "<b>Please see your attached report!</b>", // html body
+                html: emailTemplate[0].emailTemplate, // html body
                 attachments: [{
                     filename: worker + '.pdf',
                     content: pdfData

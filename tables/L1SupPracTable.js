@@ -12,7 +12,7 @@ exports.L1SupPracTable = async (date, paymentData, workerId, name) => {
     let subPracTotal = 0
     let superviserRate = rate.superviserRate * filterWorkers.length
     if (rate !== undefined && rate.isZero) {
-        filterWorkers.map(x => x.subPracAmount = formatter.format(Number(x.applied_amt.replace(/[^0-9.-]+/g, "")) - rate.associateRate)).reduce((a, b) => a + b, 0)
+        filterWorkers.map(x => x.subPracAmount = formatter.format(Number(x.applied_amt) - rate.associateRate)).reduce((a, b) => a + b, 0)
         subPracTotal = filterWorkers.map(x => Number(x.subPracAmount.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
     }
     else if (rate !== undefined && !rate.isZero) {

@@ -21,6 +21,7 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
     }
     let headers = [
         { label: "Date", property: 'FULLDATE', renderer: null, align: "center" },
+        { label: "Individual Name", property: 'service_file_presenting_individual_name', renderer: null, align: "center" },
         { label: "Service Name", property: 'description', renderer: null, align: "center" },
         { label: "Invoice ID", property: 'inv_no', renderer: null, align: "center" },
         { label: "Record ID", property: 'rec_id', renderer: null, align: "center" },
@@ -30,7 +31,7 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
         { label: "Applied Amount", property: 'applied_amt', renderer: null, align: "center" },
     ]
 
-    let rows = ['Total', "-", "-", "-", "-", "-", totalDuration_hrs, formatter.format(totalAppliedAmt)]
+    let rows = ['Total', "-", "-", "-", "-", "-", "-", totalDuration_hrs, formatter.format(totalAppliedAmt)]
 
     if (subPracTotal !== 0 && !rate.isSuperviser) {
         headers.push({ label: "Go Home Total", property: 'subPracAmount', renderer: null, align: "center" })

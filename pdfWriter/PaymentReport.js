@@ -2,7 +2,7 @@ const { createPaymentTableFunc, sortByDate, sortByName, removeSupPrac, getUnique
 const PDFDocument = require("pdfkit-table");
 const { nonRemittablesTable } = require("../tables/nonRemittablesTable");
 const { thirdPartyFeesTable } = require("../tables/thirdPartyFeesTable");
-const { getPaymentData, getNonRemittables, getAssociateProfileById, getAssociateProfileByName, getAllSuperviseeProfiles, getSuperviseePaymentData, getSuperviseeies, getSupervisers, getWorkerId, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes, getNonChargeables, getAdjustmentsFees } = require("../sql/sql");
+const { getPaymentData, getNonRemittables, getAssociateProfileById, getAssociateProfileByName, getAllSuperviseeProfiles, getSuperviseePaymentData, getSuperviseeies, getSupervisers, getWorkerId, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes, getNonChargeables, getAdjustmentsFees, getAdjustmentsFeesWorkerOnly, getTablesToShow } = require("../sql/sql");
 const { totalAppliedPaymentsTable } = require("../tables/totalAppliedPaymentsTable");
 const { appliedPaymentsTable } = require("../tables/appliedPaymentsTable");
 const { transactionsTable } = require("../tables/transactionsTable");
@@ -50,7 +50,9 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let proccessingFeeTypes = await getPaymentTypes()
             let non_remittableArr = await getNonRemittables()
             let nonRemittableItems = non_remittableArr.map(x => x.name)
-            let adjustmentFees = await getAdjustmentsFees(worker)
+            let tablesToShow = await getTablesToShow(workerId)
+
+            let adjustmentFees = reportType === 'singlepdf' ? await getAdjustmentsFeesWorkerOnly(worker) : await getAdjustmentsFees(worker)
             // const superviseePaymentData = async (worker) => {
             //     let workerPaymentData = await getSuperviseePaymentData(worker.split(',')[1].trim() + " " + worker.split(',')[0].trim(), dateUnformatted)
             //     let superviseePayments = workerPaymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
@@ -151,7 +153,8 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     /*adjustment fee table */ adjustmentFeeTableData,
                     /*show Adjustment Fee Table or not*/showAdjustmentFeeTable,
                     /*L1 Sup PRac tables*/l1SupPrac,
-                    /*type of report*/reportType
+                    /*type of report*/reportType,
+                    /*tables to show from front end */tablesToShow
                 )
 
                 //**********calculations for invoice report ************/

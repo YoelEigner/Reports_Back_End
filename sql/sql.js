@@ -6,7 +6,7 @@ var CryptoJS = require("crypto-js");
 const config = {
     user: "Node",
     password: process.env.DBPASS,
-    server: "localhost\\SQLEXPRESS",
+    server: "localhost\\SQLEXPRESS01",
     database: "CFIR",
     port: 1433,
     options: {
@@ -48,6 +48,72 @@ exports.getDataDate = async (date, worker, city) => {
         console.log(err); return err
     }
 }
+exports.getDataDateA__ = async (date, worker, city) => {
+    try {
+        await sql.connect(config);
+        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
+                                    >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
+                                    AND event_service_item_name LIKE 'A__%'`)
+
+        return resp.recordset;
+    } catch (err) {
+        console.log(err); return err
+    }
+}
+exports.getDataDateT_c_ = async (date, worker, city) => {
+    try {
+        await sql.connect(config);
+        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
+                                    >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
+                                    AND event_service_item_name LIKE 'T_c_%'`)
+
+        return resp.recordset;
+    } catch (err) {
+        console.log(err); return err
+    }
+}
+exports.getDataDateA_c_ = async (date, worker, city) => {
+    try {
+        await sql.connect(config);
+        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
+                                    >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
+                                    AND event_service_item_name LIKE 'A_c_%'`)
+
+        return resp.recordset;
+    } catch (err) {
+        console.log(err); return err
+    }
+}
+exports.getDataDateT_f_ = async (date, worker, city) => {
+    try {
+        await sql.connect(config);
+        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
+                                    >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
+                                    AND event_service_item_name LIKE 'T_f_%'`)
+
+        return resp.recordset;
+    } catch (err) {
+        console.log(err); return err
+    }
+}
+exports.getDataDateA_f_ = async (date, worker, city) => {
+    try {
+        await sql.connect(config);
+        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
+                                    >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
+                                    AND event_service_item_name LIKE 'A_f_%'`)
+
+        return resp.recordset;
+    } catch (err) {
+        console.log(err); return err
+    }
+}
+
 exports.getAssociateTypes = async (associateType) => {
     let temp = ""
     let query = ""
@@ -76,7 +142,22 @@ exports.getAssociateFeeBaseRate = async (workerId) => {
         await sql.connect(config);
         let resp = await sql.query(`SELECT [associateType], [isSupervised], [supervisor1], [supervisor2], [supervisorOneGetsMoney], [supervisorTwoGetsMoney] ,[associateFeeBaseRate],
                                     [associateFeeBaseRateOverrideLessThen],[associateFeeBaseRateOverrideGreaterThen],[associateFeeBaseRateTwo],
-                                    [associateFeeBaseRateOverrideLessThenTwo],[associateFeeBaseRateOverrideGreaterThenTwo] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
+                                    [associateFeeBaseRateOverrideLessThenTwo],[associateFeeBaseRateOverrideGreaterThenTwo],[assessmentRate_c],
+                                    [assessmentRate_f],
+                                    [associateFeeBaseRate_c],
+                                    [associateFeeBaseRate_f],
+                                    [associateFeeBaseRateTwo_c],
+                                    [associateFeeBaseRateTwo_f],
+                                    [associateFeeBaseRateOverrideLessThen_c],
+                                    [associateFeeBaseRateOverrideLessThen_f],
+                                    [associateFeeBaseRateOverrideLessThenTwo_c],
+                                    [associateFeeBaseRateOverrideLessThenTwo_f],
+                                    [associateFeeBaseRateOverrideGreaterThen_c],
+                                    [associateFeeBaseRateOverrideGreaterThen_f],
+                                    [associateFeeBaseRateOverrideGreaterThenTwo_c],
+                                    [associateFeeBaseRateOverrideGreaterThenTwo_f],
+                                    [associateFeeBaseRateOverrideAsseements_c],
+                                    [associateFeeBaseRateOverrideAsseements_f] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
         return resp.recordset;
     } catch (err) {
         console.log(err); return err
@@ -103,7 +184,14 @@ exports.getAssociateVideoFee = async (workerId) => {
 exports.getTablesToShow = async (workerId) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`SELECT [duplicateTable],[nonChargeablesTable],[associateFeesTable] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
+        let resp = await sql.query(`SELECT [duplicateTable]
+        ,[nonChargeablesTable]
+        ,[associateFeesTable]
+        ,[totalRemittenceTable]
+        ,[nonRemittablesTable]
+        ,[transactionsTable]
+        ,[superviseeTotalTabel]
+        ,[appliedPaymentsTotalTable] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
         return resp.recordset;
     } catch (err) {
         console.log(err); return err
@@ -322,13 +410,29 @@ exports.UpdateWorkerPreofile = async (arr, id) => {
         associateFeeBaseType = '${arr.associateFeeBaseType}',
         associateFeeBaseType2 = '${arr.associateFeeBaseType2}',
         assessmentRate = '${arr.assessmentRate}',
+        assessmentRate_c = '${arr.assessmentRate_c}',
+        assessmentRate_f = '${arr.assessmentRate_f}',
         associateFeeBaseRate = '${arr.associateFeeBaseRate}',
+        associateFeeBaseRate_c = '${arr.associateFeeBaseRate_c}',
+        associateFeeBaseRate_f = '${arr.associateFeeBaseRate_f}',
         associateFeeBaseRateTwo = '${arr.associateFeeBaseRateTwo}',
+        associateFeeBaseRateTwo_c= '${arr.associateFeeBaseRateTwo_c}',
+        associateFeeBaseRateTwo_f = '${arr.associateFeeBaseRateTwo_f}',
         associateFeeBaseRateOverrideLessThen = '${arr.associateFeeBaseRateOverrideLessThen}',
+        associateFeeBaseRateOverrideLessThen_c = '${arr.associateFeeBaseRateOverrideLessThen_c}',
+        associateFeeBaseRateOverrideLessThen_f = '${arr.associateFeeBaseRateOverrideLessThen_f}',
         associateFeeBaseRateOverrideLessThenTwo = '${arr.associateFeeBaseRateOverrideLessThenTwo}',
+        associateFeeBaseRateOverrideLessThenTwo_c = '${arr.associateFeeBaseRateOverrideLessThenTwo_c}',
+        associateFeeBaseRateOverrideLessThenTwo_f = '${arr.associateFeeBaseRateOverrideLessThenTwo_f}',
         associateFeeBaseRateOverrideGreaterThen = '${arr.associateFeeBaseRateOverrideGreaterThen}',
+        associateFeeBaseRateOverrideGreaterThen_c = '${arr.associateFeeBaseRateOverrideGreaterThen_c}',
+        associateFeeBaseRateOverrideGreaterThen_f = '${arr.associateFeeBaseRateOverrideGreaterThen_f}',
         associateFeeBaseRateOverrideGreaterThenTwo = '${arr.associateFeeBaseRateOverrideGreaterThenTwo}',
+        associateFeeBaseRateOverrideGreaterThenTwo_c = '${arr.associateFeeBaseRateOverrideGreaterThenTwo_c}',
+        associateFeeBaseRateOverrideGreaterThenTwo_f = '${arr.associateFeeBaseRateOverrideGreaterThenTwo_f}',
         associateFeeBaseRateOverrideAsseements = '${arr.associateFeeBaseRateOverrideAsseements}',
+        associateFeeBaseRateOverrideAsseements_c = '${arr.associateFeeBaseRateOverrideAsseements_c}',
+        associateFeeBaseRateOverrideAsseements_f = '${arr.associateFeeBaseRateOverrideAsseements_f}',
         inOfficeBlocks = '${arr.inOfficeBlocks}',
         inOfficeBlockHours = '${arr.inOfficeBlockHours}',
         inOfficeBlockTimes = '${arr.inOfficeBlockTimes}',
@@ -339,6 +443,11 @@ exports.UpdateWorkerPreofile = async (arr, id) => {
         duplicateTable = '${arr.duplicateTable}',
         nonChargeablesTable = '${arr.nonChargeablesTable}',
         associateFeesTable = '${arr.associateFeesTable}',
+        totalRemittenceTable = '${arr.totalRemittenceTable}',
+        nonRemittablesTable = '${arr.nonRemittablesTable}',
+        transactionsTable = '${arr.transactionsTable}',
+        superviseeTotalTabel = '${arr.superviseeTotalTabel}',
+        appliedPaymentsTotalTable = '${arr.appliedPaymentsTotalTable}',
         comments = '${arr.comments}',
         adjustmentFee = '${arr.adjustmentFee}',
         adjustmentPaymentFee = '${arr.adjustmentPaymentFee}'
@@ -375,15 +484,29 @@ exports.insertWorkerProfile = async (arr) => {
                 supervisorTwoGetsMoney,
                 chargesHST,
                 assessmentRate,
-                associateFeeBaseType,
-                associateFeeBaseType2,
+                assessmentRate_c,
+                assessmentRate_f,
                 associateFeeBaseRate,
-                associateFeeBaseRateTwo,
+                associateFeeBaseRate_c,
+                associateFeeBaseRate_f,
+                associateFeeBaseRateTwo ,
+                associateFeeBaseRateTwo_c,
+                associateFeeBaseRateTwo_f,
                 associateFeeBaseRateOverrideLessThen,
-                associateFeeBaseRateOverrideLessThenTwo,
+                associateFeeBaseRateOverrideLessThen_c,
+                associateFeeBaseRateOverrideLessThen_f,
+                associateFeeBaseRateOverrideLessThenTwo ,
+                associateFeeBaseRateOverrideLessThenTwo_c,
+                associateFeeBaseRateOverrideLessThenTwo_f,
                 associateFeeBaseRateOverrideGreaterThen,
-                associateFeeBaseRateOverrideGreaterThenTwo,
-                associateFeeBaseRateOverrideAsseements,
+                associateFeeBaseRateOverrideGreaterThen_c,
+                associateFeeBaseRateOverrideGreaterThen_f,
+                associateFeeBaseRateOverrideGreaterThenTwo ,
+                associateFeeBaseRateOverrideGreaterThenTwo_c ,
+                associateFeeBaseRateOverrideGreaterThenTwo__f,
+                associateFeeBaseRateOverrideAsseement,
+                associateFeeBaseRateOverrideAsseements_c,
+                associateFeeBaseRateOverrideAsseements_f,
                 inOfficeBlocks,
                 inOfficeBlockHours,
                 inOfficeBlockTimes,
@@ -394,16 +517,66 @@ exports.insertWorkerProfile = async (arr) => {
                 duplicateTable,
                 nonChargeablesTable,
                 associateFeesTable,
+                nonRemittablesTable,
+                transactionsTable,
+                superviseeTotalTabel,
+                appliedPaymentsTotalTable,
                 comments,
                 adjustmentFee,
                 adjustmentPaymentFee)
-            VALUES (${arr.status === true ? 1 : 0} ,'${date}' ,'${arr.site}' ,'${arr.associateType}','${arr.associateEmail}','${arr.associateName}',${arr.isSuperviser === true ? 1 : 0},${arr.isSupervised === true ? 1 : 0}
-                    ,${arr.IsSupervisedByNonDirector === true ? 1 : 0},'${arr.supervisor1}','${arr.supervisor1Covrage}','${arr.supervisor2}','${arr.supervisor2Covrage}',${arr.supervisorOneGetsMoney === true ? 1 : 0},
-                    ${arr.supervisorTwoGetsMoney === true ? 1 : 0},${arr.chargesHST === true ? 1 : 0},'${arr.assessmentRate}','${arr.associateFeeBaseType}','${arr.associateFeeBaseType2}','
-                    ${arr.associateFeeBaseRate}','${arr.associateFeeBaseRateTwo}','${arr.associateFeeBaseRateOverrideLessThen}','${arr.associateFeeBaseRateOverrideLessThenTwo}'
-                    ,'${arr.associateFeeBaseRateOverrideGreaterThen}','${arr.associateFeeBaseRateOverrideGreaterThenTwo}',${arr.associateFeeBaseRateOverrideAsseements === true ? 1 : 0},
-                    '${arr.inOfficeBlocks}','${arr.inOfficeBlockHours}','${arr.inOfficeBlockTimes}','${arr.blocksBiWeeklyCharge}','${arr.blocksHourlyRate}','${arr.videoTech}',${arr.cahrgeVideoFee === true ? 1 : 0},
-                    ${arr.duplicateTable === true ? 1 : 0},${arr.nonChargeablesTable === true ? 1 : 0},${arr.associateFeesTable === true ? 1 : 0}, '${arr.comments}',
+            VALUES (${arr.status === true ? 1 : 0}
+                    ,'${date}' ,'${arr.site}' 
+                    ,'${arr.associateType}'
+                    ,'${arr.associateEmail}'
+                    ,'${arr.associateName}'
+                    ,${arr.isSuperviser === true ? 1 : 0}
+                    ,${arr.isSupervised === true ? 1 : 0}
+                    ,${arr.IsSupervisedByNonDirector === true ? 1 : 0}
+                    ,'${arr.supervisor1}'
+                    ,'${arr.supervisor1Covrage}'
+                    ,'${arr.supervisor2}'
+                    ,'${arr.supervisor2Covrage}'
+                    ,${arr.supervisorOneGetsMoney === true ? 1 : 0}
+                    ,${arr.supervisorTwoGetsMoney === true ? 1 : 0}
+                    ,${arr.chargesHST === true ? 1 : 0},'${arr.assessmentRate}'
+                    ,'${arr.associateFeeBaseType}'
+                    ,'${arr.associateFeeBaseType2}',
+                    '${arr.associateFeeBaseRate}'
+                    '${arr.associateFeeBaseRate_c}'
+                    '${arr.associateFeeBaseRate_f}'
+                    ,'${arr.associateFeeBaseRateTwo}'
+                    ,'${arr.associateFeeBaseRateTwo_c}'
+                    ,'${arr.associateFeeBaseRateTwo_f}'
+                    ,'${arr.associateFeeBaseRateOverrideLessThen}'
+                    ,'${arr.associateFeeBaseRateOverrideLessThen_c}'
+                    ,'${arr.associateFeeBaseRateOverrideLessThen_f}'
+                    ,'${arr.associateFeeBaseRateOverrideLessThenTwo}'
+                    ,'${arr.associateFeeBaseRateOverrideLessThenTwo_c}'
+                    ,'${arr.associateFeeBaseRateOverrideLessThenTwo_f}'
+                    ,'${arr.associateFeeBaseRateOverrideGreaterThen}'
+                    ,'${arr.associateFeeBaseRateOverrideGreaterThen_c}'
+                    ,'${arr.associateFeeBaseRateOverrideGreaterThen_f}'
+                    ,'${arr.associateFeeBaseRateOverrideGreaterThenTwo}'
+                    ,'${arr.associateFeeBaseRateOverrideGreaterThenTwo_c}'
+                    ,'${arr.associateFeeBaseRateOverrideGreaterThenTwo_f}'
+                    ,${arr.associateFeeBaseRateOverrideAsseements === true ? 1 : 0},
+                    ,${arr.associateFeeBaseRateOverrideAsseements_c === true ? 1 : 0},
+                    ,${arr.associateFeeBaseRateOverrideAsseements_f === true ? 1 : 0},
+                    '${arr.inOfficeBlocks}'
+                    ,'${arr.inOfficeBlockHours}'
+                    ,'${arr.inOfficeBlockTimes}'
+                    ,'${arr.blocksBiWeeklyCharge}'
+                    ,'${arr.blocksHourlyRate}'
+                    ,'${arr.videoTech}'
+                    ,${arr.cahrgeVideoFee === true ? 1 : 0},
+                    ${arr.duplicateTable === true ? 1 : 0}
+                    ,${arr.nonChargeablesTable === true ? 1 : 0}
+                    ,${arr.associateFeesTable === true ? 1 : 0}
+                    ,${arr.nonRemittablesTable === true ? 1 : 0},
+                    ${arr.transactionsTable === true ? 1 : 0}
+                    ,${arr.superviseeTotalTabel === true ? 1 : 0}
+                    ,${arr.appliedPaymentsTotalTable === true ? 1 : 0}
+                    ,'${arr.comments}',
                     '${arr.adjustmentFee}','${arr.adjustmentPaymentFee}');SELECT SCOPE_IDENTITY() AS new_id;`
             )
             return { response: 200, new_id: resp.recordset[0] }
@@ -537,6 +710,16 @@ exports.getAdjustmentsFees = async (worker, superviser) => {
     }
 }
 
+exports.getAdjustmentsFeesWorkerOnly = async (worker, superviser) => {
+    try {
+        await sql.connect(config)
+        let resp = await sql.query(`select associateName, adjustmentPaymentFee from profiles WHERE associateName like '%${worker}%'`)
+        return resp.recordset
+    } catch (error) {
+        console.log(error)
+    }
+}
+
 // exports.getSuperviserTwo = async (worker, superviser) => {
 //     try {
 //         await sql.connect(config)
@@ -548,3 +731,5 @@ exports.getAdjustmentsFees = async (worker, superviser) => {
 //         console.log(error)
 //     }
 // }
+
+
