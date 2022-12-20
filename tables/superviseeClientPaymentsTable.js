@@ -11,7 +11,7 @@ exports.superviseeClientPaymentsTable = (date, data) => {
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
             { label: "Supervisee", property: 'worker', renderer: null, align: "center" },
-            { label: "Service Name", property: 'description', renderer: null, align: "center" },
+            { label: "Cart Item", property: 'description', renderer: null, align: "center" },
             { label: "Qty", property: 'duration_hrs', renderer: null, align: "center" },
             { label: "Item Total", property: 'applied_amtTemp', renderer: null, align: "center" },
             { label: "Total Payments Applied", property: 'totalTemp', renderer: null, align: "center" },
