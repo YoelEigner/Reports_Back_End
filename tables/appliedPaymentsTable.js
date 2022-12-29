@@ -20,18 +20,19 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
         subPracTotal = paymentData.map(x => Number(x.subPracAmount.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
     }
     let headers = [
-        { label: "Date", property: 'FULLDATE', renderer: null, align: "center" },
-        { label: "Individual Name", property: 'service_file_presenting_individual_name', renderer: null, align: "center" },
-        { label: "Cart Item", property: 'description', renderer: null, align: "center" },
-        { label: "Invoice ID", property: 'inv_no', renderer: null, align: "center" },
-        { label: "Record ID", property: 'rec_id', renderer: null, align: "center" },
-        { label: "Worker", property: 'worker', renderer: null, align: "center" },
-        { label: "Superviser", property: 'superviser', renderer: null, align: "center" },
-        { label: "Qty Charged", property: 'duration_hrs', renderer: null, align: "center" },
-        { label: "Applied Amount", property: 'applied_amt', renderer: null, align: "center" },
+        { label: "Date", property: 'FULLDATE',   align: "center" },
+        { label: "Individual Name", property: 'service_file_presenting_individual_name', align: "center" },
+        { label: "Service Name", property: 'case_program', align: "center" },
+        { label: "Cart Item", property: 'description', align: "center" },
+        { label: "Invoice ID", property: 'inv_no', align: "center" },
+        { label: "Record ID", property: 'rec_id', align: "center" },
+        { label: "Worker", property: 'worker',  align: "center" },
+        { label: "Superviser", property: 'superviser', align: "center" },
+        { label: "Qty Charged", property: 'duration_hrs', align: "center" },
+        { label: "Applied Amount", property: 'applied_amt', align: "center" },
     ]
 
-    let rows = ['Total', "-", "-", "-", "-", "-", "-", totalDuration_hrs, formatter.format(totalAppliedAmt)]
+    let rows = ['Total', "-", "-", "-", "-", "-", "-", "-", totalDuration_hrs, formatter.format(totalAppliedAmt)]
 
     if (subPracTotal !== 0 && !rate.isSuperviser) {
         headers.push({ label: "Go Home Total", property: 'subPracAmount', renderer: null, align: "center" })

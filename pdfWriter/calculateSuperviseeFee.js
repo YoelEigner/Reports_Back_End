@@ -20,7 +20,7 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
             let IsSupervisedByNonDirector = superviseeWorkerProfile[0].IsSupervisedByNonDirector
             let associateType = superviseeWorkerProfile[0].associateType
             let superviseeReportedItemsCount = calculateWorkerFeeByLeval(associateType, superviseeReportedItemdData, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
-            //  superviseeReportedItemdData.map(x => !non_chargeablesArr.find(n => n === x.event_service_item_name) && x.COUNT).reduce((a, b) => a + b, 0)
+            //  superviseeReportedItemdData.map(x => !non_chargeablesArr.find(n => n === x.service_name) && x.COUNT).reduce((a, b) => a + b, 0)
             let SuperviseeRate = await getRate(superviseeReportedItemsCount, worker.id)
             let chargeVideoFee = superviseeWorkerProfile.map(x => x.cahrgeVideoFee)[0]
 
