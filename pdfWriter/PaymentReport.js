@@ -22,7 +22,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
         let proccessingFee = 0
         // let L1AssociateFee = 0
         let qty = 0
-        let doc = new PDFDocument({ bufferPages: true, margins: { printing: 'highResolution', top: 50, bottom: 50, left: 50, right: 50 } });
+        let doc = new PDFDocument({ bufferPages: true, layout: 'landscape', margins: { printing: 'highResolution', top: 50, bottom: 50, left: 50, right: 50 } });
         doc.on('data', buffers.push.bind(buffers));
         doc.on('end', async () => {
             let pdfData = Buffer.concat(buffers);

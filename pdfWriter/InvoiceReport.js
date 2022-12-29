@@ -25,7 +25,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
     return new Promise(async (resolve, reject) => {
         try {
             let buffers = [];
-            let doc = new PDFDocument({ bufferPages: true, margins: { printing: 'highResolution', top: 50, bottom: 50, left: 30, right: 30 } });
+            let doc = new PDFDocument({ bufferPages: true, layout: 'landscape', margins: { printing: 'highResolution', top: 50, bottom: 50, left: 30, right: 30 } });
             doc.on('data', buffers.push.bind(buffers));
             doc.on('end', async () => {
                 let pdfData = Buffer.concat(buffers);

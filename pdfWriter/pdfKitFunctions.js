@@ -22,7 +22,7 @@ exports.generateLine = (doc, y) => {
     doc.strokeColor("black")
         .lineWidth(1)
         .moveTo(50, doc.y)
-        .lineTo(550, doc.y)
+        .lineTo(740, doc.y)
         .stroke()
         .moveDown()
 }
