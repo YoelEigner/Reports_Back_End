@@ -21,8 +21,8 @@ exports.generatePaymentHeader = (doc, worker) => {
 exports.generateLine = (doc, y) => {
     doc.strokeColor("black")
         .lineWidth(1)
-        .moveTo(50, y)
-        .lineTo(550, y)
+        .moveTo(50, doc.y)
+        .lineTo(740, doc.y)
         .stroke()
         .moveDown()
 }
@@ -124,8 +124,8 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
-                non_chargeablesArr.find(x => x === row.event_service_item_name) && doc.addBackground(rectRow, 'pink', 0.15);
-                duplicateItems.find(x => x.event_service_item_name === row.event_service_item_name) && doc.addBackground(rectRow, 'pink', 0.15);
+                non_chargeablesArr.find(x => x === row.service_name) && doc.addBackground(rectRow, 'pink', 0.15);
+                duplicateItems.find(x => x.service_name === row.service_name) && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
 
@@ -163,6 +163,13 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         let showassociateFeesTable = tablesToShow.map(x => x.associateFeesTable)[0]
         showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        doc
+            .fontSize(20)
+            .text('CFIR', { align: 'center' })
+            .font('Helvetica-Bold')
+        this.generateLine(doc, doc.y)
+        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+
         showassociateFeesTable && await doc.table(associateFees, {
             collapse: true,
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -186,6 +193,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
             .text('CBT', { align: 'center' })
             .font('Helvetica-Bold')
         this.generateLine(doc, doc.y)
+        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
 
         showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCBT, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -209,6 +217,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
             .text('CPRI', { align: 'center' })
             .font('Helvetica-Bold')
         this.generateLine(doc, doc.y)
+        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
 
         showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCPRI, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -247,7 +256,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
                 prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                     virticalLines(doc, rectCell, indexColumn)
                     doc.font("Helvetica").fontSize(8);
-                    non_chargeablesArr.find(x => x === row.event_service_item_name) && doc.addBackground(rectRow, 'pink', 0.15);
+                    non_chargeablesArr.find(x => x === row.service_name) && doc.addBackground(rectRow, 'pink', 0.15);
                 },
             });
         })
@@ -275,7 +284,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8)
-                nonRemittables.includes(row.description) && appliedPaymentTable.datas.length !== 0 && doc.addBackground(rectRow, 'pink', 0.15);
+                nonRemittables.includes(row.case_program) && appliedPaymentTable.datas.length !== 0 && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
         let showNonRemittablesTable = tablesToShow.map(x => x.nonRemittablesTable)[0]
@@ -314,7 +323,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
-                nonRemittables.includes(row.description) && doc.addBackground(rectRow, 'pink', 0.15);
+                nonRemittables.includes(row.case_program) && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
         doc.moveDown();
@@ -461,158 +470,113 @@ exports.calculateProccessingFee = (workerPaymentData, proccessingFeeTypes) => {
         parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).percentage.replace(/[^0-9.]+/, '') / 100) * x.total_amt)
 }
 
-
-// exports.removeOrAddAssessments = (paymentData, assessments) => {
-//     return assessments ?
-//         paymentData.filter(x => x.description.startsWith('A_') || x.description.startsWith('aa_'))
-//         : paymentData.filter(x => !x.description.startsWith('A_') || !x.description.startsWith('aa_'))
-// }
-//Assessments A_ aa__ A_c_ A_f_
-//Therapy T_c_ T_f_ and the rest
 exports.removeOrAddAssessments = (paymentData, assessments) => {
     return assessments ?
-        paymentData.filter(x => x.description.startsWith('A__') || x.description.startsWith('aa_'))
-        : paymentData.filter(x => !x.description.startsWith('A__') || !x.description.startsWith('aa_')
-            && !(x.description.startsWith('A_c_') || !x.description.startsWith('T_c_')
-                || !x.description.startsWith('A_f_') || !x.description.startsWith('T_f_')))
+        paymentData.filter(x => x.case_program.startsWith('A__') || x.case_program.startsWith('aa_'))
+        : paymentData.filter(x => !x.case_program.startsWith('A__') || !x.case_program.startsWith('aa_')
+            && !(x.case_program.startsWith('A_c_') || !x.case_program.startsWith('T_c_')
+                || !x.case_program.startsWith('A_f_') || !x.case_program.startsWith('T_f_')))
 }
 exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments, isSuperviser, isSupervised, IsSupervisedByNonDirector) => {
     if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && !isSupervised && !isSuperviser) {
         return assessments ?
-            data.filter(x => x.event_service_item_name.startsWith('A__') || x.event_service_item_name.startsWith('aa_'))
-            : data.filter(x => !x.event_service_item_name.startsWith('A__') || !x.event_service_item_name.startsWith('aa_')
-                && (!x.event_service_item_name.startsWith('A_c_') || !x.event_service_item_name.startsWith('T_c_')
-                    || !x.event_service_item_name.startsWith('A_f_') || !x.event_service_item_name.startsWith('T_f_')))
+            data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
+            : data.filter(x => !x.service_name.startsWith('A__') || !x.service_name.startsWith('aa_')
+                && (!x.service_name.startsWith('A_c_') || !x.service_name.startsWith('T_c_')
+                    || !x.service_name.startsWith('A_f_') || !x.service_name.startsWith('T_f_')))
     }
     else if (wokrerLeval === 'L3' || wokrerLeval === 'L4' && !IsSupervisedByNonDirector) {
         return assessments ?
-            paymentData.filter(x => x.description.startsWith('A__') || x.description.startsWith('aa_'))
-            : paymentData.filter(x => !x.description.startsWith('A__') || !x.description.startsWith('aa_')
-                && !(x.description.startsWith('A_c_') || !x.description.startsWith('T_c_')
-                    || !x.description.startsWith('A_f_') || !x.description.startsWith('T_f_')))
+            paymentData.filter(x => x.case_program.startsWith('A__'))
+            : paymentData.filter(x => x.case_program.startsWith('T__'))
     }
     else if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && isSuperviser) {
         return assessments ?
-            data.filter(x => x.event_service_item_name.startsWith('A__') || x.event_service_item_name.startsWith('aa_'))
-            : data.filter(x => !x.event_service_item_name.startsWith('A__') || !x.event_service_item_name.startsWith('aa_')
-                && !(x.event_service_item_name.startsWith('A_c_') || !x.event_service_item_name.startsWith('T_c_')
-                    || !x.event_service_item_name.startsWith('A_f_') || !x.event_service_item_name.startsWith('T_f_')))
+            data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
+            : data.filter(x => !x.service_name.startsWith('A__') || !x.service_name.startsWith('aa_')
+                && !(x.service_name.startsWith('A_c_') || !x.service_name.startsWith('T_c_')
+                    || !x.service_name.startsWith('A_f_') || !x.service_name.startsWith('T_f_')))
     }
     else if (wokrerLeval === 'L1 (Sup Prac)') {
         return assessments ?
-            paymentData.filter(x => x.description.startsWith('A__') || x.description.startsWith('aa_'))
-            : paymentData.filter(x => !x.description.startsWith('A__') || !x.description.startsWith('aa_')
-                && !(x.description.startsWith('A_c_') || !x.description.startsWith('T_c_')
-                    || !x.description.startsWith('A_f_') || !x.description.startsWith('T_f_')))
+            paymentData.filter(x => x.case_program.startsWith('A__'))
+            : paymentData.filter(x => x.case_program.startsWith('T__'))
     }
     else {
         return assessments ?
-            data.filter(x => x.event_service_item_name.startsWith('A_') || x.event_service_item_name.startsWith('aa_'))
-            : data.filter(x => !x.event_service_item_name.startsWith('A_') || !x.event_service_item_name.startsWith('aa_')
-                && !(x.event_service_item_name.startsWith('A_c_') || !x.event_service_item_name.startsWith('T_c_')
-                    || !x.event_service_item_name.startsWith('A_f_') || !x.event_service_item_name.startsWith('T_f_')))
+            data.filter(x => x.service_name.startsWith('A_') || x.service_name.startsWith('aa_'))
+            : data.filter(x => !x.service_name.startsWith('A_') || !x.service_name.startsWith('aa_')
+                && !(x.service_name.startsWith('A_c_') || !x.service_name.startsWith('T_c_')
+                    || !x.service_name.startsWith('A_f_') || !x.service_name.startsWith('T_f_')))
     }
 }
 
-//Assessments A_ aa__ A_c_ A_f_
-//Therapy T_c_ T_f_ and the rest
 //********************************************** */
 exports.removeOrAddAssessmentsCBT = (paymentData, assessments) => {
     return assessments ?
-        paymentData.filter(x => x.description.startsWith('A_c_'))
-        : paymentData.filter(x => x.description.startsWith('T_c_'))
+        paymentData.filter(x => x.case_program.startsWith('A_c_'))
+        : paymentData.filter(x => x.case_program.startsWith('T_c_'))
 }
 
 
 exports.calculateWorkerFeeByLevalCBT = (wokrerLeval, data, paymentData, assessments, isSuperviser, isSupervised, IsSupervisedByNonDirector) => {
     if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && !isSupervised && !isSuperviser) {
         return assessments ?
-            data.filter(x => x.event_service_item_name.startsWith('A_c_'))
-            : data.filter(x => x.event_service_item_name.startsWith('T_c_'))
+            data.filter(x => x.service_name.startsWith('A_c_'))
+            : data.filter(x => x.service_name.startsWith('T_c_'))
     }
     else if (wokrerLeval === 'L3' || wokrerLeval === 'L4' && !IsSupervisedByNonDirector) {
         return assessments ?
-            paymentData.filter(x => x.description.startsWith('A_c_'))
-            : paymentData.filter(x => x.description.startsWith('T_c_'))
+            paymentData.filter(x => x.case_program.startsWith('A_c_'))
+            : paymentData.filter(x => x.case_program.startsWith('T_c_'))
     }
     else if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && isSuperviser) {
         return assessments ?
-            data.filter(x => x.event_service_item_name.startsWith('A_c_'))
-            : data.filter(x => x.event_service_item_name.startsWith('T_c_'))
+            data.filter(x => x.service_name.startsWith('A_c_'))
+            : data.filter(x => x.service_name.startsWith('T_c_'))
     }
     else if (wokrerLeval === 'L1 (Sup Prac)') {
         return assessments ?
-            paymentData.filter(x => x.description.startsWith('A_c_'))
-            : paymentData.filter(x => x.description.startsWith('T_c_'))
+            paymentData.filter(x => x.case_program.startsWith('A_c_'))
+            : paymentData.filter(x => x.case_program.startsWith('T_c_'))
     }
     else {
         return assessments ?
-            data.filter(x => x.event_service_item_name.startsWith('A_c_'))
-            : data.filter(x => x.event_service_item_name.startsWith('T_c_'))
+            data.filter(x => x.service_name.startsWith('A_c_'))
+            : data.filter(x => x.service_name.startsWith('T_c_'))
     }
 }
 
 //********************************** */
 exports.removeOrCPRI = (paymentData, assessments) => {
     return assessments ?
-        paymentData.filter(x => x.description.startsWith('A_f_'))
-        : paymentData.filter(x => x.description.startsWith('T_f_'))
+        paymentData.filter(x => x.case_program.startsWith('A_f_'))
+        : paymentData.filter(x => x.case_program.startsWith('T_f_'))
 }
 exports.calculateWorkerFeeByLevalCPRI = (wokrerLeval, data, paymentData, assessments, isSuperviser, isSupervised, IsSupervisedByNonDirector) => {
     if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && !isSupervised && !isSuperviser) {
         return assessments ?
-            data.filter(x => x.event_service_item_name.startsWith('A_f_'))
-            : data.filter(x => x.event_service_item_name.startsWith('T_f_'))
+            data.filter(x => x.service_name.startsWith('A_f_'))
+            : data.filter(x => x.service_name.startsWith('T_f_'))
     }
     else if (wokrerLeval === 'L3' || wokrerLeval === 'L4' && !IsSupervisedByNonDirector) {
         return assessments ?
-            paymentData.filter(x => x.description.startsWith('A_f_'))
-            : paymentData.filter(x => x.description.startsWith('T_f_'))
+            paymentData.filter(x => x.case_program.startsWith('A_f_'))
+            : paymentData.filter(x => x.case_program.startsWith('T_f_'))
     }
     else if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && isSuperviser) {
         return assessments ?
-            data.filter(x => x.event_service_item_name.startsWith('A_f_'))
-            : data.filter(x => x.event_service_item_name.startsWith('T_f_'))
+            data.filter(x => x.service_name.startsWith('A_f_'))
+            : data.filter(x => x.service_name.startsWith('T_f_'))
     }
     else if (wokrerLeval === 'L1 (Sup Prac)') {
         return assessments ?
-            paymentData.filter(x => x.description.startsWith('A_f_'))
-            : paymentData.filter(x => x.description.startsWith('T_f_'))
+            paymentData.filter(x => x.case_program.startsWith('A_f_'))
+            : paymentData.filter(x => x.case_program.startsWith('T_f_'))
     }
     else {
         return assessments ?
-            data.filter(x => x.event_service_item_name.startsWith('A_f_'))
-            : data.filter(x => x.event_service_item_name.startsWith('T_f_'))
+            data.filter(x => x.service_name.startsWith('A_f_'))
+            : data.filter(x => x.service_name.startsWith('T_f_'))
     }
 }
-
-// exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments, isSuperviser, isSupervised, IsSupervisedByNonDirector) => {
-//     if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && !isSupervised && !isSuperviser) {
-//         return assessments ?
-//             data.filter(x => x.event_service_item_name.startsWith('A_') || x.event_service_item_name.startsWith('aa_'))
-//             : data.filter(x => !x.event_service_item_name.startsWith('A_') || !x.event_service_item_name.startsWith('aa_'))
-//     }
-//     else if (wokrerLeval === 'L3' || wokrerLeval === 'L4' && !IsSupervisedByNonDirector) {
-//         return assessments ?
-//             paymentData.filter(x => x.description.startsWith('A_') || x.description.startsWith('aa_'))
-//             : paymentData.filter(x => !x.description.startsWith('A_') || x.description.startsWith('aa_'))
-//     }
-//     else if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && isSuperviser) {
-//         return assessments ?
-//             data.filter(x => x.event_service_item_name.startsWith('A_') || x.event_service_item_name.startsWith('aa_')) : data.filter(x => !x.event_service_item_name.startsWith('A_') || !x.event_service_item_name.startsWith('aa_'))
-//     }
-//     else if (wokrerLeval === 'L1 (Sup Prac)') {
-//         return assessments ?
-//             paymentData.filter(x => x.description.startsWith('A_') || x.description.startsWith('aa_')
-//                 && !(x.description.startsWith('A_c_') || x.description.startsWith('T_c_')
-//                     || x.description.startsWith('A_f_') || x.description.startsWith('T_f_')))
-//             : paymentData.filter(x => !x.description.startsWith('A_') || !x.description.startsWith('aa_')
-//                 && !(x.description.startsWith('A_c_') || !x.description.startsWith('T_c_')
-//                     || !x.description.startsWith('A_f_') || !x.description.startsWith('T_f_')))
-//     }
-//     else {
-//         return assessments ?
-//             data.filter(x => x.event_service_item_name.startsWith('A_') || x.event_service_item_name.startsWith('aa_'))
-//             : data.filter(x => !x.event_service_item_name.startsWith('A_') || !x.event_service_item_name.startsWith('aa_'))
-//     }
-// }

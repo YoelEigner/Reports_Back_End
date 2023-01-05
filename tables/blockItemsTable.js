@@ -1,7 +1,7 @@
 const { formatter } = require("../pdfWriter/pdfKitFunctions")
 
 exports.blockItemsTable = (date, workerProfiles, equivalentHours, data) => {
-    data.map(x => x.equivalentHours = equivalentHours.find(i => x.description === i.assesment_item_name)?.hours_eqivalent)
+    data.map(x => x.equivalentHours = equivalentHours.find(i => x.case_program === i.assesment_item_name)?.hours_eqivalent)
     workerProfiles[0].equivalentHours = data.map(x => x.equivalentHours !== undefined ? Number(x.equivalentHours) : 1).reduce((a, b) => a + b, 0)
     workerProfiles.map(x => {
         x.equivalentHoursFee = x.equivalentHours * x.blocksHourlyRate

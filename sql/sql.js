@@ -6,7 +6,7 @@ var CryptoJS = require("crypto-js");
 const config = {
     user: "Node",
     password: process.env.DBPASS,
-    server: "localhost\\SQLEXPRESS01",
+    server: "localhost\\SQLEXPRESS",
     database: "CFIR",
     port: 1433,
     options: {
@@ -54,7 +54,7 @@ exports.getDataDateA__ = async (date, worker, city) => {
         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
                                     >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-                                    AND event_service_item_name LIKE 'A__%'`)
+                                    AND service_name LIKE 'A__%'`)
 
         return resp.recordset;
     } catch (err) {
@@ -67,7 +67,7 @@ exports.getDataDateT_c_ = async (date, worker, city) => {
         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
                                     >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-                                    AND event_service_item_name LIKE 'T_c_%'`)
+                                    AND service_name LIKE 'T_c_%'`)
 
         return resp.recordset;
     } catch (err) {
@@ -80,7 +80,7 @@ exports.getDataDateA_c_ = async (date, worker, city) => {
         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
                                     >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-                                    AND event_service_item_name LIKE 'A_c_%'`)
+                                    AND service_name LIKE 'A_c_%'`)
 
         return resp.recordset;
     } catch (err) {
@@ -93,7 +93,7 @@ exports.getDataDateT_f_ = async (date, worker, city) => {
         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
                                     >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-                                    AND event_service_item_name LIKE 'T_f_%'`)
+                                    AND service_name LIKE 'T_f_%'`)
 
         return resp.recordset;
     } catch (err) {
@@ -106,7 +106,7 @@ exports.getDataDateA_f_ = async (date, worker, city) => {
         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
                                     >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-                                    AND event_service_item_name LIKE 'A_f_%'`)
+                                    AND service_name LIKE 'A_f_%'`)
 
         return resp.recordset;
     } catch (err) {
