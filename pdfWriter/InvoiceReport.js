@@ -72,7 +72,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser)
 
                 //*********************format date *******************/
-                date = { start: moment(dateUnformatted.start).format('MM/DD/YYYY'), end: moment(dateUnformatted.start).format('MM/DD/YYYY') }
+                date = { start: moment(dateUnformatted.start).format('YYYY-MM-DD'), end: moment(dateUnformatted.start).format('YYYY-MM-DD') }
 
                 //******************** REMOVING NON CHARGABLES *********************
                 //check if i need to remove the non charables in the total
