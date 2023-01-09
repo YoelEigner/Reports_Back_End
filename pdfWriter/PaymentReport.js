@@ -1,18 +1,15 @@
-const { createPaymentTableFunc, sortByDate, sortByName, removeSupPrac, getUniqueItemsMultiKey, matchUser, getFeeAmount, removeNaN, calculateProccessingFee, convertToInt } = require("./pdfKitFunctions")
+const { createPaymentTableFunc, getUniqueItemsMultiKey, calculateProccessingFee } = require("./pdfKitFunctions")
 const PDFDocument = require("pdfkit-table");
 const { nonRemittablesTable } = require("../tables/nonRemittablesTable");
-const { thirdPartyFeesTable } = require("../tables/thirdPartyFeesTable");
-const { getPaymentData, getNonRemittables, getAssociateProfileById, getAssociateProfileByName, getAllSuperviseeProfiles, getSuperviseePaymentData, getSuperviseeies, getSupervisers, getWorkerId, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes, getNonChargeables, getAdjustmentsFees, getAdjustmentsFeesWorkerOnly, getTablesToShow } = require("../sql/sql");
+const { getPaymentData, getNonRemittables, getAssociateProfileById, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes, getNonChargeables, getAdjustmentsFees, getAdjustmentsFeesWorkerOnly, getTablesToShow } = require("../sql/sql");
 const { totalAppliedPaymentsTable } = require("../tables/totalAppliedPaymentsTable");
 const { appliedPaymentsTable } = require("../tables/appliedPaymentsTable");
 const { transactionsTable } = require("../tables/transactionsTable");
 const { superviseeClientPaymentsTable } = require("../tables/superviseeClientPaymentsTable");
 const { adjustmentFeeTable } = require("../tables/adjustmentTable");
 const { sendEmail } = require("../email/sendEmail");
-const { getSupervisiesFunc } = require("../tables/supervisiesTable");
 const { L1SupPracTable } = require("../tables/L1SupPracTable");
-const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees");
-const { json } = require("express");
+const moment = require('moment')
 
 exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, associateEmail, emailPassword, action, reportType) => {
     return new Promise(async (resolve, reject) => {
@@ -20,7 +17,6 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
         let netAppliedTotal = 0
         let duration_hrs = 0
         let proccessingFee = 0
-        // let L1AssociateFee = 0
         let qty = 0
         let doc = new PDFDocument({ bufferPages: true, layout: 'landscape', margins: { printing: 'highResolution', top: 50, bottom: 50, left: 50, right: 50 } });
         doc.on('data', buffers.push.bind(buffers));
@@ -40,31 +36,18 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
 
         try {
-            // let tempWorker = String(worker.split(",")[1] + " " + worker.split(",")[0]).trim()
-            // let paymentData = await getPaymentData(worker, dateUnformatted)
             let paymentData = reportType === 'singlepdf' ? await getPaymentDataForWorker(worker, dateUnformatted) : await getPaymentData(worker, dateUnformatted)
 
-            let workerPaymentData = await getPaymentDataForWorker(worker, dateUnformatted)
-            // let paymentData = removeSupPrac(paymentDataTemp, worker)
             let workerProfile = await getAssociateProfileById(workerId)
             let proccessingFeeTypes = await getPaymentTypes()
             let non_remittableArr = await getNonRemittables()
             let nonRemittableItems = non_remittableArr.map(x => x.name)
             let tablesToShow = await getTablesToShow(workerId)
-
             let adjustmentFees = reportType === 'singlepdf' ? await getAdjustmentsFeesWorkerOnly(worker) : await getAdjustmentsFees(worker)
-            // const superviseePaymentData = async (worker) => {
-            //     let workerPaymentData = await getSuperviseePaymentData(worker.split(',')[1].trim() + " " + worker.split(',')[0].trim(), dateUnformatted)
-            //     let superviseePayments = workerPaymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
-            //     let superviseeHours = workerPaymentData.filter(x => !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
-            //     return { superviseePayments, superviseeHours }
-            // }
-
 
             //*********************format date *******************/
-            let tempDateStart = dateUnformatted.start.split("/")[1] + "/" + dateUnformatted.start.split("/")[2] + "/" + dateUnformatted.start.split("/")[0]
-            let tempDateEnd = dateUnformatted.end.split("/")[1] + "/" + dateUnformatted.end.split("/")[2] + "/" + dateUnformatted.end.split("/")[0]
-            date = { start: tempDateStart, end: tempDateEnd }
+            date = { start: moment(dateUnformatted.start).format('MM/DD/YYYY'), end: moment(dateUnformatted.start).format('MM/DD/YYYY') }
+
 
             //***********************Applied Payments Table ******************/
             let appliedPaymentsTableTemp = await appliedPaymentsTable(date, paymentData, workerId, nonRemittableItems)
