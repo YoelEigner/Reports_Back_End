@@ -20,6 +20,7 @@ const { totalRemittance } = require("../tables/totalRemittance");
 const { calculateSuperviseeFeeFunc } = require("./calculateSuperviseeFee");
 const { createInvoiceTableFunc, getNotUnique, getSupervisies, formatter, sortByDate, removeNull, removeNullStr, removeNaN, getUniqueByMulti, getUniqueItemsMultiKey, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI } = require("./pdfKitFunctions");
 const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees");
+const moment = require('moment')
 
 exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netAppliedTotal, duration_hrs, videoFee, paymentQty, proccessingFee, action, associateEmail, emailPassword, reportType) => {
     return new Promise(async (resolve, reject) => {
@@ -41,10 +42,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 }
             });
             try {
-
                 let data = removeNullStr(await getDataDate(dateUnformatted, worker), '-')
-
-                // let paymentData = removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
                 let paymentData = reportType === 'singlepdf' ? removeNullStr(await getPaymentDataForWorker(worker, dateUnformatted), '-')
                     : removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
                 sortByDate(data)
@@ -73,9 +71,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser)
 
                 //*********************format date *******************/
-                let tempDateStart = dateUnformatted.start.split("/")[1] + "/" + dateUnformatted.start.split("/")[2] + "/" + dateUnformatted.start.split("/")[0]
-                let tempDateEnd = dateUnformatted.end.split("/")[1] + "/" + dateUnformatted.end.split("/")[2] + "/" + dateUnformatted.end.split("/")[0]
-                date = { start: tempDateStart, end: tempDateEnd }
+                date = { start: moment(dateUnformatted.start).format('MM/DD/YYYY'), end: moment(dateUnformatted.start).format('MM/DD/YYYY') }
 
                 //******************** REMOVING NON CHARGABLES *********************
                 //check if i need to remove the non charables in the total
@@ -126,9 +122,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let associateFeeBaseRateTablesCPRI = await associateFeesTherapyCPRI(worker, invoiceQtyCPRI, date, workerId, videoFee, proccessingFee, workerProfile[0].blocksBiWeeklyCharge,
                     Number(adjustmentFeeTableData.rows[0][2].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee, respSuperviser)
 
-                let associateFeeAssessmentTable = await associateFeesAssessments(worker, calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, true), dateUnformatted, associateFeeAssessmentRate)
-                let associateFeeAssessmentTableCBT = await associateFeesAssessments(worker, calculateWorkerFeeByLevalCBT(wokrerLeval, data, paymentData, true), dateUnformatted, associateFeeAssessmentRateCBT)
-                let associateFeeAssessmentTableCPRI = await associateFeesAssessments(worker, calculateWorkerFeeByLevalCPRI(wokrerLeval, data, paymentData, true), dateUnformatted, associateFeeAssessmentRateCPRI)
+                let associateFeeAssessmentTable = await associateFeesAssessments(worker, calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, true), date, associateFeeAssessmentRate)
+                let associateFeeAssessmentTableCBT = await associateFeesAssessments(worker, calculateWorkerFeeByLevalCBT(wokrerLeval, data, paymentData, true), date, associateFeeAssessmentRateCBT)
+                let associateFeeAssessmentTableCPRI = await associateFeesAssessments(worker, calculateWorkerFeeByLevalCPRI(wokrerLeval, data, paymentData, true), date, associateFeeAssessmentRateCPRI)
 
                 let finalTotalRemittence = associateFeeBaseRateTables.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
                 let finalAssociateAssessmentFees = associateFeeAssessmentTable.rows.map(x => Number(x[4].replace(/[^0-9.-]+/g, "")))

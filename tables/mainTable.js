@@ -1,6 +1,10 @@
+const moment = require('moment')
 
 exports.mainTable = (data, date) => {
 
+    data.map(x => {
+        x.FULLDATE = moment(x.FULLDATE).format('MM/DD/YYYY')
+    })
     return {
         title: "Invoice",
         subtitle: "From " + date.start + " To " + date.end,

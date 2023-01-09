@@ -1,8 +1,12 @@
 const { formatter } = require("../pdfWriter/pdfKitFunctions")
 const { getRate } = require("./associateFeesTherapy")
+const moment = require('moment')
 
 exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
-    paymentData.map(x => x.superviser = x.superviser.split(',')[1] + " " + x.superviser.split(',')[0])
+    paymentData.map(x => {
+        x.superviser = x.superviser.split(',')[1] + " " + x.superviser.split(',')[0]
+        x.FULLDATE = moment(x.FULLDATE).format('MM/DD/YYYY')
+    })
     let totalAppliedAmt = paymentData.map(x => Number(x.applied_amt)).reduce((a, b) => a + b, 0)
     let totalDuration_hrs = paymentData.map(x => Number(x.duration_hrs)).reduce((a, b) => a + b, 0)
 

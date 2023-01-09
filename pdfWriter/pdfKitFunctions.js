@@ -83,20 +83,6 @@ const virticalLines = (doc, rectCell, indexColumn) => {
     doc.fontSize(10).fillColor('#292929');
 }
 
-const drawBox = (doc) => {
-    doc.lineWidth(1);
-
-    // Calculate the coordinates of the box
-    let x = + 15;
-    let y = doc.y + 5;
-    let width = doc.page.width - 30;
-    let height = doc.page.height - doc.y - 130;
-
-    // Draw the path of the box
-    doc.rect(x, y, width, height);
-    doc.stroke();
-}
-
 exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, duplicateTable, nonChargeables, adjustmentFeeTable, totalRemittance, non_chargeablesArr,
     worker, associateFees, supervisies, duplicateItems, tablesToShow, showAdjustmentFeeTable, associateFeeAssessmentTable, reportType,
     associateFeeBaseRateTablesCBT, associateFeeAssessmentTableCBT, associateFeeBaseRateTablesCPRI, associateFeeAssessmentTableCPRI) => {
@@ -159,15 +145,14 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         });
 
         //*****************************Associate Fees Tables *****************************/
-        // drawBox(doc)
         let showassociateFeesTable = tablesToShow.map(x => x.associateFeesTable)[0]
         showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
-        doc
+        showassociateFeesTable && doc
             .fontSize(20)
             .text('CFIR', { align: 'center' })
             .font('Helvetica-Bold')
-        this.generateLine(doc, doc.y)
+        showassociateFeesTable && this.generateLine(doc, doc.y)
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
 
         showassociateFeesTable && await doc.table(associateFees, {
@@ -188,11 +173,11 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         //******************************CBT********************************/
         showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
-        doc
+        showassociateFeesTable && doc
             .fontSize(20)
             .text('CBT', { align: 'center' })
             .font('Helvetica-Bold')
-        this.generateLine(doc, doc.y)
+        showassociateFeesTable && this.generateLine(doc, doc.y)
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
 
         showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCBT, {
@@ -212,11 +197,11 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         //******************************CPRI********************************/
         showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
-        doc
+        showassociateFeesTable && doc
             .fontSize(20)
             .text('CPRI', { align: 'center' })
             .font('Helvetica-Bold')
-        this.generateLine(doc, doc.y)
+        showassociateFeesTable && this.generateLine(doc, doc.y)
         if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
 
         showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCPRI, {
@@ -275,9 +260,10 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
     adjustmentFeeTable, showAdjustmentFeeTable, l1SupPrac, reportType, tablesToShow) => {
     let nonRemittables = non_remittableItems.map(x => x.name)
     try {
-        // the magic
         this.generatePaymentHeader(doc, worker)
         this.generateLine(doc, 70)
+
+        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
         appliedPaymentTable.datas.map(x => x.applied_amt = this.formatter.format(x.applied_amt))
         await doc.table(appliedPaymentTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
@@ -335,8 +321,8 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             },
         });
         doc.moveDown()
+        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
         reportType !== 'singlepdf' && await l1SupPrac.map(async (t) => {
-            if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
             await doc.table(t, {
                 prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
                 prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -347,7 +333,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
         })
         let showappliedPaymentsTotalTable = tablesToShow.map(x => x.appliedPaymentsTotalTable)[0]
         showappliedPaymentsTotalTable && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
         showappliedPaymentsTotalTable && await doc.table(totalAppliedPaymentsTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -357,7 +343,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             },
         });
     } catch (error) {
-        console.log(error)
+        console.log('error in creating payment pdf:', error)
     }
     this.addNumberTotPages(doc)
     this.addDateToPages(doc)

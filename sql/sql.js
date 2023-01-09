@@ -18,99 +18,99 @@ const config = {
 exports.getData = async () => {
     try {
         await sql.connect(config);
-        // let resp = await sql.query(process.env.QUERY)
-        let resp = await sql.query(`SELECT *, CONVERT(varchar, DATEFROMPARTS(Year, MONTH(Month + '1,1'), Day)
-                                    ) AS date FROM invoice_data`)
+        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year, Month , Day) AS date FROM invoice_data`)
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getData Function', err); return err
     }
 }
 
 exports.getDataUser = async (user) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`SELECT *, CONVERT(varchar, DATEFROMPARTS(Year, MONTH(Month + '1,1'), Day) 
-                                    ) AS date FROM invoice_data WHERE individual_name='${user}`)
+        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year, Month , Day) AS date FROM invoice_data WHERE individual_name='${user}`)
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getDataUser Function', err); return err
     }
 }
 exports.getDataDate = async (date, worker, city) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
-                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
-                                    >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'`)
+        console.log(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
+        FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
+        >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'`)
+        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
+                                    >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'`)
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getDataDate Function', err); return err
     }
 }
 exports.getDataDateA__ = async (date, worker, city) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
-                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
-                                    >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
+        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
+                                    >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
                                     AND service_name LIKE 'A__%'`)
 
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getDataDateA__ Function', err); return err
     }
 }
 exports.getDataDateT_c_ = async (date, worker, city) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
-                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
-                                    >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
+        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
+                                    >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
                                     AND service_name LIKE 'T_c_%'`)
 
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getDataDateT_c_ Function', err); return err
     }
 }
 exports.getDataDateA_c_ = async (date, worker, city) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
-                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
-                                    >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
+        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
+                                    >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
                                     AND service_name LIKE 'A_c_%'`)
 
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getDataDateA_c_ Function', err); return err
     }
 }
 exports.getDataDateT_f_ = async (date, worker, city) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
-                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
-                                    >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
+        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) , 101) AS FULLDATE
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
+                                    >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
                                     AND service_name LIKE 'T_f_%'`)
 
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getDataDateT_f_ Function', err); return err
     }
 }
 exports.getDataDateA_f_ = async (date, worker, city) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, CONVERT(VARCHAR(10), DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) , 101) AS FULLDATE
-                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day)
-                                    >='${date.start}' and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
+        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) , 101) AS FULLDATE
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
+                                    >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
                                     AND service_name LIKE 'A_f_%'`)
 
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getDataDateA_f_ Function', err); return err
     }
 }
 
@@ -134,7 +134,7 @@ exports.getAssociateTypes = async (associateType) => {
         let resp = await sql.query(query)
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getAssociateTypes FUnction', err); return err
     }
 }
 exports.getAssociateFeeBaseRate = async (workerId) => {
@@ -160,7 +160,7 @@ exports.getAssociateFeeBaseRate = async (workerId) => {
                                     [associateFeeBaseRateOverrideAsseements_f] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getAssociateFeeBaseRate Function', err); return err
     }
 }
 exports.getAssociateLeval = async () => {
@@ -169,7 +169,7 @@ exports.getAssociateLeval = async () => {
         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[associate_type]`)
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getAssociateLeval Function', err); return err
     }
 }
 exports.getAssociateVideoFee = async (workerId) => {
@@ -178,7 +178,7 @@ exports.getAssociateVideoFee = async (workerId) => {
         let resp = await sql.query(`SELECT [videoTechMonthlyFee] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getAssociateVideoFee Function', err); return err
     }
 }
 exports.getTablesToShow = async (workerId) => {
@@ -194,7 +194,7 @@ exports.getTablesToShow = async (workerId) => {
         ,[appliedPaymentsTotalTable] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
         return resp.recordset;
     } catch (err) {
-        console.log(err); return err
+        console.log('getTablesToShow Function', err); return err
     }
 }
 exports.getAssociateProfileById = async (workerId) => {
@@ -261,8 +261,8 @@ exports.getReportedItems = async (date, worker) => {
         await sql.connect(config);
         let resp = await sql.query(`select [receipt_reason], [event_service_item_name],event_primary_worker_name, FORMAT(sum([event_service_item_total]), 'c') as TOTAL, sum([event_service_item_total]) as event_service_item_total,
                                     FORMAT([event_service_item_total], 'c') as itemTotal, COUNT([event_service_item_name]) as COUNT
-                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) >= '${date.start}'
-                                    and DATEFROMPARTS ( Year, MONTH(Month + '1,1'), Day) <= '${date.end}' AND [event_primary_worker_name]='${worker}'
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day) >= '${date.start}'
+                                    and DATEFROMPARTS ( Year, Month , Day) <= '${date.end}' AND [event_primary_worker_name]='${worker}'
                                     GROUP BY [event_service_item_name], event_service_item_total,event_primary_worker_name,[receipt_reason]`)
         return resp.recordset
     } catch (err) {
@@ -272,8 +272,8 @@ exports.getReportedItems = async (date, worker) => {
 exports.getReasonType = async (date, worker) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`select worker, applied_amt, reason_type from financial_view WHERE DATEFROMPARTS ( Year1, MONTH(Month1 + '1,1'), Day1) >= '${date.start}'
-                                    and DATEFROMPARTS ( Year1, MONTH(Month1 + '1,1'), Day1) <= '${date.end}' AND worker='${worker}'`)
+        let resp = await sql.query(`select worker, applied_amt, reason_type from financial_view WHERE DATEFROMPARTS ( Year1, Month1, Day1) >= '${date.start}'
+                                    and DATEFROMPARTS ( Year1, Month1, Day1) <= '${date.end}' AND worker='${worker}'`)
         return resp.recordset;
     } catch (err) {
         console.log(err); return err
@@ -503,8 +503,8 @@ exports.insertWorkerProfile = async (arr) => {
                 associateFeeBaseRateOverrideGreaterThen_f,
                 associateFeeBaseRateOverrideGreaterThenTwo ,
                 associateFeeBaseRateOverrideGreaterThenTwo_c ,
-                associateFeeBaseRateOverrideGreaterThenTwo__f,
-                associateFeeBaseRateOverrideAsseement,
+                associateFeeBaseRateOverrideGreaterThenTwo_f,
+                associateFeeBaseRateOverrideAsseements,
                 associateFeeBaseRateOverrideAsseements_c,
                 associateFeeBaseRateOverrideAsseements_f,
                 inOfficeBlocks,
@@ -540,10 +540,10 @@ exports.insertWorkerProfile = async (arr) => {
                     ,${arr.supervisorTwoGetsMoney === true ? 1 : 0}
                     ,${arr.chargesHST === true ? 1 : 0},'${arr.assessmentRate}'
                     ,'${arr.associateFeeBaseType}'
-                    ,'${arr.associateFeeBaseType2}',
-                    '${arr.associateFeeBaseRate}'
-                    '${arr.associateFeeBaseRate_c}'
-                    '${arr.associateFeeBaseRate_f}'
+                    ,'${arr.associateFeeBaseType2}'
+                    ,'${arr.associateFeeBaseRate}'
+                    ,'${arr.associateFeeBaseRate_c}'
+                    ,'${arr.associateFeeBaseRate_f}'
                     ,'${arr.associateFeeBaseRateTwo}'
                     ,'${arr.associateFeeBaseRateTwo_c}'
                     ,'${arr.associateFeeBaseRateTwo_f}'
@@ -559,10 +559,10 @@ exports.insertWorkerProfile = async (arr) => {
                     ,'${arr.associateFeeBaseRateOverrideGreaterThenTwo}'
                     ,'${arr.associateFeeBaseRateOverrideGreaterThenTwo_c}'
                     ,'${arr.associateFeeBaseRateOverrideGreaterThenTwo_f}'
-                    ,${arr.associateFeeBaseRateOverrideAsseements === true ? 1 : 0},
-                    ,${arr.associateFeeBaseRateOverrideAsseements_c === true ? 1 : 0},
-                    ,${arr.associateFeeBaseRateOverrideAsseements_f === true ? 1 : 0},
-                    '${arr.inOfficeBlocks}'
+                    ,${arr.associateFeeBaseRateOverrideAsseements === true ? 1 : 0}
+                    ,${arr.associateFeeBaseRateOverrideAsseements_c === true ? 1 : 0}
+                    ,${arr.associateFeeBaseRateOverrideAsseements_f === true ? 1 : 0}
+                    ,'${arr.inOfficeBlocks}'
                     ,'${arr.inOfficeBlockHours}'
                     ,'${arr.inOfficeBlockTimes}'
                     ,'${arr.blocksBiWeeklyCharge}'
@@ -572,8 +572,8 @@ exports.insertWorkerProfile = async (arr) => {
                     ${arr.duplicateTable === true ? 1 : 0}
                     ,${arr.nonChargeablesTable === true ? 1 : 0}
                     ,${arr.associateFeesTable === true ? 1 : 0}
-                    ,${arr.nonRemittablesTable === true ? 1 : 0},
-                    ${arr.transactionsTable === true ? 1 : 0}
+                    ,${arr.nonRemittablesTable === true ? 1 : 0}
+                    ,${arr.transactionsTable === true ? 1 : 0}
                     ,${arr.superviseeTotalTabel === true ? 1 : 0}
                     ,${arr.appliedPaymentsTotalTable === true ? 1 : 0}
                     ,'${arr.comments}',
@@ -587,7 +587,7 @@ exports.insertWorkerProfile = async (arr) => {
             already exists, please set user to inactive before creating a new user with the same name` }
         }
     } catch (error) {
-        console.log(error)
+        console.log('insertWorkerProfile Function', error)
         return error
     }
 }
@@ -596,31 +596,30 @@ exports.insertWorkerProfile = async (arr) => {
 exports.getPaymentData = async (worker, date) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT *, CONVERT(VARCHAR(10), CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),101),101) AS FULLDATE from financial_view
-                                    WHERE CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),111) BETWEEN '${date.start}' AND '${date.end}'
+        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
+                                    WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND (superviser like '%${worker}%' OR worker like '%${worker}%')`)
         return resp.recordset
     } catch (error) {
-        console.log(error)
+        console.log('getPaymentData Function', error)
     }
 }
 exports.getPaymentDataForWorker = async (tempWorker, date) => {
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT *, CONVERT(VARCHAR(10), CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),101),101) AS FULLDATE from financial_view
-                                    WHERE CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),111) BETWEEN '${date.start}' AND '${date.end}'
-                                    AND worker like '%${tempWorker}%'`)
+        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
+                                    WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
+                                   AND worker like '%${tempWorker}%'`)
         return resp.recordset
     } catch (error) {
-        console.log(error)
+        // console.log(error)
     }
 }
 
 exports.getSuperviseePaymentData = async (supervisee, date) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT *, CONVERT(VARCHAR(10), CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),101),101) AS FULLDATE from financial_view
-                                    WHERE CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),111) BETWEEN '${date.start}' AND '${date.end}'
+        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
+                                    WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND (worker like '%${supervisee}%')`)
         return resp.recordset
     } catch (error) {
@@ -668,8 +667,8 @@ exports.getNonRemittables = async () => {
 exports.getSubPrac = async (date, superviser) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT *, CONVERT(VARCHAR(10), CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),101),101) AS FULLDATE from financial_view
-                                    WHERE CONVERT(date, CONCAT(Year1,'/',Month1,'/',Day1),111) BETWEEN '${date.start}' AND '${date.end}'
+        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
+                                    WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND (worker like '%${superviser}%'AND associateType = 'L1 (Sub Prac)')`)
 
         return resp.recordset
