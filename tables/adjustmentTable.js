@@ -4,9 +4,9 @@ const { formatter } = require("../pdfWriter/pdfKitFunctions")
 
 exports.adjustmentFeeTable = (date, data) => {
     const filteredArray = data.filter(object => Number(object.value) !== 0)
-    const parsedArray = filteredArray.map(item => {
-        const parsed = JSON.parse(item.adjustmentPaymentFee);
-        parsed[0].associateName = item.associateName;
+    const parsedArray = filteredArray.map((item, idx) => {
+        const parsed = JSON.parse(item.adjustmentPaymentFee ? item.adjustmentPaymentFee : item.adjustmentFee);
+        parsed.map(x => x.associateName = item.associateName);
         return parsed;
     });
 

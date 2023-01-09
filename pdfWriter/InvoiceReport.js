@@ -1,7 +1,7 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit-table");
 const { sendEmail } = require("../email/sendEmail");
-const { getData, getDataDate, getDataUser, getReportedItems, getNonChargeables, getAssociateVideoFee, getPaymentTypes, getProcessingFee, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker, getAssessmentItemEquivalent, getDataDateA__, getDataDateT_c_, getDataDateA_c_, getDataDateA_f_, getDataDateT_f_ } = require("../sql/sql");
+const { getData, getDataDate, getDataUser, getReportedItems, getNonChargeables, getAssociateVideoFee, getPaymentTypes, getProcessingFee, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker, getAssessmentItemEquivalent, getDataDateA__, getDataDateT_c_, getDataDateA_c_, getDataDateA_f_, getDataDateT_f_, getAdjustmentsFeesWorkerOnly, getAdjustmentsFees, getAdjustmentsFeesWorkerOnlyInvoice, getAdjustmentsFeesInvoice } = require("../sql/sql");
 const { adjustmentFeeTable } = require("../tables/adjustmentTable");
 const { associateFeesAssessments } = require("../tables/associateFeesAssessments");
 const { associateFeesTherapy, getRate } = require("../tables/associateFeesTherapy");
@@ -47,6 +47,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                     : removeNullStr(await getPaymentData(worker, dateUnformatted), '-')
                 sortByDate(data)
 
+                let adjustmentFees = reportType === 'singlepdf' ? await getAdjustmentsFeesWorkerOnlyInvoice(worker) : await getAdjustmentsFeesInvoice(worker)
                 let reportedItemData = removeNullStr(await getReportedItems(dateUnformatted, worker), '-')
 
                 let reportedItemDataFiltered = getUniqueItemsMultiKey(data, ['event_service_item_name'])
@@ -103,13 +104,17 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
 
                 //***************adjustment fees *****************/
-                let adjustmentFee = JSON.parse(workerProfile.map(x => x.adjustmentFee))
-                let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFee)
-                let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
-                // let blocksBiWeeklyCharge = parseFloat(workerProfile.map(x => x.blocksBiWeeklyCharge)[0])
-                let tablesToShow = await getTablesToShow(workerId)
-                let showAdjustmentFeeTable = adjustmentFee.length >= 1 && adjustmentFee[0].name !== ''
+                // let adjustmentFee = JSON.parse(workerProfile.map(x => x.adjustmentFee))
+                // console.log(workerProfile,'adjust fee')
+                // let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFee)
 
+                let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFees)
+
+
+
+                let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
+                let tablesToShow = await getTablesToShow(workerId)
+                let showAdjustmentFeeTable = !adjustmentFeeTableData.datas.every(x => x.name === "-")
                 //***********calculate supervisee fee********************/
                 let superviseeFeeCalculation = respSuperviser.length >= 0 && reportType !== 'singlepdf' ? await calculateSuperviseeFeeFunc(dateUnformatted, respSuperviser, non_chargeablesArr, nonChargeableItems,
                     proccessingFeeTypes, videoFee) : []
