@@ -5,7 +5,7 @@ const { removeNullStr, removeNaN, calculateProccessingFee, calculateWorkerFeeByL
 const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees")
 
 
-exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, nonChargeableItems, proccessingFeeTypes, videoFee) => {
+exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, nonChargeableItems, proccessingFeeTypes, videoFee, tableType) => {
     let arr = []
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
@@ -40,7 +40,7 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
 
 
             arr.push(await calculateAssociateFeeForSupervisee(worker.associateName, superviseeReportedItemsCount, parseFloat(SuperviseeRate), videoFee,
-                superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge, superviseeHST, superviseeAdjustmentFee, chargeVideoFee))
+                superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge, superviseeHST, superviseeAdjustmentFee, chargeVideoFee, tableType))
 
         })
         Promise.all(loop).then(() => {

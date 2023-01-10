@@ -37,9 +37,6 @@ exports.getDataUser = async (user) => {
 exports.getDataDate = async (date, worker, city) => {
     try {
         await sql.connect(config);
-        console.log(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
-        FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-        >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'`)
         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'`)

@@ -247,7 +247,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         })
 
     } catch (error) {
-        console.log(error)
+        console.log(error, 'Error At: Create Invoice Table Function')
     }
     // done!
     this.addNumberTotPages(doc)
@@ -343,7 +343,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             },
         });
     } catch (error) {
-        console.log('error in creating payment pdf:', error)
+        console.log(error, 'error in creating payment pdf')
     }
     this.addNumberTotPages(doc)
     this.addDateToPages(doc)

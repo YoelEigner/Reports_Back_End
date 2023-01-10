@@ -46,7 +46,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let adjustmentFees = reportType === 'singlepdf' ? await getAdjustmentsFeesWorkerOnly(worker) : await getAdjustmentsFees(worker)
 
             //*********************format date *******************/
-            date = { start: moment(dateUnformatted.start).format('YYYY-MM-DD'), end: moment(dateUnformatted.start).format('YYYY-MM-DD') }
+            date = { start: moment(dateUnformatted.start).format('YYYY-MM-DD'), end: moment(dateUnformatted.end).format('YYYY-MM-DD') }
 
 
             //***********************Applied Payments Table ******************/

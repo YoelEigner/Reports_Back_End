@@ -108,9 +108,7 @@ exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, videoFe
             { label: "Quantity", renderer: null, align: "center" },
             { label: "Fee Base Rate", renderer: null, align: "center" },
             { label: "Video Fee", renderer: null, align: "center" },
-            // { label: "Other Fee", renderer: null, align: "center" },
             { label: "Adjustment Fee", renderer: null, align: "center" },
-            // { label: "Blocks Charge Fee", renderer: null, align: "center" },
             { label: "HST", renderer: null, align: "center" },
             { label: "Total + HST", renderer: null, align: "center" }
         ],
@@ -120,11 +118,9 @@ exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, videoFe
                 count,
                 formatter.format(rate),
                 formatter.format(vidFee),
-                // formatter.format(finalProccessingFee.toFixed(2)),
                 formatter.format(ajustmentFees.toFixed(2)),
-                // formatter.format(blockItemFees),
                 formatter.format(((count * rate) * process.env.HST - (count * rate)).toFixed(2)),
-                formatter.format((count * rate) * process.env.HST + vidFee + /*finalProccessingFee + blockItemFees + */ ajustmentFees)
+                formatter.format((count * rate) * process.env.HST + vidFee + ajustmentFees)
             ],
             ...superviseeFeeCalculation
         ],

@@ -72,7 +72,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser)
 
                 //*********************format date *******************/
-                date = { start: moment(dateUnformatted.start).format('YYYY-MM-DD'), end: moment(dateUnformatted.start).format('YYYY-MM-DD') }
+                date = { start: moment(dateUnformatted.start).format('YYYY-MM-DD'), end: moment(dateUnformatted.end).format('YYYY-MM-DD') }
 
                 //******************** REMOVING NON CHARGABLES *********************
                 //check if i need to remove the non charables in the total
@@ -119,13 +119,21 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let superviseeFeeCalculation = respSuperviser.length >= 0 && reportType !== 'singlepdf' ? await calculateSuperviseeFeeFunc(dateUnformatted, respSuperviser, non_chargeablesArr, nonChargeableItems,
                     proccessingFeeTypes, videoFee) : []
 
+                let superviseeFeeCalculationTemp = async (tableType) => {
+                    if (respSuperviser.length >= 0 && reportType !== 'singlepdf') {
+                        return (await calculateSuperviseeFeeFunc(dateUnformatted, respSuperviser, non_chargeablesArr, nonChargeableItems,
+                            proccessingFeeTypes, videoFee, tableType))
+                    }
+                    else return ([])
+                }
+
                 //***************calculate associateship fees  */
                 let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, workerProfile[0].blocksBiWeeklyCharge,
-                    Number(adjustmentFeeTableData.rows[0][2].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee, respSuperviser)
+                    Number(adjustmentFeeTableData.rows[0][2].replace(/[^0-9.-]+/g, "")), await superviseeFeeCalculationTemp('CFIR'), chargeVideoFee, respSuperviser)
                 let associateFeeBaseRateTablesCBT = await associateFeesTherapyCBT(worker, invoiceQtyCBT, date, workerId, videoFee, proccessingFee, workerProfile[0].blocksBiWeeklyCharge,
-                    Number(adjustmentFeeTableData.rows[0][2].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee, respSuperviser)
+                    Number(adjustmentFeeTableData.rows[0][2].replace(/[^0-9.-]+/g, "")), await superviseeFeeCalculationTemp('CBT'), chargeVideoFee, respSuperviser)
                 let associateFeeBaseRateTablesCPRI = await associateFeesTherapyCPRI(worker, invoiceQtyCPRI, date, workerId, videoFee, proccessingFee, workerProfile[0].blocksBiWeeklyCharge,
-                    Number(adjustmentFeeTableData.rows[0][2].replace(/[^0-9.-]+/g, "")), superviseeFeeCalculation, chargeVideoFee, respSuperviser)
+                    Number(adjustmentFeeTableData.rows[0][2].replace(/[^0-9.-]+/g, "")), await superviseeFeeCalculationTemp('CPRI'), chargeVideoFee, respSuperviser)
 
                 let associateFeeAssessmentTable = await associateFeesAssessments(worker, calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, true), date, associateFeeAssessmentRate)
                 let associateFeeAssessmentTableCBT = await associateFeesAssessments(worker, calculateWorkerFeeByLevalCBT(wokrerLeval, data, paymentData, true), date, associateFeeAssessmentRateCBT)
