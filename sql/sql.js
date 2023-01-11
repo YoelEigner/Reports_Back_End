@@ -490,6 +490,7 @@ exports.UpdateWorkerPreofile = async (arr, id) => {
 exports.insertWorkerProfile = async (arr) => {
     let date = moment(arr.startDate).format('YYYY-MM-DD')
     let endDate = moment(arr.endDate).format('YYYY-MM-DD')
+    console.log(arr)
     try {
         await sql.connect(config)
         let checkForDuplicate = await sql.query(`SELECT status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND  associateType='${arr.associateType}' AND status=1`)
