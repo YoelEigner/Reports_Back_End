@@ -512,6 +512,8 @@ exports.insertWorkerProfile = async (arr) => {
                 supervisorOneGetsMoney,
                 supervisorTwoGetsMoney,
                 chargesHST,
+                associateFeeBaseType,
+                associateFeeBaseType2,
                 assessmentRate,
                 assessmentRate_c,
                 assessmentRate_f,
@@ -570,9 +572,12 @@ exports.insertWorkerProfile = async (arr) => {
                     ,'${arr.supervisor2Covrage}'
                     ,${arr.supervisorOneGetsMoney === true ? 1 : 0}
                     ,${arr.supervisorTwoGetsMoney === true ? 1 : 0}
-                    ,${arr.chargesHST === true ? 1 : 0},'${arr.assessmentRate}'
+                    ,${arr.chargesHST === true ? 1 : 0}
                     ,'${arr.associateFeeBaseType}'
                     ,'${arr.associateFeeBaseType2}'
+                    ,'${arr.assessmentRate}'
+                    ,'${arr.assessmentRate_c}'
+                    ,'${arr.assessmentRate_f}'
                     ,'${arr.associateFeeBaseRate}'
                     ,'${arr.associateFeeBaseRate_c}'
                     ,'${arr.associateFeeBaseRate_f}'
@@ -600,8 +605,8 @@ exports.insertWorkerProfile = async (arr) => {
                     ,'${arr.blocksBiWeeklyCharge}'
                     ,'${arr.blocksHourlyRate}'
                     ,'${arr.videoTech}'
-                    ,${arr.cahrgeVideoFee === true ? 1 : 0},
-                    ${arr.duplicateTable === true ? 1 : 0}
+                    ,${arr.cahrgeVideoFee === true ? 1 : 0}
+                    ,${arr.duplicateTable === true ? 1 : 0}
                     ,${arr.nonChargeablesTable === true ? 1 : 0}
                     ,${arr.associateFeesTable === true ? 1 : 0}
                     ,${arr.totalRemittenceTable === true ? 1 : 0}
@@ -609,8 +614,8 @@ exports.insertWorkerProfile = async (arr) => {
                     ,${arr.transactionsTable === true ? 1 : 0}
                     ,${arr.superviseeTotalTabel === true ? 1 : 0}
                     ,${arr.appliedPaymentsTotalTable === true ? 1 : 0}
-                    ,'${arr.comments}',
-                    '${arr.adjustmentFee}','${arr.adjustmentPaymentFee}');SELECT SCOPE_IDENTITY() AS new_id;`
+                    ,'${arr.comments}'
+                    ,'${arr.adjustmentFee}','${arr.adjustmentPaymentFee}');SELECT SCOPE_IDENTITY() AS new_id;`
             )
             return { response: 200, new_id: resp.recordset[0] }
         }
