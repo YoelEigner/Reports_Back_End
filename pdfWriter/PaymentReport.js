@@ -1,4 +1,4 @@
-const { createPaymentTableFunc, getUniqueItemsMultiKey, calculateProccessingFee } = require("./pdfKitFunctions")
+const { createPaymentTableFunc, getUniqueItemsMultiKey, calculateProccessingFee, getProfileDateFormatted } = require("./pdfKitFunctions")
 const PDFDocument = require("pdfkit-table");
 const { nonRemittablesTable } = require("../tables/nonRemittablesTable");
 const { getPaymentData, getNonRemittables, getAssociateProfileById, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes, getNonChargeables, getAdjustmentsFees, getAdjustmentsFeesWorkerOnly, getTablesToShow } = require("../sql/sql");
@@ -36,7 +36,8 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
 
         try {
-            let paymentData = reportType === 'singlepdf' ? await getPaymentDataForWorker(worker, dateUnformatted) : await getPaymentData(worker, dateUnformatted)
+            let profileDates = await getProfileDateFormatted(workerId)
+            let paymentData = reportType === 'singlepdf' ? await getPaymentDataForWorker(worker, dateUnformatted, profileDates) : await getPaymentData(worker, dateUnformatted, profileDates)
 
             let workerProfile = await getAssociateProfileById(workerId)
             let proccessingFeeTypes = await getPaymentTypes()

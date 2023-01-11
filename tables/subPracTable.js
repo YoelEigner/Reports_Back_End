@@ -1,8 +1,8 @@
 const { formatter } = require("../pdfWriter/pdfKitFunctions")
-const { getSubPrac } = require("../sql/sql")
+// const { getSubPrac } = require("../sql/sql")
 
-exports.subPracTable = async (date, worker) => {
-    let data = await getSubPrac(date, worker)
+exports.subPracTable = async (date, worker, profileDates) => {
+    // let data = await getSubPrac(date, worker, profileDates)
     return {
         title: "L1 Supervised Practice",
         subtitle: "From " + date.start + " To " + date.end,

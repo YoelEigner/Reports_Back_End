@@ -1,6 +1,6 @@
 var firstBy = require('thenby');
-const { getNonChargeables, getSupervisies, getSupervisiesPaymentData, getSupervisers, getReportedItems, getAssociateFeeBaseRate, getSuperviserOne, getSuperviseeies } = require("../sql/sql");
-const { supervisiesTable } = require("../tables/supervisiesTable");
+const { getSuperviseeies, getProfileDates } = require("../sql/sql");
+const moment = require('moment')
 
 
 exports.generateHeader = (doc, worker) => {
@@ -100,7 +100,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         });
 
         doc.moveDown()
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         reportedItemsTable.datas.map(x => {
             x.event_service_item_total = this.formatter.format(x.event_service_item_total)
             x.totalAmt = this.formatter.format(x.totalAmt)
@@ -117,7 +117,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
 
         let showduplicateTable = tablesToShow.map(x => x.duplicateTable)[0]
         showduplicateTable && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showduplicateTable && await doc.table(duplicateTable, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -127,7 +127,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         });
         let showNonChargeablesTable = tablesToShow.map(x => x.nonChargeablesTable)[0]
         showNonChargeablesTable && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showNonChargeablesTable && await doc.table(nonChargeables, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -136,7 +136,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
             },
         });
         doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showAdjustmentFeeTable && await doc.table(adjustmentFeeTable, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -147,13 +147,13 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         //*****************************Associate Fees Tables *****************************/
         let showassociateFeesTable = tablesToShow.map(x => x.associateFeesTable)[0]
         showassociateFeesTable && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showassociateFeesTable && doc
             .fontSize(20)
             .text('CFIR', { align: 'center' })
             .font('Helvetica-Bold')
         showassociateFeesTable && this.generateLine(doc, doc.y)
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
 
         showassociateFeesTable && await doc.table(associateFees, {
             collapse: true,
@@ -163,7 +163,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
             },
         });
         showassociateFeesTable && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showassociateFeesTable && await doc.table(associateFeeAssessmentTable, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -172,13 +172,13 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         });
         //******************************CBT********************************/
         showassociateFeesTable && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showassociateFeesTable && doc
             .fontSize(20)
             .text('CBT', { align: 'center' })
             .font('Helvetica-Bold')
         showassociateFeesTable && this.generateLine(doc, doc.y)
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
 
         showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCBT, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -187,7 +187,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
             },
         });
         showassociateFeesTable && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showassociateFeesTable && await doc.table(associateFeeAssessmentTableCBT, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -196,13 +196,13 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         });
         //******************************CPRI********************************/
         showassociateFeesTable && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showassociateFeesTable && doc
             .fontSize(20)
             .text('CPRI', { align: 'center' })
             .font('Helvetica-Bold')
         showassociateFeesTable && this.generateLine(doc, doc.y)
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
 
         showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCPRI, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -211,7 +211,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
             },
         });
         showassociateFeesTable && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showassociateFeesTable && await doc.table(associateFeeAssessmentTableCPRI, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -224,7 +224,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
 
         let showTotalRemittanceTable = tablesToShow.map(x => x.totalRemittenceTable)[0]
         showTotalRemittanceTable && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showTotalRemittanceTable && await doc.table(totalRemittance, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -235,7 +235,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
 
         reportType !== 'singlepdf' && doc.moveDown();
         reportType !== 'singlepdf' && await supervisies.forEach(async (t) => {
-            if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+            if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
             t.rows.map(x => x[4] = this.formatter.format(x[4]))
             await doc.table(t, {
                 prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -263,7 +263,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
         this.generatePaymentHeader(doc, worker)
         this.generateLine(doc, 70)
 
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         appliedPaymentTable.datas.map(x => x.applied_amt = this.formatter.format(x.applied_amt))
         await doc.table(appliedPaymentTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
@@ -275,7 +275,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
         });
         let showNonRemittablesTable = tablesToShow.map(x => x.nonRemittablesTable)[0]
         showNonRemittablesTable && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showNonRemittablesTable && nonRemittablesTable.datas.map(x => x.applied_amtTemp = this.formatter.format(x.applied_amt))
         showNonRemittablesTable && await doc.table(nonRemittablesTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
@@ -289,7 +289,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
 
         let showTransactions = tablesToShow.map(x => x.transactionsTable)[0]
         showTransactions && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showTransactions && transactionsTable.datas.map(x => x.total_amtTemp = this.formatter.format(x.total_amt))
         showTransactions && transactionsTable.datas.map(x => x.applied_amtTemp = this.formatter.format(x.applied_amt))
         showTransactions && await doc.table(transactionsTable, {
@@ -301,7 +301,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
         });
         let showsuperviseeTotalTabel = tablesToShow.map(x => x.superviseeTotalTabel)[0]
         showsuperviseeTotalTabel && doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showsuperviseeTotalTabel && superviseeClientPaymentsTable.datas.map(x => x.totalTemp = this.formatter.format(x.total))
         showsuperviseeTotalTabel && superviseeClientPaymentsTable.datas.map(x => x.applied_amtTemp = this.formatter.format(x.applied_amt))
         showsuperviseeTotalTabel && await doc.table(superviseeClientPaymentsTable, {
@@ -313,7 +313,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             },
         });
         doc.moveDown();
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showAdjustmentFeeTable && await doc.table(adjustmentFeeTable, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -321,8 +321,8 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             },
         });
         doc.moveDown()
-        if (doc.y > 0.8 * doc.page.height) { doc.addPage() }
         reportType !== 'singlepdf' && await l1SupPrac.map(async (t) => {
+            if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
             await doc.table(t, {
                 prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
                 prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -333,7 +333,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
         })
         let showappliedPaymentsTotalTable = tablesToShow.map(x => x.appliedPaymentsTotalTable)[0]
         showappliedPaymentsTotalTable && doc.moveDown();
-        if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
+        if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
         showappliedPaymentsTotalTable && await doc.table(totalAppliedPaymentsTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -446,7 +446,8 @@ exports.getUniqueItemsMultiKey = (arr, keyProps) => {
 }
 exports.getFeeAmount = (arr, type) => {
     if (type === undefined) { return { name: '', percentage: '0.0%', ammount: '$0.00' } }
-    return arr.find(i => type === i.name) !== undefined && arr.find(i => type === i.name)
+    return arr.find(i => type === i.name) === undefined ? { name: '', percentage: '0.0%', ammount: '$0.00' } : arr.find(i => type === i.name)
+    // return arr.find(i => type === i.name) !== undefined && arr.find(i => type === i.name)
 }
 
 exports.calculateProccessingFee = (workerPaymentData, proccessingFeeTypes) => {
@@ -565,4 +566,11 @@ exports.calculateWorkerFeeByLevalCPRI = (wokrerLeval, data, paymentData, assessm
             data.filter(x => x.service_name.startsWith('A_f_'))
             : data.filter(x => x.service_name.startsWith('T_f_'))
     }
+}
+
+exports.getProfileDateFormatted = async (workerId) => {
+    let profileDates = await getProfileDates(workerId)
+    profileDates.startDate = moment(profileDates.startDate).format('YYYY-MM-DD')
+    profileDates.endDate = moment(profileDates.endDate).format('YYYY-MM-DD')
+    return profileDates
 }

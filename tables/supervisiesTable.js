@@ -20,12 +20,12 @@ exports.getRates = async (count, workerId) => {
 
 
 
-exports.getSupervisiesFunc = async (date, non_chargeablesArr, respSuperviser) => {
+exports.getSupervisiesFunc = async (date, non_chargeablesArr, respSuperviser, profileDates) => {
     try {
         let tempSupervisies = []
         let total = []
         respSuperviser.forEach(async (x) => {
-            let resp = await getReportedItems(date, x.associateName)
+            let resp = await getReportedItems(date, x.associateName, profileDates)
             let subtotal = resp.map(x => !non_chargeablesArr.find(n => n === x.service_name) && x.event_service_item_total).reduce((a, b) => a + b, 0)
             total.push(subtotal)
             tempSupervisies.total = total

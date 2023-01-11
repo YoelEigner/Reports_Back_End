@@ -101,8 +101,9 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
     // let blocksBiWeeklyCharge = Number(blockItemFees.datas.map(x => x.newBiWeeklyRate)[0])
     let rate = await this.getRate(count, workerId, false, L1AssociateFee)
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
+
     return {
-        title: "Associate Fees (Therapy Only)",
+        title: "CFIR Associate Fees (Therapy Only)",
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
             { label: "Worker", renderer: null, align: "center" },

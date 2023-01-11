@@ -7,7 +7,7 @@ exports.associateFeesAssessments = async (worker, data, date, rate) => {
     let HST = (fee / 100) * process.env.HST
 
     return {
-        title: "Associate Fees (Assessments Only)",
+        title: "CFIR Associate Fees (Assessments Only)",
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
             { label: "Worker", renderer: null, align: "center" },
