@@ -106,12 +106,12 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
             x.totalAmt = this.formatter.format(x.totalAmt)
         }
         )
-        await doc.table(reportedItemsTable, {
+        await doc.table(reportedItemsTable, {            
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
-                non_chargeablesArr.find(x => x === row.service_name) && doc.addBackground(rectRow, 'pink', 0.15);
-                duplicateItems.find(x => x.service_name === row.service_name) && doc.addBackground(rectRow, 'pink', 0.15);
+                // non_chargeablesArr.find(x => x === row.service_name) && doc.addBackground(rectRow, 'pink', 0.15);
+                // duplicateItems.find(x => x.service_name === row.service_name) && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
 
