@@ -1,6 +1,4 @@
 var CryptoJS = require("crypto-js");
-
-const PDFDocument = require("pdfkit-table");
 const fs = require('fs');
 const { createZip } = require('../zipFiles/createZip');
 const { createInvoiceTable } = require('./InvoiceReport');

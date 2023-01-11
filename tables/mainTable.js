@@ -10,7 +10,8 @@ exports.mainTable = (data, date) => {
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
             { label: "Date", property: 'FULLDATE', renderer: null, align: "center" },
-            { label: "Name", property: 'service_file_presenting_individual_name', renderer: null, align: "center" },
+            { label: "Payor Name", property: 'service_file_presenting_individual_name', renderer: null, align: "center" },
+            { label: "Individual Name", property: 'individual_name', renderer: null , align: "center"},
             { label: "Invoice ID", property: 'invoice_id', renderer: null, align: "center" },
             { label: "Service Name", property: 'service_name', renderer: null, align: "center" },
             { label: "Cart Item", property: 'event_service_item_name', renderer: null, align: "center" },
