@@ -50,7 +50,7 @@ exports.getDataDate = async (date, worker, profileDates) => {
         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}'
-                                    AND DATEFROMPARTS ( Year, Month , Day) >='${profileDates.startDate}' and DATEFROMPARTS ( Year, Month , Day) <='${profileDates.endDate}'
+                                    AND Cast(batch_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                     AND [event_primary_worker_name]='${worker}'`)
         return resp.recordset;
     } catch (err) {
@@ -274,7 +274,7 @@ exports.getReportedItems = async (date, worker, profileDates) => {
                                     FORMAT([event_service_item_total], 'c') as itemTotal, COUNT([event_service_item_name]) as COUNT
                                     FROM [CFIR].[dbo].[invoice_data] 
                                     WHERE DATEFROMPARTS ( Year, Month , Day) >= '${date.start}' and DATEFROMPARTS ( Year, Month , Day) <= '${date.end}'
-                                    AND DATEFROMPARTS ( Year, Month , Day) >='${profileDates.startDate}' and DATEFROMPARTS ( Year, Month , Day) <='${profileDates.endDate}'
+                                    AND Cast(batch_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                     AND [event_primary_worker_name]='${worker}'
                                     GROUP BY [event_service_item_name], event_service_item_total,event_primary_worker_name,[receipt_reason]`)
         return resp.recordset
