@@ -596,60 +596,60 @@ exports.findSplitFees = (arr) => {
         return false;
     });
 }
-exports.removeSplitFees = (arr) => {
-    return arr.filter(item => {
-        for (let i = 0; i < arr.length; i++) {
-            if (item.event_id === arr[i].event_id && item.case_file_name === arr[i].case_file_name && item.service_name === arr[i].service_name && item.invoice_id !== arr[i].invoice_id) {
-                if (i === 0) return true
-                return false;
-            }
-        }
-        return true;
-    });
-}
-
-exports.removeDuplicates = (arr) => {
-    const seen = new Set();
-    return arr.filter((item, index) => {
-        const itemAsString = JSON.stringify((item));
-        if (seen.has(itemAsString)) {
-            if (index === 0) return true
-            return false;
-        } else {
-            seen.add(itemAsString);
-            return true;
-        }
-    });
-}
-
 // exports.removeSplitFees = (arr) => {
-//     let newArr = [];
-//     let seen = new Map();
-//     for (let i = 0; i < arr.length; i++) {
-//         let item = arr[i];
-//         let key = item.event_id + item.case_file_name + item.service_name;
-//         if (!seen.has(key)) {
-//             seen.set(key, item);
-//         } else {
-//             let temp = seen.get(key);
-//             if (temp.invoice_id !== item.invoice_id) {
-//                 seen.set(key, item);
+//     return arr.filter(item => {
+//         for (let i = 0; i < arr.length; i++) {
+//             if (item.event_id === arr[i].event_id && item.case_file_name === arr[i].case_file_name && item.service_name === arr[i].service_name && item.invoice_id !== arr[i].invoice_id) {
+//                 if (i === 0) return true
+//                 return false;
 //             }
 //         }
-//     }
-//     seen.forEach((value) => {
-//         newArr.push(value);
+//         return true;
 //     });
-//     return newArr;
 // }
 
 // exports.removeDuplicates = (arr) => {
-//     let uniqueArr = [];
-//     for (let i = 0; i < arr.length; i++) {
-//         let current = arr[i];
-//         if (uniqueArr.indexOf(current) === -1) {
-//             uniqueArr.push(current);
+//     const seen = new Set();
+//     return arr.filter((item, index) => {
+//         const itemAsString = JSON.stringify((item));
+//         if (seen.has(itemAsString)) {
+//             if (index === 0) return true
+//             return false;
+//         } else {
+//             seen.add(itemAsString);
+//             return true;
 //         }
-//     }
-//     return uniqueArr;
+//     });
 // }
+
+exports.removeSplitFees = (arr) => {
+    let newArr = [];
+    let seen = new Map();
+    for (let i = 0; i < arr.length; i++) {
+        let item = arr[i];
+        let key = item.event_id + item.case_file_name + item.service_name;
+        if (!seen.has(key)) {
+            seen.set(key, item);
+        } else {
+            let temp = seen.get(key);
+            if (temp.invoice_id !== item.invoice_id) {
+                seen.set(key, item);
+            }
+        }
+    }
+    seen.forEach((value) => {
+        newArr.push(value);
+    });
+    return newArr;
+}
+
+exports.removeDuplicates = (arr) => {
+    let uniqueArr = [];
+    for (let i = 0; i < arr.length; i++) {
+        let current = arr[i];
+        if (uniqueArr.indexOf(current) === -1) {
+            uniqueArr.push(current);
+        }
+    }
+    return uniqueArr;
+}

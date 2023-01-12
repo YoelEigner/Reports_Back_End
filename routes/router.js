@@ -1,11 +1,9 @@
 const express = require("express");
-const fs = require('fs');
 const router = express.Router();
-const { authMW, authToken } = require("../MidWear/MidWear");
-const { getData, getphysicians, getProvinces, getWorkerProfile, insertWorkerProfile, getVideoTech, getServiceTypes, UpdateServiceTypes, UpdateWorkerPreofile, getPaymentTypes, getserviceTypes, getAssociateTypes, getSupervisies, getAssociateLeval, updateEmailPassword, resetAdjustmentFees } = require("../sql/sql");
-const { createReport, filterSupervisies, getSupervisiesFunc } = require("../pdfWriter/pdfKitFunctions");
-const { json } = require("express");
-const { MultiPDF, GeneratePDF } = require("../pdfWriter/generatePDF");
+const { authToken } = require("../MidWear/MidWear");
+const { getphysicians, getProvinces, getWorkerProfile, insertWorkerProfile, getVideoTech, getServiceTypes, UpdateServiceTypes, UpdateWorkerPreofile, getPaymentTypes, getAssociateTypes, getAssociateLeval, updateEmailPassword, resetAdjustmentFees } = require("../sql/sql");
+const { getSupervisiesFunc } = require("../pdfWriter/pdfKitFunctions");
+const { GeneratePDF } = require("../pdfWriter/generatePDF");
 
 //middlewaer
 router.use(authToken)
