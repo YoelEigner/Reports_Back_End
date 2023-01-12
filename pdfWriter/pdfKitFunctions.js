@@ -627,7 +627,7 @@ exports.removeSplitFees = (arr) => {
     let seen = new Map();
     for (let i = 0; i < arr.length; i++) {
         let item = arr[i];
-        let key = item.event_id + item.case_file_name + item.service_name;
+        let key = item.event_id + item.case_file_name + item.service_name + item.batch_date;
         if (!seen.has(key)) {
             seen.set(key, item);
         } else {
