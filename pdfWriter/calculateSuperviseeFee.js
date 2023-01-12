@@ -13,7 +13,7 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
             let superviseeReportedItemdData = removeNullStr(await getDataDate(date, worker.associateName, profileDates), '-')
             let workerPaymentData = await getPaymentDataForWorker(worker.associateName, date, profileDates)
 
-            let { duplicateItemsAndSplitFees } = duplicateAndSplitFees(data)
+            let { duplicateItemsAndSplitFees } = duplicateAndSplitFees(superviseeReportedItemdData)
 
             // let { duplicateItems } = removeDuplicateAndSplitFees(superviseeReportedItemdData)
 

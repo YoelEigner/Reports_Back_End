@@ -25,25 +25,25 @@ exports.getProfileDates = async (workerId) => {
     }
 }
 
-exports.getData = async () => {
-    try {
-        await sql.connect(config);
-        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year, Month , Day) AS date FROM invoice_data`)
-        return resp.recordset;
-    } catch (err) {
-        console.log('getData Function', err); return err
-    }
-}
+// exports.getData = async () => {
+//     try {
+//         await sql.connect(config);
+//         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year, Month , Day) AS date FROM invoice_data AND [financial_transaction_type] != 'return'`)
+//         return resp.recordset;
+//     } catch (err) {
+//         console.log('getData Function', err); return err
+//     }
+// }
 
-exports.getDataUser = async (user) => {
-    try {
-        await sql.connect(config);
-        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year, Month , Day) AS date FROM invoice_data WHERE individual_name='${user}`)
-        return resp.recordset;
-    } catch (err) {
-        console.log('getDataUser Function', err); return err
-    }
-}
+// exports.getDataUser = async (user) => {
+//     try {
+//         await sql.connect(config);
+//         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year, Month , Day) AS date FROM invoice_data WHERE individual_name='${user} AND [financial_transaction_type] != 'return'`)
+//         return resp.recordset;
+//     } catch (err) {
+//         console.log('getDataUser Function', err); return err
+//     }
+// }
 exports.getDataDate = async (date, worker, profileDates) => {
     try {
         await sql.connect(config);
@@ -51,7 +51,8 @@ exports.getDataDate = async (date, worker, profileDates) => {
                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}'
                                     AND DATEFROMPARTS ( Year, Month , Day) >='${profileDates.startDate}' and DATEFROMPARTS ( Year, Month , Day) <='${profileDates.endDate}'
-                                    AND [event_primary_worker_name]='${worker}'`)
+                                    AND [event_primary_worker_name]='${worker}'
+                                    AND [financial_transaction_type] != 'return'`)
         return resp.recordset;
     } catch (err) {
         console.log('getDataDate Function', err); return err
@@ -276,6 +277,7 @@ exports.getReportedItems = async (date, worker, profileDates) => {
                                     WHERE DATEFROMPARTS ( Year, Month , Day) >= '${date.start}' and DATEFROMPARTS ( Year, Month , Day) <= '${date.end}'
                                     AND DATEFROMPARTS ( Year, Month , Day) >='${profileDates.startDate}' and DATEFROMPARTS ( Year, Month , Day) <='${profileDates.endDate}'
                                     AND [event_primary_worker_name]='${worker}'
+                                    AND [financial_transaction_type] != 'return'
                                     GROUP BY [event_service_item_name], event_service_item_total,event_primary_worker_name,[receipt_reason],[service_name]`)
         return resp.recordset
     } catch (err) {
@@ -625,7 +627,8 @@ exports.getPaymentData = async (worker, date, profileDates) => {
         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
-                                    AND (superviser like '%${worker}%' OR worker like '%${worker}%')`)
+                                    AND (superviser like '%${worker}%' OR worker like '%${worker}%')
+                                    AND [rec_type] != 'return'`)
         return resp.recordset
     } catch (error) {
         console.log('getPaymentData Function', error)
@@ -636,7 +639,8 @@ exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
-                                   AND worker like '%${tempWorker}%'`)
+                                   AND worker like '%${tempWorker}%'
+                                   AND [rec_type] != 'return'`)
         return resp.recordset
     } catch (error) {
         // console.log(error)
@@ -674,15 +678,15 @@ exports.getSuperviseeiesL1 = async (superviser) => {
         console.log(error)
     }
 }
-exports.getAllPayments = async () => {
-    try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT * FROM financial_view `)
-        return resp.recordset
-    } catch (error) {
-        console.log(error)
-    }
-}
+// exports.getAllPayments = async () => {
+//     try {
+//         await sql.connect(config)
+//         let resp = await sql.query(`SELECT * FROM financial_view AND [rec_type] != 'return'`)
+//         return resp.recordset
+//     } catch (error) {
+//         console.log(error)
+//     }
+// }
 exports.getNonRemittables = async () => {
     try {
         await sql.connect(config)
