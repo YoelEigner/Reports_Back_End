@@ -1,5 +1,6 @@
 const { formatter, isSuperviserOne, removeNaN } = require("../pdfWriter/pdfKitFunctions")
 const { getAssociateFeeBaseRate, getProcessingFee, getPaymentTypes } = require("../sql/sql")
+const { getRate_CPRI } = require("./associateFeesTherapy")
 
 const isNum = (num) => {
     if (isNaN(num)) { return 0 }
@@ -98,7 +99,7 @@ const getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
     }
 }
 exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees, superviseeFeeCalculation, chargeVideoFee, L1AssociateFee) => {
-    let rate = await getRate(count, workerId, false, L1AssociateFee)
+    let rate = await getRate_CPRI(count, workerId, false, L1AssociateFee)
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
     return {
         title: "CPRI Associate Fees (Therapy Only)",
@@ -107,8 +108,8 @@ exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, videoFe
             { label: "Worker", renderer: null, align: "center" },
             { label: "Quantity", renderer: null, align: "center" },
             { label: "Fee Base Rate", renderer: null, align: "center" },
-            { label: "Video Fee", renderer: null, align: "center" },
-            { label: "Adjustment Fee", renderer: null, align: "center" },
+            // { label: "Video Fee", renderer: null, align: "center" },
+            // { label: "Adjustment Fee", renderer: null, align: "center" },
             { label: "HST", renderer: null, align: "center" },
             { label: "Total + HST", renderer: null, align: "center" }
         ],
@@ -117,10 +118,10 @@ exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, videoFe
                 worker,
                 count,
                 formatter.format(rate),
-                formatter.format(vidFee),
-                formatter.format(ajustmentFees.toFixed(2)),
+                // formatter.format(vidFee),
+                // formatter.format(ajustmentFees.toFixed(2)),
                 formatter.format(((count * rate) * process.env.HST - (count * rate)).toFixed(2)),
-                formatter.format((count * rate) * process.env.HST + vidFee + ajustmentFees)
+                formatter.format((count * rate) * process.env.HST)
             ],
             ...superviseeFeeCalculation
         ],

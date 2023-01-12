@@ -3,13 +3,13 @@ const moment = require('moment')
 exports.mainTable = (data, date) => {
 
     data.map(x => {
-        x.FULLDATE = moment(x.FULLDATE).format('YYYY-MM-DD')
+        x.batch_date = moment(x.batch_date).format('YYYY-MM-DD')
     })
     return {
         title: "Invoice",
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
-            { label: "Date", property: 'FULLDATE', renderer: null, align: "center" },
+            { label: "Date", property: 'batch_date', renderer: null, align: "center" },
             { label: "Funder Name", property: 'funder_name', renderer: null, align: "center" },
             { label: "Individual Name", property: 'individual_name', renderer: null , align: "center"},
             { label: "Invoice ID", property: 'invoice_id', renderer: null, align: "center" },

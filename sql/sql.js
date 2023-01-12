@@ -230,7 +230,7 @@ exports.getAllSuperviseeProfiles = async () => {
 exports.getphysicians = async () => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`SELECT [id],[associateName],[status], [associateType] FROM [CFIR].[dbo].[profiles]`)
+        let resp = await sql.query(`SELECT [id],[associateName],[status], [startDate], [endDate], [associateType] FROM [CFIR].[dbo].[profiles]`)
         return resp.recordset;
     } catch (err) {
         console.log(err); return err
@@ -270,29 +270,19 @@ exports.resetAdjustmentFees = async () => {
 exports.getReportedItems = async (date, worker, profileDates) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`select [receipt_reason], [event_service_item_name],event_primary_worker_name, FORMAT(sum([event_service_item_total]), 'c') as TOTAL, sum([event_service_item_total]) as event_service_item_total,
+        let resp = await sql.query(`select [receipt_reason], [service_name], [event_service_item_name],event_primary_worker_name, FORMAT(sum([event_service_item_total]), 'c') as TOTAL, sum([event_service_item_total]) as event_service_item_total,
                                     FORMAT([event_service_item_total], 'c') as itemTotal, COUNT([event_service_item_name]) as COUNT
                                     FROM [CFIR].[dbo].[invoice_data] 
                                     WHERE DATEFROMPARTS ( Year, Month , Day) >= '${date.start}' and DATEFROMPARTS ( Year, Month , Day) <= '${date.end}'
                                     AND DATEFROMPARTS ( Year, Month , Day) >='${profileDates.startDate}' and DATEFROMPARTS ( Year, Month , Day) <='${profileDates.endDate}'
                                     AND [event_primary_worker_name]='${worker}'
-                                    GROUP BY [event_service_item_name], event_service_item_total,event_primary_worker_name,[receipt_reason]`)
+                                    GROUP BY [event_service_item_name], event_service_item_total,event_primary_worker_name,[receipt_reason],[service_name]`)
         return resp.recordset
     } catch (err) {
         console.log(err); return err
     }
 }
-// exports.getReasonType = async (date, worker) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select worker, applied_amt, reason_type from financial_view 
-//                                     WHERE DATEFROMPARTS ( Year1, Month1, Day1) >= '${date.start}' and DATEFROMPARTS ( Year1, Month1, Day1) <= '${date.end}'
-//                                     AND worker='${worker}'`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log(err); return err
-//     }
-// }
+
 exports.getProvinces = async () => {
     try {
         await sql.connect(config)
@@ -403,82 +393,83 @@ exports.getSupervisers = async (name) => {
 
 exports.UpdateWorkerPreofile = async (arr, id) => {
 
+
     try {
+
         await sql.connect(config)
+        let checkForDuplicate = await sql.query(`SELECT startDate, endDate, status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND id !=${id} AND status=1`)
+        if (checkForDuplicate.recordset.length === 0 || moment(checkForDuplicate.recordset[0].startDate).format('YYYY-MM-DD') > arr.endDate || moment(checkForDuplicate.recordset[0].endDate).format('YYYY-MM-DD') < arr.startDate) {
+            await sql.query(`UPDATE [CFIR].[dbo].[profiles]
+                SET status = '${arr.status}',
+                startDate = '${arr.startDate}',
+                endDate = '${arr.endDate}',
+                site = '${arr.site}',
+                associateType = '${arr.associateType}',
+                associateEmail = '${arr.associateEmail}',
+                associateName = '${arr.associateName}',
+                isSuperviser = '${arr.isSuperviser}',
+                isSupervised = '${arr.isSupervised}',
+                IsSupervisedByNonDirector = '${arr.IsSupervisedByNonDirector}',
+                supervisor1 = '${arr.supervisor1}',
+                supervisor1Covrage = '${arr.supervisor1Covrage}',
+                supervisor2 = '${arr.supervisor2}',
+                supervisor2Covrage = '${arr.supervisor2Covrage}',
+                supervisorOneGetsMoney = '${arr.supervisorOneGetsMoney}',
+                supervisorTwoGetsMoney = '${arr.supervisorTwoGetsMoney}',
+                chargesHST = '${arr.chargesHST}',
+                associateFeeBaseType = '${arr.associateFeeBaseType}',
+                associateFeeBaseType2 = '${arr.associateFeeBaseType2}',
+                assessmentRate = '${arr.assessmentRate}',
+                assessmentRate_c = '${arr.assessmentRate_c}',
+                assessmentRate_f = '${arr.assessmentRate_f}',
+                associateFeeBaseRate = '${arr.associateFeeBaseRate}',
+                associateFeeBaseRate_c = '${arr.associateFeeBaseRate_c}',
+                associateFeeBaseRate_f = '${arr.associateFeeBaseRate_f}',
+                associateFeeBaseRateTwo = '${arr.associateFeeBaseRateTwo}',
+                associateFeeBaseRateTwo_c= '${arr.associateFeeBaseRateTwo_c}',
+                associateFeeBaseRateTwo_f = '${arr.associateFeeBaseRateTwo_f}',
+                associateFeeBaseRateOverrideLessThen = '${arr.associateFeeBaseRateOverrideLessThen}',
+                associateFeeBaseRateOverrideLessThen_c = '${arr.associateFeeBaseRateOverrideLessThen_c}',
+                associateFeeBaseRateOverrideLessThen_f = '${arr.associateFeeBaseRateOverrideLessThen_f}',
+                associateFeeBaseRateOverrideLessThenTwo = '${arr.associateFeeBaseRateOverrideLessThenTwo}',
+                associateFeeBaseRateOverrideLessThenTwo_c = '${arr.associateFeeBaseRateOverrideLessThenTwo_c}',
+                associateFeeBaseRateOverrideLessThenTwo_f = '${arr.associateFeeBaseRateOverrideLessThenTwo_f}',
+                associateFeeBaseRateOverrideGreaterThen = '${arr.associateFeeBaseRateOverrideGreaterThen}',
+                associateFeeBaseRateOverrideGreaterThen_c = '${arr.associateFeeBaseRateOverrideGreaterThen_c}',
+                associateFeeBaseRateOverrideGreaterThen_f = '${arr.associateFeeBaseRateOverrideGreaterThen_f}',
+                associateFeeBaseRateOverrideGreaterThenTwo = '${arr.associateFeeBaseRateOverrideGreaterThenTwo}',
+                associateFeeBaseRateOverrideGreaterThenTwo_c = '${arr.associateFeeBaseRateOverrideGreaterThenTwo_c}',
+                associateFeeBaseRateOverrideGreaterThenTwo_f = '${arr.associateFeeBaseRateOverrideGreaterThenTwo_f}',
+                associateFeeBaseRateOverrideAsseements = '${arr.associateFeeBaseRateOverrideAsseements}',
+                associateFeeBaseRateOverrideAsseements_c = '${arr.associateFeeBaseRateOverrideAsseements_c}',
+                associateFeeBaseRateOverrideAsseements_f = '${arr.associateFeeBaseRateOverrideAsseements_f}',
+                inOfficeBlocks = '${arr.inOfficeBlocks}',
+                inOfficeBlockHours = '${arr.inOfficeBlockHours}',
+                inOfficeBlockTimes = '${arr.inOfficeBlockTimes}',
+                blocksBiWeeklyCharge = '${arr.blocksBiWeeklyCharge}',
+                blocksHourlyRate = '${arr.blocksHourlyRate}',
+                videoTech = '${arr.videoTech}',
+                cahrgeVideoFee = '${arr.cahrgeVideoFee}',
+                duplicateTable = '${arr.duplicateTable}',
+                nonChargeablesTable = '${arr.nonChargeablesTable}',
+                associateFeesTable = '${arr.associateFeesTable}',
+                totalRemittenceTable = '${arr.totalRemittenceTable}',
+                nonRemittablesTable = '${arr.nonRemittablesTable}',
+                transactionsTable = '${arr.transactionsTable}',
+                superviseeTotalTabel = '${arr.superviseeTotalTabel}',
+                appliedPaymentsTotalTable = '${arr.appliedPaymentsTotalTable}',
+                comments = '${arr.comments}',
+                adjustmentFee = '${arr.adjustmentFee}',
+                adjustmentPaymentFee = '${arr.adjustmentPaymentFee}'
+                WHERE id = ${id}`)
+            return 200
 
-        await sql.query(`UPDATE [CFIR].[dbo].[profiles]
-        SET status = '${arr.status}',
-        startDate = '${arr.startDate}',
-        endDate = '${arr.endDate}',
-        site = '${arr.site}',
-        associateType = '${arr.associateType}',
-        associateEmail = '${arr.associateEmail}',
-        associateName = '${arr.associateName}',
-        isSuperviser = '${arr.isSuperviser}',
-        isSupervised = '${arr.isSupervised}',
-        IsSupervisedByNonDirector = '${arr.IsSupervisedByNonDirector}',
-        supervisor1 = '${arr.supervisor1}',
-        supervisor1Covrage = '${arr.supervisor1Covrage}',
-        supervisor2 = '${arr.supervisor2}',
-        supervisor2Covrage = '${arr.supervisor2Covrage}',
-        supervisorOneGetsMoney = '${arr.supervisorOneGetsMoney}',
-        supervisorTwoGetsMoney = '${arr.supervisorTwoGetsMoney}',
-        chargesHST = '${arr.chargesHST}',
-        associateFeeBaseType = '${arr.associateFeeBaseType}',
-        associateFeeBaseType2 = '${arr.associateFeeBaseType2}',
-        assessmentRate = '${arr.assessmentRate}',
-        assessmentRate_c = '${arr.assessmentRate_c}',
-        assessmentRate_f = '${arr.assessmentRate_f}',
-        associateFeeBaseRate = '${arr.associateFeeBaseRate}',
-        associateFeeBaseRate_c = '${arr.associateFeeBaseRate_c}',
-        associateFeeBaseRate_f = '${arr.associateFeeBaseRate_f}',
-        associateFeeBaseRateTwo = '${arr.associateFeeBaseRateTwo}',
-        associateFeeBaseRateTwo_c= '${arr.associateFeeBaseRateTwo_c}',
-        associateFeeBaseRateTwo_f = '${arr.associateFeeBaseRateTwo_f}',
-        associateFeeBaseRateOverrideLessThen = '${arr.associateFeeBaseRateOverrideLessThen}',
-        associateFeeBaseRateOverrideLessThen_c = '${arr.associateFeeBaseRateOverrideLessThen_c}',
-        associateFeeBaseRateOverrideLessThen_f = '${arr.associateFeeBaseRateOverrideLessThen_f}',
-        associateFeeBaseRateOverrideLessThenTwo = '${arr.associateFeeBaseRateOverrideLessThenTwo}',
-        associateFeeBaseRateOverrideLessThenTwo_c = '${arr.associateFeeBaseRateOverrideLessThenTwo_c}',
-        associateFeeBaseRateOverrideLessThenTwo_f = '${arr.associateFeeBaseRateOverrideLessThenTwo_f}',
-        associateFeeBaseRateOverrideGreaterThen = '${arr.associateFeeBaseRateOverrideGreaterThen}',
-        associateFeeBaseRateOverrideGreaterThen_c = '${arr.associateFeeBaseRateOverrideGreaterThen_c}',
-        associateFeeBaseRateOverrideGreaterThen_f = '${arr.associateFeeBaseRateOverrideGreaterThen_f}',
-        associateFeeBaseRateOverrideGreaterThenTwo = '${arr.associateFeeBaseRateOverrideGreaterThenTwo}',
-        associateFeeBaseRateOverrideGreaterThenTwo_c = '${arr.associateFeeBaseRateOverrideGreaterThenTwo_c}',
-        associateFeeBaseRateOverrideGreaterThenTwo_f = '${arr.associateFeeBaseRateOverrideGreaterThenTwo_f}',
-        associateFeeBaseRateOverrideAsseements = '${arr.associateFeeBaseRateOverrideAsseements}',
-        associateFeeBaseRateOverrideAsseements_c = '${arr.associateFeeBaseRateOverrideAsseements_c}',
-        associateFeeBaseRateOverrideAsseements_f = '${arr.associateFeeBaseRateOverrideAsseements_f}',
-        inOfficeBlocks = '${arr.inOfficeBlocks}',
-        inOfficeBlockHours = '${arr.inOfficeBlockHours}',
-        inOfficeBlockTimes = '${arr.inOfficeBlockTimes}',
-        blocksBiWeeklyCharge = '${arr.blocksBiWeeklyCharge}',
-        blocksHourlyRate = '${arr.blocksHourlyRate}',
-        videoTech = '${arr.videoTech}',
-        cahrgeVideoFee = '${arr.cahrgeVideoFee}',
-        duplicateTable = '${arr.duplicateTable}',
-        nonChargeablesTable = '${arr.nonChargeablesTable}',
-        associateFeesTable = '${arr.associateFeesTable}',
-        totalRemittenceTable = '${arr.totalRemittenceTable}',
-        nonRemittablesTable = '${arr.nonRemittablesTable}',
-        transactionsTable = '${arr.transactionsTable}',
-        superviseeTotalTabel = '${arr.superviseeTotalTabel}',
-        appliedPaymentsTotalTable = '${arr.appliedPaymentsTotalTable}',
-        comments = '${arr.comments}',
-        adjustmentFee = '${arr.adjustmentFee}',
-        adjustmentPaymentFee = '${arr.adjustmentPaymentFee}'
-        WHERE id = ${id}`)
-        return 200
-        // let checkForDuplicate = await sql.query(`SELECT status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND  associateType='${arr.associateType}' AND status=1`)
-        // if (checkForDuplicate.recordset.length === 0) {
-
-        // }
-        // else {
-        //     return {
-        //         response: 500, errMsg: `User ${checkForDuplicate.recordset[0].associateType} ${checkForDuplicate.recordset[0].associateName} 
-        //     already exists, please set user to inactive before creating a new user with the same name` }
-        // }
+        }
+        else {
+            return {
+                response: 500, errMsg: `User ${checkForDuplicate.recordset[0].associateType} ${checkForDuplicate.recordset[0].associateName} 
+                already exists, please change the profile dates before trying again` }
+        }
 
     } catch (error) {
         return {
@@ -490,11 +481,10 @@ exports.UpdateWorkerPreofile = async (arr, id) => {
 exports.insertWorkerProfile = async (arr) => {
     let date = moment(arr.startDate).format('YYYY-MM-DD')
     let endDate = moment(arr.endDate).format('YYYY-MM-DD')
-    console.log(arr)
     try {
         await sql.connect(config)
-        let checkForDuplicate = await sql.query(`SELECT status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND  associateType='${arr.associateType}' AND status=1`)
-        if (checkForDuplicate.recordset.length === 0) {
+        let checkForDuplicate = await sql.query(`SELECT startDate, endDate, status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND status=1`)
+        if (checkForDuplicate.recordset.length === 0 || moment(checkForDuplicate.recordset[0].startDate).format('YYYY-MM-DD') > endDate || moment(checkForDuplicate.recordset[0].endDate).format('YYYY-MM-DD') < date) {
             let resp = await sql.query(`INSERT INTO [CFIR].[dbo].[profiles] (
                 status,
                 startDate,
@@ -623,7 +613,7 @@ exports.insertWorkerProfile = async (arr) => {
         else {
             return {
                 response: 500, errMsg: `User ${checkForDuplicate.recordset[0].associateType} ${checkForDuplicate.recordset[0].associateName} 
-            already exists, please set user to inactive before creating a new user with the same name` }
+            already exists, please change the profile dates before trying again` }
         }
     } catch (error) {
         console.log('insertWorkerProfile Function', error)

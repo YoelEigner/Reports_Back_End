@@ -90,7 +90,6 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         // the magic
         this.generateHeader(doc, worker)
         this.generateLine(doc, 70)
-
         await doc.table(mainTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -106,7 +105,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
             x.totalAmt = this.formatter.format(x.totalAmt)
         }
         )
-        await doc.table(reportedItemsTable, {            
+        await doc.table(reportedItemsTable, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
@@ -377,12 +376,12 @@ exports.removeNaN = (arr) => {
 exports.sortByName = (arr) => {
     arr.sort(
         firstBy(function (a, b) { return a.worker.localeCompare(b.worker); })
-            .thenBy((a, b) => { return new Date(a.FULLDATE) - new Date(b.FULLDATE) })
+            .thenBy((a, b) => { return new Date(a.batch_date) - new Date(b.batch_date) })
     );
 }
 exports.sortByDate = (arr) => {
     arr.sort((a, b) => {
-        return new Date(a.FULLDATE) - new Date(b.FULLDATE)
+        return new Date(a.batch_date) - new Date(b.batch_date)
     })
 }
 
@@ -574,3 +573,83 @@ exports.getProfileDateFormatted = async (workerId) => {
     profileDates.endDate = moment(profileDates.endDate).format('YYYY-MM-DD')
     return profileDates
 }
+exports.findDuplicates = (arr) => {
+    const seen = new Set();
+    return arr.filter(item => {
+        const itemAsString = JSON.stringify(item);
+        if (seen.has(itemAsString)) {
+            return true;
+        } else {
+            seen.add(itemAsString);
+            return false;
+        }
+    });
+}
+
+exports.findSplitFees = (arr) => {
+    return arr.filter(item => {
+        for (let i = 0; i < arr.length; i++) {
+            if (item.event_id === arr[i].event_id && item.case_file_name === arr[i].case_file_name && item.service_name === arr[i].service_name && item.invoice_id !== arr[i].invoice_id) {
+                return true;
+            }
+        }
+        return false;
+    });
+}
+exports.removeSplitFees = (arr) => {
+    return arr.filter(item => {
+        for (let i = 0; i < arr.length; i++) {
+            if (item.event_id === arr[i].event_id && item.case_file_name === arr[i].case_file_name && item.service_name === arr[i].service_name && item.invoice_id !== arr[i].invoice_id) {
+                if (i === 0) return true
+                return false;
+            }
+        }
+        return true;
+    });
+}
+
+exports.removeDuplicates = (arr) => {
+    const seen = new Set();
+    return arr.filter((item, index) => {
+        const itemAsString = JSON.stringify((item));
+        if (seen.has(itemAsString)) {
+            if (index === 0) return true
+            return false;
+        } else {
+            seen.add(itemAsString);
+            return true;
+        }
+    });
+}
+
+// exports.removeSplitFees = (arr) => {
+//     let newArr = [];
+//     let seen = new Map();
+//     for (let i = 0; i < arr.length; i++) {
+//         let item = arr[i];
+//         let key = item.event_id + item.case_file_name + item.service_name;
+//         if (!seen.has(key)) {
+//             seen.set(key, item);
+//         } else {
+//             let temp = seen.get(key);
+//             if (temp.invoice_id !== item.invoice_id) {
+//                 seen.set(key, item);
+//             }
+//         }
+//     }
+//     seen.forEach((value) => {
+//         newArr.push(value);
+//     });
+//     return newArr;
+// }
+
+// exports.removeDuplicates = (arr) => {
+//     let uniqueArr = [];
+//     for (let i = 0; i < arr.length; i++) {
+//         let current = arr[i];
+//         if (uniqueArr.indexOf(current) === -1) {
+//             uniqueArr.push(current);
+//         }
+//     }
+//     return uniqueArr;
+// }

@@ -2,20 +2,20 @@ const { getSupervisers, getReportedItems, getAssociateFeeBaseRate, getAssociateV
 const { calculateAssociateFeeForSupervisee } = require("./calculateAssociateFeeForSupervisee.js")
 // const { getRate } = require("./associateFees")
 
-exports.getRates = async (count, workerId) => {
-    const associateFees = await getAssociateFeeBaseRate(workerId)
-    if (associateFees[0] !== undefined) {
-        if (count >= 34) {
-            return associateFees[0].associateFeeBaseRateOverrideGreaterThen
-        }
-        else if (parseFloat(associateFees[0].associateFeeBaseRateOverrideLessThen) !== 0 && count <= 33) {
-            return associateFees[0].associateFeeBaseRateOverrideLessThen
-        }
-        else {
-            return associateFees[0].associateFeeBaseRate
-        }
-    }
-}
+// exports.getRates = async (count, workerId) => {
+//     const associateFees = await getAssociateFeeBaseRate(workerId)
+//     if (associateFees[0] !== undefined) {
+//         if (count >= 34) {
+//             return associateFees[0].associateFeeBaseRateOverrideGreaterThen
+//         }
+//         else if (parseFloat(associateFees[0].associateFeeBaseRateOverrideLessThen) !== 0 && count <= 33) {
+//             return associateFees[0].associateFeeBaseRateOverrideLessThen
+//         }
+//         else {
+//             return associateFees[0].associateFeeBaseRate
+//         }
+//     }
+// }
 
 
 
@@ -39,6 +39,7 @@ exports.getSupervisiesFunc = async (date, non_chargeablesArr, respSuperviser, pr
 
 exports.supervisiesTable = (data, date, supervisee, subtotal, non_chargeablesArr) => {
     let reportedItemsCount = data.map(x => !non_chargeablesArr.find(n => n === x.service_name) && x.COUNT).reduce((a, b) => a + b, 0)
+
     return {
         title: "Supervisee - " + supervisee,
         subtitle: "From " + date.start + " To " + date.end,

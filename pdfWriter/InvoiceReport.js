@@ -19,7 +19,7 @@ const { supervisiesTable, getSupervisiesFunc } = require("../tables/supervisiesT
 const { totalRemittance } = require("../tables/totalRemittance");
 const { calculateSuperviseeFeeFunc } = require("./calculateSuperviseeFee");
 const { createInvoiceTableFunc, getNotUnique, getSupervisies, formatter, sortByDate, removeNull, removeNullStr, removeNaN, getUniqueByMulti, getUniqueItemsMultiKey, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI, getProfileDateFormatted } = require("./pdfKitFunctions");
-const { removeDuplicateAndSplitFees, removeDuplicateAndSplitFeesFromArr } = require("./removeDuplicateAndSplitFees");
+const { removeDuplicateAndSplitFees, removeDuplicateAndSplitFeesFromArr, duplicateAndSplitFees, duplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees");
 const moment = require('moment')
 
 exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netAppliedTotal, duration_hrs, videoFee, paymentQty, proccessingFee, action, associateEmail, emailPassword, reportType) => {
@@ -71,7 +71,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let associateFeeAssessmentRate = workerProfile[0].assessmentRate
                 let associateFeeAssessmentRateCBT = workerProfile[0].assessmentRate_c
                 let associateFeeAssessmentRateCPRI = workerProfile[0].assessmentRate_f
-                let equivalentHours = await getAssessmentItemEquivalent()
+                // let equivalentHours = await getAssessmentItemEquivalent()
                 //*********************Create supervisees Tables *******************
                 let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser, profileDates)
 
@@ -86,44 +86,24 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
 
                 //******************** REMOVING DUPLICATE & SPLIT FEES (event_id && case_file_name) *********************
-                let { duplicateItemsAndSplitFees } = removeDuplicateAndSplitFees(data)
-                let { duplicateItemsAndSplitFeesRemoved } = removeDuplicateAndSplitFeesFromArr(data)
-                
+                let { duplicateItemsAndSplitFees } = duplicateAndSplitFees(data)
+                let { duplicateItemsAndSplitFeesRemoved } = duplicateAndSplitFeesRemoved(data)
+
                 //*******************calculate worker fee by leval *****************
                 let removedNonChargablesArr = duplicateItemsAndSplitFeesRemoved.filter(x => !nonRemittableItemsNames.includes(x.event_service_item_name))
                 let invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                 let invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                 let invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
 
-                // //************** ASSOCIATE FEE BASE RATE CALCULATION **********************
-                // /*COUNT ALL DUPLICATE/SPILIT FEES LEAVING ONLY ONE*/
-                // let associateFeeTableQty = 0
-                // if (workerProfile[0].associateType === 'L1' || workerProfile[0].associateType === 'L2') {
-                //     associateFeeTableQty = data.length - Math.max(nonChargeableItems.map(x => x.COUNT).reduce((a, b) => a + b, 0), 0)
-                //         - Math.max((duplicateItemsAndSplitFees.length - getNotUnique(duplicateItemsAndSplitFees.map(x => x.event_id)).length), 0)
-                // }
-                // else {
-                //     associateFeeTableQty = paymentData.length - Math.max(nonChargeableItems.map(x => x.COUNT).reduce((a, b) => a + b, 0), 0)
-                //         - Math.max((duplicateItemsAndSplitFees.length - getNotUnique(duplicateItemsAndSplitFees.map(x => x.event_id)).length), 0)
-                // }
-
-
                 //***************adjustment fees *****************/
-                // let adjustmentFee = JSON.parse(workerProfile.map(x => x.adjustmentFee))
-                // console.log(workerProfile,'adjust fee')
-                // let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFee)
-
                 let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFees)
-
-
-
                 let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
                 let tablesToShow = await getTablesToShow(workerId)
                 let showAdjustmentFeeTable = !adjustmentFeeTableData.datas.every(x => x.name === "-")
-                //***********calculate supervisee fee********************/
-                let superviseeFeeCalculation = respSuperviser.length >= 0 && reportType !== 'singlepdf' ? await calculateSuperviseeFeeFunc(dateUnformatted, respSuperviser, non_chargeablesArr, nonChargeableItems,
-                    proccessingFeeTypes, videoFee, null, profileDates) : []
 
+                //***********calculate supervisee fee********************/
+                // let superviseeFeeCalculation = respSuperviser.length >= 0 && reportType !== 'singlepdf' ? await calculateSuperviseeFeeFunc(dateUnformatted, respSuperviser, non_chargeablesArr, nonChargeableItems,
+                //     proccessingFeeTypes, videoFee, null, profileDates) : []
                 let superviseeFeeCalculationTemp = async (tableType) => {
                     if (respSuperviser.length >= 0 && reportType !== 'singlepdf') {
                         return (await calculateSuperviseeFeeFunc(dateUnformatted, respSuperviser, non_chargeablesArr, nonChargeableItems,
@@ -145,7 +125,12 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let associateFeeAssessmentTableCPRI = await associateFeesAssessments(worker, calculateWorkerFeeByLevalCPRI(wokrerLeval, data, paymentData, true), date, associateFeeAssessmentRateCPRI)
 
                 let finalTotalRemittence = associateFeeBaseRateTables.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
+                    + associateFeeBaseRateTablesCBT.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
+                    + associateFeeBaseRateTablesCPRI.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
                 let finalAssociateAssessmentFees = associateFeeAssessmentTable.rows.map(x => Number(x[4].replace(/[^0-9.-]+/g, "")))
+                    + associateFeeAssessmentTableCBT.rows.map(x => Number(x[4].replace(/[^0-9.-]+/g, "")))
+                    + associateFeeAssessmentTableCPRI.rows.map(x => Number(x[4].replace(/[^0-9.-]+/g, "")))
+
                 createInvoiceTableFunc(doc,
                 /*Main Table*/  mainTable(data, date),
                 /*Reported Items Table*/await reportedItemsTable(reportedItemDataFiltered, date, subtotal, workerId),

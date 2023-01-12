@@ -29,8 +29,8 @@ exports.calculateAssociateFeeForSupervisee = async (workerName, reportedItems, r
             workerName,
             reportedItems,
             formatterCurrency.format(rate),
-            formatterCurrency.format(vidFee),
-            formatterCurrency.format(adjustmentFee),
+            // formatterCurrency.format(vidFee),
+            // formatterCurrency.format(adjustmentFee),
             formatterCurrency.format(superviseeHST),
             formatterCurrency.format(total)
         ]

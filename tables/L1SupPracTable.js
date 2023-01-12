@@ -24,7 +24,7 @@ exports.L1SupPracTable = async (date, paymentData, workerId, name) => {
         title: "Supervisees (L1 Supervised Practice) " + name,
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
-            { label: "Date", property: 'FULLDATE', renderer: null, align: "center" },
+            { label: "Date", property: 'batch_date', renderer: null, align: "center" },
             { label: "Cart Item", property: 'description', renderer: null, align: "center" },
             { label: "Invoice ID", property: 'inv_no', renderer: null, align: "center" },
             { label: "Worker", property: 'worker', renderer: null, align: "center" },

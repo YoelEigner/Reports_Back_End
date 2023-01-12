@@ -1,7 +1,7 @@
 const { getAssociateProfileById, getPaymentDataForWorker, getDataDate } = require("../sql/sql")
-const { getRate } = require("../tables/associateFeesTherapy")
+const { getRate, getRate_CBT, getRate_CPRI } = require("../tables/associateFeesTherapy")
 const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js")
-const { removeNullStr, removeNaN, calculateProccessingFee, calculateWorkerFeeByLeval } = require("./pdfKitFunctions")
+const { removeNullStr, removeNaN, calculateProccessingFee, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI } = require("./pdfKitFunctions")
 const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees")
 
 
@@ -20,9 +20,18 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
             let isSuperviser = superviseeWorkerProfile[0].isSuperviser
             let IsSupervisedByNonDirector = superviseeWorkerProfile[0].IsSupervisedByNonDirector
             let associateType = superviseeWorkerProfile[0].associateType
-            let superviseeReportedItemsCount = calculateWorkerFeeByLeval(associateType, superviseeReportedItemdData, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
-            //  superviseeReportedItemdData.map(x => !non_chargeablesArr.find(n => n === x.service_name) && x.COUNT).reduce((a, b) => a + b, 0)
-            let SuperviseeRate = await getRate(superviseeReportedItemsCount, worker.id)
+
+            let superviseeReportedItemsCount = () => {
+                if (tableType === 'CFIR') return calculateWorkerFeeByLeval(associateType, superviseeReportedItemdData, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
+                else if (tableType === 'CBT') return calculateWorkerFeeByLevalCBT(associateType, superviseeReportedItemdData, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
+                else if (tableType === 'CPRI') return calculateWorkerFeeByLevalCPRI(associateType, superviseeReportedItemdData, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
+            }
+
+            let SuperviseeRate = async () => {
+                if (tableType === 'CFIR') return await getRate(superviseeReportedItemsCount(), worker.id)
+                else if (tableType === 'CBT') return await getRate_CBT(superviseeReportedItemsCount(), worker.id)
+                else if (tableType === 'CPRI') return await getRate_CPRI(superviseeReportedItemsCount(), worker.id)
+            }
             let chargeVideoFee = superviseeWorkerProfile.map(x => x.cahrgeVideoFee)[0]
 
             //Create associate fees table
@@ -33,16 +42,16 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
                 return !itemsToDelete.has(item);
             });
 
-            let superviseeFinalProccessingFee = calculateProccessingFee(reportedItemDataFiltered, proccessingFeeTypes, superviseeWorkerProfile[0].associateType).reduce((a, b) => a + b, 0)
+            // let superviseeFinalProccessingFee = calculateProccessingFee(reportedItemDataFiltered, proccessingFeeTypes, superviseeWorkerProfile[0].associateType).reduce((a, b) => a + b, 0)
+            let superviseeFinalProccessingFee = tableType === 'CFIR' ? calculateProccessingFee(reportedItemDataFiltered, proccessingFeeTypes, superviseeWorkerProfile[0].associateType).reduce((a, b) => a + b, 0) : 0
 
             let superviseeBlocksBiWeeklyCharge = parseFloat(superviseeWorkerProfile.map(x => x.blocksBiWeeklyCharge)[0])
-            let superviseeHST = ((superviseeReportedItemsCount * SuperviseeRate) * process.env.HST - (superviseeReportedItemsCount * SuperviseeRate))
+            let superviseeHST = ((superviseeReportedItemsCount() * await SuperviseeRate()) * process.env.HST - (superviseeReportedItemsCount() * await SuperviseeRate()))
             let superviseeAdjustmentFee = JSON.parse(superviseeWorkerProfile.map(x => x.adjustmentFee))
 
 
-            arr.push(await calculateAssociateFeeForSupervisee(worker.associateName, superviseeReportedItemsCount, parseFloat(SuperviseeRate), videoFee,
+            arr.push(await calculateAssociateFeeForSupervisee(worker.associateName, superviseeReportedItemsCount(), parseFloat(await SuperviseeRate()), videoFee,
                 superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge, superviseeHST, superviseeAdjustmentFee, chargeVideoFee, tableType))
-
         })
         Promise.all(loop).then(() => {
             resolve(arr)

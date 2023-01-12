@@ -5,13 +5,14 @@ const moment = require('moment')
 exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
     paymentData.map(x => {
         x.superviser = x.superviser.split(',')[1] + " " + x.superviser.split(',')[0]
-        x.FULLDATE = moment(x.FULLDATE).format('YYYY-MM-DD')
+        x.batch_date = moment(x.batch_date).format('YYYY-MM-DD')
     })
     let totalAppliedAmt = paymentData.map(x => Number(x.applied_amt)).reduce((a, b) => a + b, 0)
     let totalDuration_hrs = paymentData.map(x => Number(x.duration_hrs)).reduce((a, b) => a + b, 0)
 
     //****************calculate L1 Sup Practice amount***************/
-    let rate = await getRate(32, workerId, true)
+    let rate = await getRate(paymentData.length, workerId, true)
+
     let subPracTotal = 0
     let associateFee = rate.superviserRate + rate.cfirRate
     if (rate !== undefined && rate.isZero) {
@@ -24,7 +25,7 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
         subPracTotal = paymentData.map(x => Number(x.subPracAmount.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
     }
     let headers = [
-        { label: "Date", property: 'FULLDATE',   align: "center" },
+        { label: "Date", property: 'batch_date',   align: "center" },
         { label: "Individual Name", property: 'service_file_presenting_individual_name', align: "center" },
         { label: "Service Name", property: 'case_program', align: "center" },
         { label: "Cart Item", property: 'description', align: "center" },

@@ -1,5 +1,7 @@
 // const { getNotUnique } = require("./pdfKitFunctions")
 
+const { findDuplicates, findSplitFees, removeSplitFees, removeDuplicates } = require("./pdfKitFunctions");
+
 // exports.removeDuplicateAndSplitFees = (data) => {
 //     console.log(data)
 //     let duplicateIds = getNotUnique(data.map(x => x.event_id))
@@ -13,42 +15,22 @@
 
 //     return { duplicateItems, duplicateItemsId }
 // }
-exports.removeDuplicateAndSplitFees = (array) => {
-    const seen = new Set();
-    const duplicateItemsAndSplitFees = array.filter(item => {
-        const key = `${item.event_id}-${item.case_file_name}`;
-        // const key = `${item.individual_name}-${item.event_id}-${item.case_file_name}-${item.event_service_item_name}-${item.event_invoice_details_worker_name}`;
-        if (seen.has(key)) {
-            return true;
-        }
-        seen.add(key);
-        return false;
-    });
-    // const splitFeesArr = array.filter(item => {
-    //     const key = `${item.individual_name}-${item.event_service_item_name}-${item.event_service_item_qty}-${item.event_service_item_tax_total}-${item.applied_credit_amt}`;
-    //     if (seen.has(key)) {
-    //         return true;
-    //     }
-    //     seen.add(key);
-    //     return false;
-    // });
-    // let duplicateItemsAndSplitFees = [...duplicateItemsArr, ...splitFeesArr]
+exports.duplicateAndSplitFees = (array) => {
+    const duplicateItemsArr = findDuplicates(array)
+    const splitFeesArr = findSplitFees(array)
+    let duplicateItemsAndSplitFees = [...duplicateItemsArr, ...splitFeesArr]
 
     return { duplicateItemsAndSplitFees }
 }
 
-exports.removeDuplicateAndSplitFeesFromArr = (array) => {
-    const seen = new Set();
-    const duplicateItemsAndSplitFeesRemoved = array.filter((item, index) => {
-        const key = `${item.event_id}-${item.case_file_name}`;
-        // const key = `${item.individual_name}-${item.event_id}-${item.case_file_name}-${item.event_service_item_name}-${item.event_invoice_details_worker_name}`;
-        if (seen.has(key)) {
-            // if (index === 0) return true; // Keep first item
-            return false;
-        }
-        seen.add(key);
-        return true;
-    });
+exports.duplicateAndSplitFeesRemoved = (array) => {
+    const duplicateItemsArr = removeDuplicates(array)
+    const duplicateItemsAndSplitFeesRemoved = removeSplitFees(duplicateItemsArr)
+
     return { duplicateItemsAndSplitFeesRemoved }
 
 }
+
+
+
+  
