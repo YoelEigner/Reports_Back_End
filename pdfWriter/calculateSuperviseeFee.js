@@ -2,7 +2,7 @@ const { getAssociateProfileById, getPaymentDataForWorker, getDataDate } = requir
 const { getRate, getRate_CBT, getRate_CPRI } = require("../tables/associateFeesTherapy")
 const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js")
 const { removeNullStr, removeNaN, calculateProccessingFee, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI } = require("./pdfKitFunctions")
-const { removeDuplicateAndSplitFees } = require("./removeDuplicateAndSplitFees")
+const { removeDuplicateAndSplitFees, duplicateAndSplitFees } = require("./removeDuplicateAndSplitFees")
 
 
 exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, nonChargeableItems, proccessingFeeTypes, videoFee, tableType, profileDates) => {
@@ -13,7 +13,9 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
             let superviseeReportedItemdData = removeNullStr(await getDataDate(date, worker.associateName, profileDates), '-')
             let workerPaymentData = await getPaymentDataForWorker(worker.associateName, date, profileDates)
 
-            let { duplicateItems } = removeDuplicateAndSplitFees(superviseeReportedItemdData)
+            let { duplicateItemsAndSplitFees } = duplicateAndSplitFees(data)
+
+            // let { duplicateItems } = removeDuplicateAndSplitFees(superviseeReportedItemdData)
 
             let superviseeWorkerProfile = await getAssociateProfileById(worker.id)
             let isSupervised = superviseeWorkerProfile[0].isSupervised
@@ -36,7 +38,7 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
 
             //Create associate fees table
             // make a Set to hold values from namesToDeleteArr
-            const itemsToDelete = new Set(nonChargeableItems.concat(duplicateItems));
+            const itemsToDelete = new Set(nonChargeableItems.concat(duplicateItemsAndSplitFees));
             const reportedItemDataFiltered = workerPaymentData.filter((item) => {
                 item.total_amt = item.applied_amt
                 return !itemsToDelete.has(item);
