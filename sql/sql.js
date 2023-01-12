@@ -392,10 +392,7 @@ exports.getSupervisers = async (name) => {
 // }
 
 exports.UpdateWorkerPreofile = async (arr, id) => {
-
-
     try {
-
         await sql.connect(config)
         let checkForDuplicate = await sql.query(`SELECT startDate, endDate, status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND id !=${id} AND status=1`)
         if (checkForDuplicate.recordset.length === 0 || moment(checkForDuplicate.recordset[0].startDate).format('YYYY-MM-DD') > arr.endDate || moment(checkForDuplicate.recordset[0].endDate).format('YYYY-MM-DD') < arr.startDate) {
