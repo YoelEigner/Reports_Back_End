@@ -41,7 +41,7 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
                 formatter.format(ajustmentFees.toFixed(2)),
                 formatter.format(blockItemFees),
                 formatter.format(hst),
-                formatter.format(totalWoHST + hst)
+                formatter.format(totalWoHST + hst + blockItemFees + vidFee + finalProccessingFee + ajustmentFees)
             ],
             ...superviseeFeeCalculation
         ],
