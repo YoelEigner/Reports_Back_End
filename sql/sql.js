@@ -68,7 +68,7 @@ exports.getDataDateForWorker = async (date, worker, profileDates) => {
                                         WHERE i.batch_date >= '${date.start}' AND i.batch_date <= '${date.end}'
                                         AND i.batch_date >= '${profileDates.startDate}' AND i.batch_date <= '${profileDates.endDate}'
                                         AND (i.event_primary_worker_name = '${worker}' OR i.event_invoice_details_worker_name='${worker}')
-                                        AND (p.supervisorOneGetsMoney = 1 OR p.supervisorTwoGetsMoney = 1))
+                                        AND (p.supervisor1 = '${worker}' AND p.supervisorOneGetsMoney = 1 OR p.supervisor2 = '${worker}' AND p.supervisorTwoGetsMoney = 1))
                                         UNION
                                         (
                                         select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
@@ -578,7 +578,7 @@ exports.getPaymentData = async (worker, date, profileDates) => {
                                         WHERE DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) BETWEEN '${date.start}' AND '${date.end}'
                                         AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                         AND (fv.superviser like '%${worker}%' OR worker like '%${worker}%')
-                                        AND (p.supervisorOneGetsMoney = 1 OR p.supervisorTwoGetsMoney = 1)
+                                        AND (p.supervisor1 = '%${worker}%' AND p.supervisorOneGetsMoney = 1 OR p.supervisor2 = '%${worker}%' AND p.supervisorTwoGetsMoney = 1)
                                         )
                                         UNION
                                         (

@@ -57,7 +57,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             //***********************Applied Payments Table ******************/
             let appliedPaymentsTableTemp = await appliedPaymentsTable(date, paymentData, workerId, nonRemittableItems)
 
-            //*************Applied Payments total table ****************/
+            //*************Applied Payments totalRemittance table ****************/
             const getClientPayments = () => { return (paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
             const getClientHours = () => { return (paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
 
@@ -152,8 +152,8 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 let tempArrayOftransations = arrayOftransations.map(x => x[0]).filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
                 /*remove non chargables*/
                 // netAppliedTotal = (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
-                netAppliedTotal = reportType === 'singlepdf' ? (clientPayments - ajustmentFeesTotal)
-                    : (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
+                netAppliedTotal = reportType === 'singlepdf' ? (clientPayments + ajustmentFeesTotal)
+                    : clientPayments - superviseeClientsPayment - totalAppliedAmount - totalSupPracAmount + ajustmentFeesTotal
                 duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 qty = tempQty.length
                 proccessingFee = calculateProccessingFee(tempArrayOftransations, proccessingFeeTypes, workerProfile[0].associateType).reduce((a, b) => a + b, 0)
