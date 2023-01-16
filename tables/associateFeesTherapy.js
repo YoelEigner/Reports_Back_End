@@ -15,7 +15,7 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
     let rate = await this.getRate(removedNonChargablesArr, workerId, false, L1AssociateFee)
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
 
-    let totalWoHST = (count * rate) + finalProccessingFee + blockItemFees + ajustmentFees
+    let totalWoHST = (count * rate) + blockItemFees
     let hst = totalWoHST * (process.env.HST / 100)
     return {
         title: "CFIR Associate Fees (Therapy Only)",
