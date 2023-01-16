@@ -654,18 +654,18 @@ exports.removeSplitFees = (arr) => {
 }
 
 exports.removeDuplicates = (arr) => {
-    let unique = arr.filter(function (item) {
-        let duplicate = arr.filter(function (item2) {
-            return item.individual_name === item2.individual_name &&
-                item.case_file_name === item2.case_file_name &&
-                item.batch_date === item2.batch_date &&
-                item.event_id === item2.event_id &&
-                item.invoice_id === item2.invoice_id &&
-                item.event_service_item_name === item2.event_service_item_name;
-        });
-        return duplicate.length === 1;
+    let seen = new Set();
+    let unique = arr.filter(function(item) {
+        let key = item.individual_name + item.case_file_name + item.batch_date + item.event_id + item.invoice_id + item.event_service_item_name;
+        if (!seen.has(key)) {
+            seen.add(key);
+            return true;
+        }
+        return false;
     });
     return unique;
+    
+    
 
     // const seen = new Set();
     // return arr.filter(item => {
