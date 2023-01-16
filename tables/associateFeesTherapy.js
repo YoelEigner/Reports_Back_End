@@ -11,8 +11,8 @@ const getRatesForL1 = (arr) => {
     return arr.map(x => x !== undefined ? Number(x.replace(/[^0-9.-]+/g, "")) : 0).reduce((a, b) => a + b, 0)
 }
 
-exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees, superviseeFeeCalculation, chargeVideoFee, L1AssociateFee) => {
-    let rate = await this.getRate(count, workerId, false, L1AssociateFee)
+exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees, superviseeFeeCalculation, chargeVideoFee, L1AssociateFee, removedNonChargablesArr) => {
+    let rate = await this.getRate(removedNonChargablesArr, workerId, false, L1AssociateFee)
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
 
     let totalWoHST = (count * rate) + finalProccessingFee + blockItemFees + ajustmentFees

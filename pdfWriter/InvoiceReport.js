@@ -118,11 +118,11 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 //***************calculate associateship fees  */
                 let finalAdjustmentFee = adjustmentFees.map(x => JSON.parse(x.adjustmentFee)[0].value) ? adjustmentFees.map(x => JSON.parse(x.adjustmentFee)[0].value) : 0
                 let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
-                    Number(finalAdjustmentFee), await superviseeFeeCalculationTemp('CFIR'), chargeVideoFee, respSuperviser)
+                    Number(finalAdjustmentFee), await superviseeFeeCalculationTemp('CFIR'), chargeVideoFee, respSuperviser, removedNonChargablesArr.length)
                 let associateFeeBaseRateTablesCBT = await associateFeesTherapyCBT(worker, invoiceQtyCBT, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
-                    0, await superviseeFeeCalculationTemp('CBT'), chargeVideoFee, respSuperviser)
+                    0, await superviseeFeeCalculationTemp('CBT'), chargeVideoFee, respSuperviser, removedNonChargablesArr.length)
                 let associateFeeBaseRateTablesCPRI = await associateFeesTherapyCPRI(worker, invoiceQtyCPRI, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
-                    0, await superviseeFeeCalculationTemp('CPRI'), chargeVideoFee, respSuperviser)
+                    0, await superviseeFeeCalculationTemp('CPRI'), chargeVideoFee, respSuperviser, removedNonChargablesArr.length)
 
                 let associateFeeAssessmentTable = await associateFeesAssessments(worker, calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, true), date, associateFeeAssessmentRate, 'CFIR')
                 let associateFeeAssessmentTableCBT = await associateFeesAssessments(worker, calculateWorkerFeeByLevalCBT(wokrerLeval, data, paymentData, true), date, associateFeeAssessmentRateCBT, 'CBT')

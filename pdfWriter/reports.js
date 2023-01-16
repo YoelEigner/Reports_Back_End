@@ -10,9 +10,14 @@ const { paymentReportGenerator } = require("./paymentReportGenerator");
 
 
 const getDecryptedPass = async () => {
-    let encryptedPass = await getEmailPassword()
-    const result = CryptoJS.AES.decrypt(encryptedPass[0].password, process.env.KEY);
-    return result.toString(CryptoJS.enc.Utf8);
+    try {
+        let encryptedPass = await getEmailPassword()
+        const result = CryptoJS.AES.decrypt(encryptedPass[0].password, process.env.KEY);
+        return result.toString(CryptoJS.enc.Utf8);
+    } catch (error) {
+        return ''
+    }
+
 }
 
 const getNetTotal = (res, date, worker, action, reportType) => {

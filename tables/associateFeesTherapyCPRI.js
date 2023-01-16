@@ -98,12 +98,12 @@ const getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
         }
     }
 }
-exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees, superviseeFeeCalculation, chargeVideoFee, L1AssociateFee) => {
-    let rate = await getRate_CPRI(count, workerId, false, L1AssociateFee)
+exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees, superviseeFeeCalculation, chargeVideoFee, L1AssociateFee, removedNonChargablesArr) => {
+    let rate = await getRate_CPRI(removedNonChargablesArr, workerId, false, L1AssociateFee)
 
     let totalWoHST = (count * rate)
     let hst = totalWoHST * (process.env.HST / 100)
-    
+
     return {
         title: "CPRI Associate Fees (Therapy Only)",
         subtitle: "From " + date.start + " To " + date.end,
