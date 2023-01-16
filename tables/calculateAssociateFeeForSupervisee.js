@@ -8,7 +8,9 @@ exports.calculateAssociateFeeForSupervisee = async (workerName, reportedItems, r
     superviseeHST, superviseeAdjustmentFee, chargeVideoFee, tableType) => {
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
     let adjustmentFee = superviseeAdjustmentFee.map(x => Number(x.value)).reduce((a, b) => a + b, 0)
-    let total = (reportedItems * rate) * process.env.HST + vidFee + superviseeFinalProccessingFee + superviseeBlocksBiWeeklyCharge + adjustmentFee
+    let totalWoHST = (reportedItems * rate) + vidFee + superviseeFinalProccessingFee + superviseeBlocksBiWeeklyCharge + adjustmentFee
+    let hst = totalWoHST * (process.env.HST / 100)
+    let total = totalWoHST + hst
     // let resp = await getReportedItems(date, worker.associateName)
 
     if (tableType === 'CFIR') {
@@ -20,18 +22,18 @@ exports.calculateAssociateFeeForSupervisee = async (workerName, reportedItems, r
             formatterCurrency.format(superviseeFinalProccessingFee),
             formatterCurrency.format(adjustmentFee),
             formatterCurrency.format(superviseeBlocksBiWeeklyCharge),
-            formatterCurrency.format(superviseeHST),
+            formatterCurrency.format(hst),
             formatterCurrency.format(total)
         ]
     }
-    else{
+    else {
         return [
             workerName,
             reportedItems,
             formatterCurrency.format(rate),
             // formatterCurrency.format(vidFee),
             // formatterCurrency.format(adjustmentFee),
-            formatterCurrency.format(superviseeHST),
+            formatterCurrency.format(hst),
             formatterCurrency.format(total)
         ]
     }

@@ -157,6 +157,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 qty = tempQty.length
                 proccessingFee = calculateProccessingFee(tempArrayOftransations, proccessingFeeTypes, workerProfile[0].associateType).reduce((a, b) => a + b, 0)
+
             })
         } catch (error) {
             console.log(error)

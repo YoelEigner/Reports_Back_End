@@ -465,8 +465,8 @@ exports.getFeeAmount = (arr, type) => {
 }
 
 exports.calculateProccessingFee = (workerPaymentData, proccessingFeeTypes) => {
-    let tempArr = this.removeOrAddAssessments(workerPaymentData, false)
-    return tempArr.map(x => x.proccessingFee =
+    // let tempArr = this.removeOrAddAssessments(workerPaymentData, false)
+    return workerPaymentData.map(x => x.proccessingFee =
         parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).ammount.replace(/[^0-9]+/, '')) +
         parseFloat(this.getFeeAmount(proccessingFeeTypes, x.reason_type) && this.getFeeAmount(proccessingFeeTypes, x.reason_type).percentage.replace(/[^0-9.]+/, '') / 100) * x.total_amt)
 }
