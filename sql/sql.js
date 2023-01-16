@@ -46,8 +46,7 @@ exports.getDataDate = async (date, worker, profileDates) => {
                                     FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                     >='${date.start}' and batch_date <='${date.end}'
                                     AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
-                                    AND [event_primary_worker_name]='${worker}'
-                                    AND [financial_transaction_type] != 'return'`)
+                                    AND [event_primary_worker_name]='${worker}'`)
         // let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
         //                             FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
         //                             >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}'
@@ -69,7 +68,6 @@ exports.getDataDateForWorker = async (date, worker, profileDates) => {
                                         WHERE i.batch_date >= '${date.start}' AND i.batch_date <= '${date.end}'
                                         AND i.batch_date >= '${profileDates.startDate}' AND i.batch_date <= '${profileDates.endDate}'
                                         AND (i.event_primary_worker_name = '${worker}' OR i.event_invoice_details_worker_name='${worker}')
-                                        AND i.[financial_transaction_type] != 'return'
                                         AND (p.supervisorOneGetsMoney = 1 OR p.supervisorTwoGetsMoney = 1))
                                         UNION
                                         (
@@ -77,8 +75,7 @@ exports.getDataDateForWorker = async (date, worker, profileDates) => {
                                                                             FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                                                             >='${date.start}' and batch_date <='${date.end}'
                                                                             AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
-                                                                            AND [event_primary_worker_name]='${worker}'
-                                                                            AND [financial_transaction_type] != 'return')`
+                                                                            AND [event_primary_worker_name]='${worker}')`
         )
         return resp.recordset;
     } catch (err) {
@@ -237,8 +234,7 @@ exports.getReportedItems = async (date, worker, profileDates) => {
                                     FROM [CFIR].[dbo].[invoice_data] 
                                     WHERE batch_date >= '${date.start}' and batch_date <= '${date.end}'
                                     AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
-                                    AND [event_primary_worker_name]='${worker}'
-                                    AND [financial_transaction_type] != 'return'
+                                    AND [event_primary_worker_name]='${worker}'                                    
                                     GROUP BY [event_service_item_name], event_service_item_total,event_primary_worker_name,[receipt_reason],[service_name]`)
         return resp.recordset
     } catch (err) {
@@ -582,7 +578,6 @@ exports.getPaymentData = async (worker, date, profileDates) => {
                                         WHERE DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) BETWEEN '${date.start}' AND '${date.end}'
                                         AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                         AND (fv.superviser like '%${worker}%' OR worker like '%${worker}%')
-                                        AND fv.[rec_type] != 'return'
                                         AND (p.supervisorOneGetsMoney = 1 OR p.supervisorTwoGetsMoney = 1)
                                         )
                                         UNION
@@ -591,7 +586,6 @@ exports.getPaymentData = async (worker, date, profileDates) => {
                                             WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                             AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                             AND worker like '%${worker}%'
-                                            AND [rec_type] != 'return'
                                         )`)
         // let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
         //                             WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
@@ -609,8 +603,7 @@ exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
-                                   AND worker like '%${tempWorker}%'
-                                   AND [rec_type] != 'return'`)
+                                   AND worker like '%${tempWorker}%'`)
         return resp.recordset
     } catch (error) {
         // console.log(error)
