@@ -26,11 +26,9 @@ exports.duplicateAndSplitFees = (array) => {
 exports.duplicateAndSplitFeesRemoved = (array) => {
     const duplicateItemsArr = removeDuplicates(array)
     const duplicateItemsAndSplitFeesRemoved = removeSplitFees(duplicateItemsArr)
-
     return { duplicateItemsAndSplitFeesRemoved }
 
 }
 
 
 
-  

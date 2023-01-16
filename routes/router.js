@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { authToken } = require("../MidWear/MidWear");
-const { getphysicians, getProvinces, getWorkerProfile, insertWorkerProfile, getVideoTech, getServiceTypes, UpdateServiceTypes, UpdateWorkerPreofile, getPaymentTypes, getAssociateTypes, getAssociateLeval, updateEmailPassword, resetAdjustmentFees } = require("../sql/sql");
+const { getphysicians, getProvinces, getWorkerProfile, insertWorkerProfile, getVideoTech, getServiceTypes, UpdateServiceTypes, UpdateWorkerPreofile, getPaymentTypes, getAssociateTypes, getAssociateLeval, updateEmailPassword, resetAdjustmentFees, deleteprofile } = require("../sql/sql");
 const { getSupervisiesFunc } = require("../pdfWriter/pdfKitFunctions");
 const { GeneratePDF } = require("../pdfWriter/generatePDF");
 
@@ -40,6 +40,10 @@ router.route('/getassociateleval', authToken).get(async (req, res) => {
 
 
 //************POST***************
+router.route("/deleteprofile", authToken).post(async (req, res) => {
+    let resp = await deleteprofile(req.body.id)
+    res.sendStatus(resp)
+});
 
 router.route("/resetadjustmentfee", authToken).get(async (req, res) => {
     let resp = await resetAdjustmentFees()

@@ -11,7 +11,7 @@ const { sendEmail } = require("../email/sendEmail");
 const { L1SupPracTable } = require("../tables/L1SupPracTable");
 const moment = require('moment')
 
-exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, associateEmail, emailPassword, action, reportType) => {
+exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, associateEmail, emailPassword, action, reportType, index) => {
     return new Promise(async (resolve, reject) => {
         let buffers = [];
         let netAppliedTotal = 0
@@ -24,8 +24,9 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let pdfData = Buffer.concat(buffers);
             try {
                 if (action === 'email') {
-                    let emailResp = await sendEmail(associateEmail, worker, pdfData, emailPassword, 'Payment')
+                    let emailResp = await sendEmail(associateEmail, worker, pdfData, emailPassword, 'Payment', index)
                     resolve(emailResp)
+
                 }
                 else { resolve({ pdfData, netAppliedTotal, duration_hrs, qty, proccessingFee }) }
             } catch (error) {
@@ -37,7 +38,10 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
         try {
             let profileDates = await getProfileDateFormatted(workerId)
-            let paymentData = reportType === 'singlepdf' ? await getPaymentDataForWorker(worker, dateUnformatted, profileDates) : await getPaymentData(worker, dateUnformatted, profileDates)
+            let paymentData = reportType === 'singlepdf' ?
+                await getPaymentDataForWorker(worker, dateUnformatted, profileDates)
+                :
+                await getPaymentData(worker, dateUnformatted, profileDates)
 
             let workerProfile = await getAssociateProfileById(workerId)
             let proccessingFeeTypes = await getPaymentTypes()

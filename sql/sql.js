@@ -22,109 +22,70 @@ exports.getProfileDates = async (workerId) => {
         return resp.recordset[0];
     } catch (err) {
         console.log('profileDates Function', err); return err
+        return err
     }
 }
 
-// exports.getData = async () => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year, Month , Day) AS date FROM invoice_data AND [financial_transaction_type] != 'return'`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getData Function', err); return err
-//     }
-// }
+exports.deleteprofile = async (id) => {
+    try {
+        await sql.connect(config);
+        let resp = await sql.query(`delete from profiles where id = ${id}`)
+        if (resp.rowsAffected[0] === 1) return 200
+        else return 500
+    } catch (error) {
+        console.log(error, 'Error deleing profile')
+        return error
+    }
 
-// exports.getDataUser = async (user) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year, Month , Day) AS date FROM invoice_data WHERE individual_name='${user} AND [financial_transaction_type] != 'return'`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataUser Function', err); return err
-//     }
-// }
+
+}
 exports.getDataDate = async (date, worker, profileDates) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
-                                    FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-                                    >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}'
-                                    AND DATEFROMPARTS ( Year, Month , Day) >='${profileDates.startDate}' and DATEFROMPARTS ( Year, Month , Day) <='${profileDates.endDate}'
+        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
+                                    FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
+                                    >='${date.start}' and batch_date <='${date.end}'
+                                    AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
                                     AND [event_primary_worker_name]='${worker}'
                                     AND [financial_transaction_type] != 'return'`)
+        // let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
+        //                             FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
+        //                             >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}'
+        //                             AND DATEFROMPARTS ( Year, Month , Day) >='${profileDates.startDate}' and DATEFROMPARTS ( Year, Month , Day) <='${profileDates.endDate}'
+        //                             AND [event_primary_worker_name]='${worker}'
+        //                             AND [financial_transaction_type] != 'return'`)
         return resp.recordset;
     } catch (err) {
-        console.log('getDataDate Function', err); return err
+        console.log('getDataDate Function', err);
+        return err
     }
 }
-// exports.getDataDateA__ = async (date, worker, profileDates) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
-//                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-//                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' 
-//                                     AND DATEFROMPARTS ( Year, Month , Day) >='${profileDates.startDate}' and DATEFROMPARTS ( Year, Month , Day) <='${profileDates.endDate}'
-//                                     AND [event_primary_worker_name]='${worker}'
-//                                     AND service_name LIKE 'A__%'`)
-
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataDateA__ Function', err); return err
-//     }
-// }
-// exports.getDataDateT_c_ = async (date, worker, city) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
-//                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-//                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-//                                     AND service_name LIKE 'T_c_%'`)
-
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataDateT_c_ Function', err); return err
-//     }
-// }
-// exports.getDataDateA_c_ = async (date, worker, city) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
-//                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-//                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-//                                     AND service_name LIKE 'A_c_%'`)
-
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataDateA_c_ Function', err); return err
-//     }
-// }
-// exports.getDataDateT_f_ = async (date, worker, city) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) , 101) AS FULLDATE
-//                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-//                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-//                                     AND service_name LIKE 'T_f_%'`)
-
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataDateT_f_ Function', err); return err
-//     }
-// }
-// exports.getDataDateA_f_ = async (date, worker, city) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) , 101) AS FULLDATE
-//                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-//                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-//                                     AND service_name LIKE 'A_f_%'`)
-
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataDateA_f_ Function', err); return err
-//     }
-// }
+exports.getDataDateForWorker = async (date, worker, profileDates) => {
+    try {
+        await sql.connect(config);
+        let resp = await sql.query(`(SELECT i.*, FORMAT(i.[event_service_item_total], 'C') as TOTAL, i.batch_date AS FULLDATE
+                                        FROM [CFIR].[dbo].[invoice_data] i
+                                        JOIN profiles p ON (i.event_primary_worker_name = p.associateName OR event_invoice_details_worker_name = p.associateName)
+                                        WHERE i.batch_date >= '${date.start}' AND i.batch_date <= '${date.end}'
+                                        AND i.batch_date >= '${profileDates.startDate}' AND i.batch_date <= '${profileDates.endDate}'
+                                        AND (i.event_primary_worker_name = '${worker}' OR i.event_invoice_details_worker_name='${worker}')
+                                        AND i.[financial_transaction_type] != 'return'
+                                        AND (p.supervisorOneGetsMoney = 1 OR p.supervisorTwoGetsMoney = 1))
+                                        UNION
+                                        (
+                                        select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
+                                                                            FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
+                                                                            >='${date.start}' and batch_date <='${date.end}'
+                                                                            AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
+                                                                            AND [event_primary_worker_name]='${worker}'
+                                                                            AND [financial_transaction_type] != 'return')`
+        )
+        return resp.recordset;
+    } catch (err) {
+        console.log('getDataDate Function', err);
+        return err
+    }
+}
 
 exports.getAssociateTypes = async (associateType) => {
     let temp = ""
@@ -274,8 +235,8 @@ exports.getReportedItems = async (date, worker, profileDates) => {
         let resp = await sql.query(`select [receipt_reason], [service_name], [event_service_item_name],event_primary_worker_name, FORMAT(sum([event_service_item_total]), 'c') as TOTAL, sum([event_service_item_total]) as event_service_item_total,
                                     FORMAT([event_service_item_total], 'c') as itemTotal, COUNT([event_service_item_name]) as COUNT
                                     FROM [CFIR].[dbo].[invoice_data] 
-                                    WHERE DATEFROMPARTS ( Year, Month , Day) >= '${date.start}' and DATEFROMPARTS ( Year, Month , Day) <= '${date.end}'
-                                    AND DATEFROMPARTS ( Year, Month , Day) >='${profileDates.startDate}' and DATEFROMPARTS ( Year, Month , Day) <='${profileDates.endDate}'
+                                    WHERE batch_date >= '${date.start}' and batch_date <= '${date.end}'
+                                    AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
                                     AND [event_primary_worker_name]='${worker}'
                                     AND [financial_transaction_type] != 'return'
                                     GROUP BY [event_service_item_name], event_service_item_total,event_primary_worker_name,[receipt_reason],[service_name]`)
@@ -332,15 +293,6 @@ exports.getPaymentTypes = async () => {
         console.log(error)
     }
 }
-// exports.getWorkerData = async () => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[payment_types] `)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
 
 exports.getProcessingFee = async (feeName) => {
     try {
@@ -375,101 +327,101 @@ exports.getNonChargeables = async () => {
 exports.getSupervisers = async (name) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT id, associateName, associateType, supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where
-                                    (associateType != 'L1 (Sup Prac)') AND (supervisor1='${name}' OR supervisor2='${name}')`)
+        let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where
+                                    (associateType != 'L1 (Sup Prac)') AND (supervisor1='${name}' AND supervisorOneGetsMoney = 'true' OR supervisor2='${name}' AND supervisorTwoGetsMoney = 'true')`)
 
         return resp.recordset
     } catch (error) {
         console.log(error)
     }
 }
-// exports.getSupervisiesPaymentData = async (name) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[invoice_data] where event_primary_worker_name = '${name}'`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
 
 exports.UpdateWorkerPreofile = async (arr, id) => {
     try {
         await sql.connect(config)
-        let checkForDuplicate = await sql.query(`SELECT startDate, endDate, status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND id !=${id} AND status=1`)
-        if (checkForDuplicate.recordset.length === 0 || moment(checkForDuplicate.recordset[0].startDate).format('YYYY-MM-DD') > arr.endDate || moment(checkForDuplicate.recordset[0].endDate).format('YYYY-MM-DD') < arr.startDate) {
-            await sql.query(`UPDATE [CFIR].[dbo].[profiles]
-                SET status = '${arr.status}',
-                startDate = '${arr.startDate}',
-                endDate = '${arr.endDate}',
-                site = '${arr.site}',
-                associateType = '${arr.associateType}',
-                associateEmail = '${arr.associateEmail}',
-                associateName = '${arr.associateName}',
-                isSuperviser = '${arr.isSuperviser}',
-                isSupervised = '${arr.isSupervised}',
-                IsSupervisedByNonDirector = '${arr.IsSupervisedByNonDirector}',
-                supervisor1 = '${arr.supervisor1}',
-                supervisor1Covrage = '${arr.supervisor1Covrage}',
-                supervisor2 = '${arr.supervisor2}',
-                supervisor2Covrage = '${arr.supervisor2Covrage}',
-                supervisorOneGetsMoney = '${arr.supervisorOneGetsMoney}',
-                supervisorTwoGetsMoney = '${arr.supervisorTwoGetsMoney}',
-                chargesHST = '${arr.chargesHST}',
-                associateFeeBaseType = '${arr.associateFeeBaseType}',
-                associateFeeBaseType2 = '${arr.associateFeeBaseType2}',
-                assessmentRate = '${arr.assessmentRate}',
-                assessmentRate_c = '${arr.assessmentRate_c}',
-                assessmentRate_f = '${arr.assessmentRate_f}',
-                associateFeeBaseRate = '${arr.associateFeeBaseRate}',
-                associateFeeBaseRate_c = '${arr.associateFeeBaseRate_c}',
-                associateFeeBaseRate_f = '${arr.associateFeeBaseRate_f}',
-                associateFeeBaseRateTwo = '${arr.associateFeeBaseRateTwo}',
-                associateFeeBaseRateTwo_c= '${arr.associateFeeBaseRateTwo_c}',
-                associateFeeBaseRateTwo_f = '${arr.associateFeeBaseRateTwo_f}',
-                associateFeeBaseRateOverrideLessThen = '${arr.associateFeeBaseRateOverrideLessThen}',
-                associateFeeBaseRateOverrideLessThen_c = '${arr.associateFeeBaseRateOverrideLessThen_c}',
-                associateFeeBaseRateOverrideLessThen_f = '${arr.associateFeeBaseRateOverrideLessThen_f}',
-                associateFeeBaseRateOverrideLessThenTwo = '${arr.associateFeeBaseRateOverrideLessThenTwo}',
-                associateFeeBaseRateOverrideLessThenTwo_c = '${arr.associateFeeBaseRateOverrideLessThenTwo_c}',
-                associateFeeBaseRateOverrideLessThenTwo_f = '${arr.associateFeeBaseRateOverrideLessThenTwo_f}',
-                associateFeeBaseRateOverrideGreaterThen = '${arr.associateFeeBaseRateOverrideGreaterThen}',
-                associateFeeBaseRateOverrideGreaterThen_c = '${arr.associateFeeBaseRateOverrideGreaterThen_c}',
-                associateFeeBaseRateOverrideGreaterThen_f = '${arr.associateFeeBaseRateOverrideGreaterThen_f}',
-                associateFeeBaseRateOverrideGreaterThenTwo = '${arr.associateFeeBaseRateOverrideGreaterThenTwo}',
-                associateFeeBaseRateOverrideGreaterThenTwo_c = '${arr.associateFeeBaseRateOverrideGreaterThenTwo_c}',
-                associateFeeBaseRateOverrideGreaterThenTwo_f = '${arr.associateFeeBaseRateOverrideGreaterThenTwo_f}',
-                associateFeeBaseRateOverrideAsseements = '${arr.associateFeeBaseRateOverrideAsseements}',
-                associateFeeBaseRateOverrideAsseements_c = '${arr.associateFeeBaseRateOverrideAsseements_c}',
-                associateFeeBaseRateOverrideAsseements_f = '${arr.associateFeeBaseRateOverrideAsseements_f}',
-                inOfficeBlocks = '${arr.inOfficeBlocks}',
-                inOfficeBlockHours = '${arr.inOfficeBlockHours}',
-                inOfficeBlockTimes = '${arr.inOfficeBlockTimes}',
-                blocksBiWeeklyCharge = '${arr.blocksBiWeeklyCharge}',
-                blocksHourlyRate = '${arr.blocksHourlyRate}',
-                videoTech = '${arr.videoTech}',
-                cahrgeVideoFee = '${arr.cahrgeVideoFee}',
-                duplicateTable = '${arr.duplicateTable}',
-                nonChargeablesTable = '${arr.nonChargeablesTable}',
-                associateFeesTable = '${arr.associateFeesTable}',
-                totalRemittenceTable = '${arr.totalRemittenceTable}',
-                nonRemittablesTable = '${arr.nonRemittablesTable}',
-                transactionsTable = '${arr.transactionsTable}',
-                superviseeTotalTabel = '${arr.superviseeTotalTabel}',
-                appliedPaymentsTotalTable = '${arr.appliedPaymentsTotalTable}',
-                comments = '${arr.comments}',
-                adjustmentFee = '${arr.adjustmentFee}',
-                adjustmentPaymentFee = '${arr.adjustmentPaymentFee}'
-                WHERE id = ${id}`)
-            return 200
+        if (arr.associateName) {
+            let checkForDuplicate = await sql.query(`SELECT startDate, endDate, status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND id !=${id} AND status=1`)
 
-        }
-        else {
-            return {
-                response: 500, errMsg: `User ${checkForDuplicate.recordset[0].associateType} ${checkForDuplicate.recordset[0].associateName} 
-                already exists, please change the profile dates before trying again` }
-        }
+            let duplicateFound = false;
+            checkForDuplicate.recordset.forEach(record => {
+                if (record.associateName === arr.associateName) {
+                    if ((new Date(arr.startDate) >= record.startDate && new Date(arr.startDate) <= record.endDate) || (new Date(arr.endDate) >= record.startDate && new Date(arr.endDate) <= record.endDate)) {
+                        duplicateFound = true;
+                    }
+                }
+            });
+            if (!duplicateFound) {
+                await sql.query(`UPDATE [CFIR].[dbo].[profiles]
+                        SET status = '${arr.status}',
+                        startDate = '${arr.startDate}',
+                        endDate = '${arr.endDate}',
+                        site = '${arr.site}',
+                        associateType = '${arr.associateType}',
+                        associateEmail = '${arr.associateEmail}',
+                        associateName = '${arr.associateName}',
+                        isSuperviser = '${arr.isSuperviser}',
+                        isSupervised = '${arr.isSupervised}',
+                        IsSupervisedByNonDirector = '${arr.IsSupervisedByNonDirector}',
+                        supervisor1 = '${arr.supervisor1}',
+                        supervisor1Covrage = '${arr.supervisor1Covrage}',
+                        supervisor2 = '${arr.supervisor2}',
+                        supervisor2Covrage = '${arr.supervisor2Covrage}',
+                        supervisorOneGetsMoney = '${arr.supervisorOneGetsMoney}',
+                        supervisorTwoGetsMoney = '${arr.supervisorTwoGetsMoney}',
+                        chargesHST = '${arr.chargesHST}',
+                        associateFeeBaseType = '${arr.associateFeeBaseType}',
+                        associateFeeBaseType2 = '${arr.associateFeeBaseType2}',
+                        assessmentRate = '${arr.assessmentRate}',
+                        assessmentRate_c = '${arr.assessmentRate_c}',
+                        assessmentRate_f = '${arr.assessmentRate_f}',
+                        associateFeeBaseRate = '${arr.associateFeeBaseRate}',
+                        associateFeeBaseRate_c = '${arr.associateFeeBaseRate_c}',
+                        associateFeeBaseRate_f = '${arr.associateFeeBaseRate_f}',
+                        associateFeeBaseRateTwo = '${arr.associateFeeBaseRateTwo}',
+                        associateFeeBaseRateTwo_c= '${arr.associateFeeBaseRateTwo_c}',
+                        associateFeeBaseRateTwo_f = '${arr.associateFeeBaseRateTwo_f}',
+                        associateFeeBaseRateOverrideLessThen = '${arr.associateFeeBaseRateOverrideLessThen}',
+                        associateFeeBaseRateOverrideLessThen_c = '${arr.associateFeeBaseRateOverrideLessThen_c}',
+                        associateFeeBaseRateOverrideLessThen_f = '${arr.associateFeeBaseRateOverrideLessThen_f}',
+                        associateFeeBaseRateOverrideLessThenTwo = '${arr.associateFeeBaseRateOverrideLessThenTwo}',
+                        associateFeeBaseRateOverrideLessThenTwo_c = '${arr.associateFeeBaseRateOverrideLessThenTwo_c}',
+                        associateFeeBaseRateOverrideLessThenTwo_f = '${arr.associateFeeBaseRateOverrideLessThenTwo_f}',
+                        associateFeeBaseRateOverrideGreaterThen = '${arr.associateFeeBaseRateOverrideGreaterThen}',
+                        associateFeeBaseRateOverrideGreaterThen_c = '${arr.associateFeeBaseRateOverrideGreaterThen_c}',
+                        associateFeeBaseRateOverrideGreaterThen_f = '${arr.associateFeeBaseRateOverrideGreaterThen_f}',
+                        associateFeeBaseRateOverrideGreaterThenTwo = '${arr.associateFeeBaseRateOverrideGreaterThenTwo}',
+                        associateFeeBaseRateOverrideGreaterThenTwo_c = '${arr.associateFeeBaseRateOverrideGreaterThenTwo_c}',
+                        associateFeeBaseRateOverrideGreaterThenTwo_f = '${arr.associateFeeBaseRateOverrideGreaterThenTwo_f}',
+                        associateFeeBaseRateOverrideAsseements = '${arr.associateFeeBaseRateOverrideAsseements}',
+                        associateFeeBaseRateOverrideAsseements_c = '${arr.associateFeeBaseRateOverrideAsseements_c}',
+                        associateFeeBaseRateOverrideAsseements_f = '${arr.associateFeeBaseRateOverrideAsseements_f}',
+                        inOfficeBlocks = '${arr.inOfficeBlocks}',
+                        inOfficeBlockHours = '${arr.inOfficeBlockHours}',
+                        inOfficeBlockTimes = '${arr.inOfficeBlockTimes}',
+                        blocksBiWeeklyCharge = '${arr.blocksBiWeeklyCharge}',
+                        blocksHourlyRate = '${arr.blocksHourlyRate}',
+                        videoTech = '${arr.videoTech}',
+                        cahrgeVideoFee = '${arr.cahrgeVideoFee}',
+                        duplicateTable = '${arr.duplicateTable}',
+                        nonChargeablesTable = '${arr.nonChargeablesTable}',
+                        associateFeesTable = '${arr.associateFeesTable}',
+                        totalRemittenceTable = '${arr.totalRemittenceTable}',
+                        nonRemittablesTable = '${arr.nonRemittablesTable}',
+                        transactionsTable = '${arr.transactionsTable}',
+                        superviseeTotalTabel = '${arr.superviseeTotalTabel}',
+                        appliedPaymentsTotalTable = '${arr.appliedPaymentsTotalTable}',
+                        comments = '${arr.comments}',
+                        adjustmentFee = '${arr.adjustmentFee}',
+                        adjustmentPaymentFee = '${arr.adjustmentPaymentFee}'
+                        WHERE id = ${id}`)
+                return 200
 
+            } else {
+                return {
+                    response: 500, errMsg: `User ${arr.associateType} ${arr.associateName} 
+                has another profile with overlapping dates, please check the dates and try again.` }
+            }
+        }
     } catch (error) {
         return {
             response: 500, errMsg: error.message
@@ -482,8 +434,8 @@ exports.insertWorkerProfile = async (arr) => {
     let endDate = moment(arr.endDate).format('YYYY-MM-DD')
     try {
         await sql.connect(config)
-        let checkForDuplicate = await sql.query(`SELECT startDate, endDate, status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND status=1`)
-        if (checkForDuplicate.recordset.length === 0 || moment(checkForDuplicate.recordset[0].startDate).format('YYYY-MM-DD') > endDate || moment(checkForDuplicate.recordset[0].endDate).format('YYYY-MM-DD') < date) {
+        let checkForOverlap = await sql.query(`SELECT * FROM profiles WHERE '${arr.startDate}' <= endDate AND '${arr.endDate}' >= startDate AND associateName='${arr.associateName}' AND associateType = '${arr.associateType}'`);
+        if (checkForOverlap.recordset.length === 0) {
             let resp = await sql.query(`INSERT INTO [CFIR].[dbo].[profiles] (
                 status,
                 startDate,
@@ -611,7 +563,7 @@ exports.insertWorkerProfile = async (arr) => {
         }
         else {
             return {
-                response: 500, errMsg: `User ${checkForDuplicate.recordset[0].associateType} ${checkForDuplicate.recordset[0].associateName} 
+                response: 500, errMsg: `User ${arr.associateType} ${arr.associateName} 
             already exists, please change the profile dates before trying again` }
         }
     } catch (error) {
@@ -624,14 +576,32 @@ exports.insertWorkerProfile = async (arr) => {
 exports.getPaymentData = async (worker, date, profileDates) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
-                                    WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
-                                    AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
-                                    AND (superviser like '%${worker}%' OR worker like '%${worker}%')
-                                    AND [rec_type] != 'return'`)
+        let resp = await sql.query(`(SELECT fv.*, DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) AS FULLDATE 
+                                        FROM financial_view fv
+                                        JOIN profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName)
+                                        WHERE DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) BETWEEN '${date.start}' AND '${date.end}'
+                                        AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                                        AND (fv.superviser like '%${worker}%' OR worker like '%${worker}%')
+                                        AND fv.[rec_type] != 'return'
+                                        AND (p.supervisorOneGetsMoney = 1 OR p.supervisorTwoGetsMoney = 1)
+                                        )
+                                        UNION
+                                        (
+                                            SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
+                                            WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
+                                            AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                                            AND worker like '%${worker}%'
+                                            AND [rec_type] != 'return'
+                                        )`)
+        // let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
+        //                             WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
+        //                             AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+        //                             AND (superviser like '%${worker}%' OR worker like '%${worker}%')
+        //                             AND [rec_type] != 'return'`)
         return resp.recordset
     } catch (error) {
         console.log('getPaymentData Function', error)
+        return error
     }
 }
 exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
@@ -647,17 +617,6 @@ exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
     }
 }
 
-// exports.getSuperviseePaymentData = async (supervisee, date) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
-//                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
-//                                     AND (worker like '%${supervisee}%')`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
 exports.getSuperviseeies = async (superviser) => {
     try {
         await sql.connect(config)
@@ -678,15 +637,7 @@ exports.getSuperviseeiesL1 = async (superviser) => {
         console.log(error)
     }
 }
-// exports.getAllPayments = async () => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM financial_view AND [rec_type] != 'return'`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
+
 exports.getNonRemittables = async () => {
     try {
         await sql.connect(config)
@@ -696,18 +647,6 @@ exports.getNonRemittables = async () => {
         console.log(error)
     }
 }
-// exports.getSubPrac = async (date, superviser) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
-//                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
-//                                     AND (worker like '%${superviser}%'AND associateType = 'L1 (Sub Prac)')`)
-
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
 
 exports.getWorkerId = async (partialName) => {
     try {
@@ -770,786 +709,3 @@ exports.getAdjustmentsFeesWorkerOnlyInvoice = async (worker, superviser) => {
         console.log(error)
     }
 }
-
-// exports.getSuperviserTwo = async (worker, superviser) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT [status],[associateType],[associateName],[isSupervised],[supervisor2],[supervisorTwoGetsMoney]
-//                                     FROM [CFIR].[dbo].[profiles]
-//                                     WHERE (associateName = '${worker}') and (supervisor2='${superviser}' and isSupervised = 'true')`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-
-// const moment = require("moment");
-// const sql = require("mssql");
-// var CryptoJS = require("crypto-js");
-
-
-// const config = {
-//     user: "Node",
-//     password: process.env.DBPASS,
-//     server: "localhost\\SQLEXPRESS",
-//     database: "CFIR",
-//     port: 1433,
-//     options: {
-//         trustedConnection: false,
-//         trustServerCertificate: true
-//     }
-// };
-
-// exports.getData = async () => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year, Month , Day) AS date FROM invoice_data`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getData Function', err); return err
-//     }
-// }
-
-// exports.getDataUser = async (user) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year, Month , Day) AS date FROM invoice_data WHERE individual_name='${user}`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataUser Function', err); return err
-//     }
-// }
-// exports.getDataDate = async (date, worker, city) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
-//                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-//                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataDate Function', err); return err
-//     }
-// }
-// exports.getDataDateA__ = async (date, worker, city) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
-//                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-//                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-//                                     AND service_name LIKE 'A__%'`)
-
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataDateA__ Function', err); return err
-//     }
-// }
-// exports.getDataDateT_c_ = async (date, worker, city) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
-//                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-//                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-//                                     AND service_name LIKE 'T_c_%'`)
-
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataDateT_c_ Function', err); return err
-//     }
-// }
-// exports.getDataDateA_c_ = async (date, worker, city) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) AS FULLDATE
-//                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-//                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-//                                     AND service_name LIKE 'A_c_%'`)
-
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataDateA_c_ Function', err); return err
-//     }
-// }
-// exports.getDataDateT_f_ = async (date, worker, city) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) , 101) AS FULLDATE
-//                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-//                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-//                                     AND service_name LIKE 'T_f_%'`)
-
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataDateT_f_ Function', err); return err
-//     }
-// }
-// exports.getDataDateA_f_ = async (date, worker, city) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, DATEFROMPARTS ( Year, Month , Day) , 101) AS FULLDATE
-//                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day)
-//                                     >='${date.start}' and DATEFROMPARTS ( Year, Month , Day) <='${date.end}' AND [event_primary_worker_name]='${worker}'
-//                                     AND service_name LIKE 'A_f_%'`)
-
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getDataDateA_f_ Function', err); return err
-//     }
-// }
-
-// exports.getAssociateTypes = async (associateType) => {
-//     let temp = ""
-//     let query = ""
-//     if (associateType === 'associateType') {
-//         temp = 'associateType'
-//         query = `SELECT * FROM [CFIR].[dbo].[profiles] WHERE associateType=associateType`
-//     }
-//     else if (associateType === 'supervisers') {
-//         temp = 'associateType'
-//         query = `SELECT * FROM [CFIR].[dbo].[profiles] WHERE isSuperviser='true'`
-//     }
-//     else {
-//         temp = `'${associateType}'`
-//         query = `SELECT * FROM [CFIR].[dbo].[profiles] WHERE associateType=${temp}`
-//     }
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(query)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getAssociateTypes FUnction', err); return err
-//     }
-// }
-// exports.getAssociateFeeBaseRate = async (workerId) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`SELECT [associateType], [isSupervised], [supervisor1], [supervisor2], [supervisorOneGetsMoney], [supervisorTwoGetsMoney] ,[associateFeeBaseRate],
-//                                     [associateFeeBaseRateOverrideLessThen],[associateFeeBaseRateOverrideGreaterThen],[associateFeeBaseRateTwo],
-//                                     [associateFeeBaseRateOverrideLessThenTwo],[associateFeeBaseRateOverrideGreaterThenTwo],[assessmentRate_c],
-//                                     [assessmentRate_f],
-//                                     [associateFeeBaseRate_c],
-//                                     [associateFeeBaseRate_f],
-//                                     [associateFeeBaseRateTwo_c],
-//                                     [associateFeeBaseRateTwo_f],
-//                                     [associateFeeBaseRateOverrideLessThen_c],
-//                                     [associateFeeBaseRateOverrideLessThen_f],
-//                                     [associateFeeBaseRateOverrideLessThenTwo_c],
-//                                     [associateFeeBaseRateOverrideLessThenTwo_f],
-//                                     [associateFeeBaseRateOverrideGreaterThen_c],
-//                                     [associateFeeBaseRateOverrideGreaterThen_f],
-//                                     [associateFeeBaseRateOverrideGreaterThenTwo_c],
-//                                     [associateFeeBaseRateOverrideGreaterThenTwo_f],
-//                                     [associateFeeBaseRateOverrideAsseements_c],
-//                                     [associateFeeBaseRateOverrideAsseements_f] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getAssociateFeeBaseRate Function', err); return err
-//     }
-// }
-// exports.getAssociateLeval = async () => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[associate_type]`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getAssociateLeval Function', err); return err
-//     }
-// }
-// exports.getAssociateVideoFee = async (workerId) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`SELECT [videoTechMonthlyFee] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getAssociateVideoFee Function', err); return err
-//     }
-// }
-// exports.getTablesToShow = async (workerId) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`SELECT [duplicateTable]
-//         ,[nonChargeablesTable]
-//         ,[associateFeesTable]
-//         ,[totalRemittenceTable]
-//         ,[nonRemittablesTable]
-//         ,[transactionsTable]
-//         ,[superviseeTotalTabel]
-//         ,[appliedPaymentsTotalTable] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log('getTablesToShow Function', err); return err
-//     }
-// }
-// exports.getAssociateProfileById = async (workerId) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log(err); return err
-//     }
-// }
-// exports.getAllSuperviseeProfiles = async () => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE supervisorOneGetsMoney = 'true' or supervisorTwoGetsMoney = 'true'`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log(err); return err
-//     }
-// }
-
-// exports.getphysicians = async () => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`SELECT [id],[associateName],[status], [associateType] FROM [CFIR].[dbo].[profiles]`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log(err); return err
-//     }
-// }
-// exports.getEmailPassword = async () => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[email_password]`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log(err); return err
-//     }
-// }
-
-// exports.updateEmailPassword = async (password) => {
-//     const result = CryptoJS.AES.encrypt(password, process.env.KEY);
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`UPDATE [dbo].[email_password] SET [password] = '${result.toString()}' WHERE id = 1`)
-//         return 200;
-//     } catch (err) {
-//         console.log(err); return 500
-//     }
-// }
-// exports.resetAdjustmentFees = async () => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`UPDATE [dbo].[profiles] SET [adjustmentFee] = '${JSON.stringify([{ "name": "", "value": "0" }])}' ,
-//         [adjustmentPaymentFee] = '${JSON.stringify([{ "name": "", "value": "0" }])}' `)
-//         return 200;
-//     } catch (err) {
-//         console.log(err); return 500
-//     }
-// }
-
-// exports.getReportedItems = async (date, worker) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select [receipt_reason], [event_service_item_name],event_primary_worker_name, FORMAT(sum([event_service_item_total]), 'c') as TOTAL, sum([event_service_item_total]) as event_service_item_total,
-//                                     FORMAT([event_service_item_total], 'c') as itemTotal, COUNT([event_service_item_name]) as COUNT
-//                                     FROM [CFIR].[dbo].[invoice_data] WHERE DATEFROMPARTS ( Year, Month , Day) >= '${date.start}'
-//                                     and DATEFROMPARTS ( Year, Month , Day) <= '${date.end}' AND [event_primary_worker_name]='${worker}'
-//                                     GROUP BY [event_service_item_name], event_service_item_total,event_primary_worker_name,[receipt_reason]`)
-//         return resp.recordset
-//     } catch (err) {
-//         console.log(err); return err
-//     }
-// }
-// exports.getReasonType = async (date, worker) => {
-//     try {
-//         await sql.connect(config);
-//         let resp = await sql.query(`select worker, applied_amt, reason_type from financial_view WHERE DATEFROMPARTS ( Year1, Month1, Day1) >= '${date.start}'
-//                                     and DATEFROMPARTS ( Year1, Month1, Day1) <= '${date.end}' AND worker='${worker}'`)
-//         return resp.recordset;
-//     } catch (err) {
-//         console.log(err); return err
-//     }
-// }
-// exports.getProvinces = async () => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[provinces]`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// exports.getWorkerProfile = async (id) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[profiles] where id=${id}`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// exports.getVideoTech = async () => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[video_technology]`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-// exports.getServiceTypes = async () => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT *FROM [CFIR].[dbo].[service_files_names] `)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-// exports.getPaymentTypes = async () => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[payment_types] `)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-// exports.getWorkerData = async () => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[payment_types] `)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// exports.getProcessingFee = async (feeName) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[payment_types] where name ='${feeName}'`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// exports.UpdateServiceTypes = async (arr, id, covrage) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`UPDATE [CFIR].[dbo].[profiles] SET [${covrage}] = '${arr}' WHERE id=${id}`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// exports.getNonChargeables = async () => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[non_chargeables]`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// exports.getSupervisers = async (name) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT id, associateName, associateType, supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where
-//                                     (associateType != 'L1 (Sup Prac)') AND (supervisor1='${name}' OR supervisor2='${name}')`)
-
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-// exports.getSupervisiesPaymentData = async (name) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[invoice_data] where event_primary_worker_name = '${name}'`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// exports.UpdateWorkerPreofile = async (arr, id) => {
-
-//     try {
-//         await sql.connect(config)
-
-//         let checkForDuplicate = await sql.query(`SELECT status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND  associateType='${arr.associateType}' AND status=1`)
-//         if (checkForDuplicate.recordset.length === 0) {
-//             await sql.query(`UPDATE [CFIR].[dbo].[profiles]
-//             SET status = '${arr.status}',
-//             startDate = '${arr.startDate}',
-//             endDate = '${arr.endDate}',
-//             site = '${arr.site}',
-//             associateType = '${arr.associateType}',
-//             associateEmail = '${arr.associateEmail}',
-//             associateName = '${arr.associateName}',
-//             isSuperviser = '${arr.isSuperviser}',
-//             isSupervised = '${arr.isSupervised}',
-//             IsSupervisedByNonDirector = '${arr.IsSupervisedByNonDirector}',
-//             supervisor1 = '${arr.supervisor1}',
-//             supervisor1Covrage = '${arr.supervisor1Covrage}',
-//             supervisor2 = '${arr.supervisor2}',
-//             supervisor2Covrage = '${arr.supervisor2Covrage}',
-//             supervisorOneGetsMoney = '${arr.supervisorOneGetsMoney}',
-//             supervisorTwoGetsMoney = '${arr.supervisorTwoGetsMoney}',
-//             chargesHST = '${arr.chargesHST}',
-//             associateFeeBaseType = '${arr.associateFeeBaseType}',
-//             associateFeeBaseType2 = '${arr.associateFeeBaseType2}',
-//             assessmentRate = '${arr.assessmentRate}',
-//             assessmentRate_c = '${arr.assessmentRate_c}',
-//             assessmentRate_f = '${arr.assessmentRate_f}',
-//             associateFeeBaseRate = '${arr.associateFeeBaseRate}',
-//             associateFeeBaseRate_c = '${arr.associateFeeBaseRate_c}',
-//             associateFeeBaseRate_f = '${arr.associateFeeBaseRate_f}',
-//             associateFeeBaseRateTwo = '${arr.associateFeeBaseRateTwo}',
-//             associateFeeBaseRateTwo_c= '${arr.associateFeeBaseRateTwo_c}',
-//             associateFeeBaseRateTwo_f = '${arr.associateFeeBaseRateTwo_f}',
-//             associateFeeBaseRateOverrideLessThen = '${arr.associateFeeBaseRateOverrideLessThen}',
-//             associateFeeBaseRateOverrideLessThen_c = '${arr.associateFeeBaseRateOverrideLessThen_c}',
-//             associateFeeBaseRateOverrideLessThen_f = '${arr.associateFeeBaseRateOverrideLessThen_f}',
-//             associateFeeBaseRateOverrideLessThenTwo = '${arr.associateFeeBaseRateOverrideLessThenTwo}',
-//             associateFeeBaseRateOverrideLessThenTwo_c = '${arr.associateFeeBaseRateOverrideLessThenTwo_c}',
-//             associateFeeBaseRateOverrideLessThenTwo_f = '${arr.associateFeeBaseRateOverrideLessThenTwo_f}',
-//             associateFeeBaseRateOverrideGreaterThen = '${arr.associateFeeBaseRateOverrideGreaterThen}',
-//             associateFeeBaseRateOverrideGreaterThen_c = '${arr.associateFeeBaseRateOverrideGreaterThen_c}',
-//             associateFeeBaseRateOverrideGreaterThen_f = '${arr.associateFeeBaseRateOverrideGreaterThen_f}',
-//             associateFeeBaseRateOverrideGreaterThenTwo = '${arr.associateFeeBaseRateOverrideGreaterThenTwo}',
-//             associateFeeBaseRateOverrideGreaterThenTwo_c = '${arr.associateFeeBaseRateOverrideGreaterThenTwo_c}',
-//             associateFeeBaseRateOverrideGreaterThenTwo_f = '${arr.associateFeeBaseRateOverrideGreaterThenTwo_f}',
-//             associateFeeBaseRateOverrideAsseements = '${arr.associateFeeBaseRateOverrideAsseements}',
-//             associateFeeBaseRateOverrideAsseements_c = '${arr.associateFeeBaseRateOverrideAsseements_c}',
-//             associateFeeBaseRateOverrideAsseements_f = '${arr.associateFeeBaseRateOverrideAsseements_f}',
-//             inOfficeBlocks = '${arr.inOfficeBlocks}',
-//             inOfficeBlockHours = '${arr.inOfficeBlockHours}',
-//             inOfficeBlockTimes = '${arr.inOfficeBlockTimes}',
-//             blocksBiWeeklyCharge = '${arr.blocksBiWeeklyCharge}',
-//             blocksHourlyRate = '${arr.blocksHourlyRate}',
-//             videoTech = '${arr.videoTech}',
-//             cahrgeVideoFee = '${arr.cahrgeVideoFee}',
-//             duplicateTable = '${arr.duplicateTable}',
-//             nonChargeablesTable = '${arr.nonChargeablesTable}',
-//             associateFeesTable = '${arr.associateFeesTable}',
-//             totalRemittenceTable = '${arr.totalRemittenceTable}',
-//             nonRemittablesTable = '${arr.nonRemittablesTable}',
-//             transactionsTable = '${arr.transactionsTable}',
-//             superviseeTotalTabel = '${arr.superviseeTotalTabel}',
-//             appliedPaymentsTotalTable = '${arr.appliedPaymentsTotalTable}',
-//             comments = '${arr.comments}',
-//             adjustmentFee = '${arr.adjustmentFee}',
-//             adjustmentPaymentFee = '${arr.adjustmentPaymentFee}'
-//             WHERE id = ${id}`)
-//             return 200
-//         }
-//         else {
-//             return {
-//                 response: 500, errMsg: `User ${checkForDuplicate.recordset[0].associateType} ${checkForDuplicate.recordset[0].associateName}
-//             already exists, please set user to inactive before creating a new user with the same name` }
-//         }
-
-//     } catch (error) {
-//         return {
-//             response: 500, errMsg: error.message
-//         }
-//     }
-// }
-
-// exports.insertWorkerProfile = async (arr) => {
-//     let date = moment(arr.startDate).format('YYYY-MM-DD')
-//     let endDate = moment(arr.endDate).format('YYYY-MM-DD')
-//     try {
-//         await sql.connect(config)
-//         let checkForDuplicate = await sql.query(`SELECT status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND  associateType='${arr.associateType}' AND status=1`)
-//         if (checkForDuplicate.recordset.length === 0) {
-//             let resp = await sql.query(`INSERT INTO [CFIR].[dbo].[profiles] (
-//                 status,
-//                 startDate,
-//                 endDate,
-//                 site,
-//                 associateType,
-//                 associateEmail,
-//                 associateName,
-//                 isSuperviser,
-//                 isSupervised,
-//                 IsSupervisedByNonDirector,
-//                 supervisor1,
-//                 supervisor1Covrage,
-//                 supervisor2,
-//                 supervisor2Covrage,
-//                 supervisorOneGetsMoney,
-//                 supervisorTwoGetsMoney,
-//                 chargesHST,
-//                 assessmentRate,
-//                 assessmentRate_c,
-//                 assessmentRate_f,
-//                 associateFeeBaseRate,
-//                 associateFeeBaseRate_c,
-//                 associateFeeBaseRate_f,
-//                 associateFeeBaseRateTwo ,
-//                 associateFeeBaseRateTwo_c,
-//                 associateFeeBaseRateTwo_f,
-//                 associateFeeBaseRateOverrideLessThen,
-//                 associateFeeBaseRateOverrideLessThen_c,
-//                 associateFeeBaseRateOverrideLessThen_f,
-//                 associateFeeBaseRateOverrideLessThenTwo ,
-//                 associateFeeBaseRateOverrideLessThenTwo_c,
-//                 associateFeeBaseRateOverrideLessThenTwo_f,
-//                 associateFeeBaseRateOverrideGreaterThen,
-//                 associateFeeBaseRateOverrideGreaterThen_c,
-//                 associateFeeBaseRateOverrideGreaterThen_f,
-//                 associateFeeBaseRateOverrideGreaterThenTwo ,
-//                 associateFeeBaseRateOverrideGreaterThenTwo_c ,
-//                 associateFeeBaseRateOverrideGreaterThenTwo_f,
-//                 associateFeeBaseRateOverrideAsseements,
-//                 associateFeeBaseRateOverrideAsseements_c,
-//                 associateFeeBaseRateOverrideAsseements_f,
-//                 inOfficeBlocks,
-//                 inOfficeBlockHours,
-//                 inOfficeBlockTimes,
-//                 blocksBiWeeklyCharge,
-//                 blocksHourlyRate,
-//                 videoTech,
-//                 cahrgeVideoFee,
-//                 duplicateTable,
-//                 nonChargeablesTable,
-//                 associateFeesTable,
-//                 totalRemittenceTable,
-//                 nonRemittablesTable,
-//                 transactionsTable,
-//                 superviseeTotalTabel,
-//                 appliedPaymentsTotalTable,
-//                 comments,
-//                 adjustmentFee,
-//                 adjustmentPaymentFee)
-//             VALUES (${arr.status === true ? 1 : 0}
-//                     ,'${date}'
-//                     ,'${endDate}'
-//                     ,'${arr.site}'
-//                     ,'${arr.associateType}'
-//                     ,'${arr.associateEmail}'
-//                     ,'${arr.associateName}'
-//                     ,${arr.isSuperviser === true ? 1 : 0}
-//                     ,${arr.isSupervised === true ? 1 : 0}
-//                     ,${arr.IsSupervisedByNonDirector === true ? 1 : 0}
-//                     ,'${arr.supervisor1}'
-//                     ,'${arr.supervisor1Covrage}'
-//                     ,'${arr.supervisor2}'
-//                     ,'${arr.supervisor2Covrage}'
-//                     ,${arr.supervisorOneGetsMoney === true ? 1 : 0}
-//                     ,${arr.supervisorTwoGetsMoney === true ? 1 : 0}
-//                     ,${arr.chargesHST === true ? 1 : 0},'${arr.assessmentRate}'
-//                     ,'${arr.associateFeeBaseType}'
-//                     ,'${arr.associateFeeBaseType2}'
-//                     ,'${arr.associateFeeBaseRate}'
-//                     ,'${arr.associateFeeBaseRate_c}'
-//                     ,'${arr.associateFeeBaseRate_f}'
-//                     ,'${arr.associateFeeBaseRateTwo}'
-//                     ,'${arr.associateFeeBaseRateTwo_c}'
-//                     ,'${arr.associateFeeBaseRateTwo_f}'
-//                     ,'${arr.associateFeeBaseRateOverrideLessThen}'
-//                     ,'${arr.associateFeeBaseRateOverrideLessThen_c}'
-//                     ,'${arr.associateFeeBaseRateOverrideLessThen_f}'
-//                     ,'${arr.associateFeeBaseRateOverrideLessThenTwo}'
-//                     ,'${arr.associateFeeBaseRateOverrideLessThenTwo_c}'
-//                     ,'${arr.associateFeeBaseRateOverrideLessThenTwo_f}'
-//                     ,'${arr.associateFeeBaseRateOverrideGreaterThen}'
-//                     ,'${arr.associateFeeBaseRateOverrideGreaterThen_c}'
-//                     ,'${arr.associateFeeBaseRateOverrideGreaterThen_f}'
-//                     ,'${arr.associateFeeBaseRateOverrideGreaterThenTwo}'
-//                     ,'${arr.associateFeeBaseRateOverrideGreaterThenTwo_c}'
-//                     ,'${arr.associateFeeBaseRateOverrideGreaterThenTwo_f}'
-//                     ,${arr.associateFeeBaseRateOverrideAsseements === true ? 1 : 0}
-//                     ,${arr.associateFeeBaseRateOverrideAsseements_c === true ? 1 : 0}
-//                     ,${arr.associateFeeBaseRateOverrideAsseements_f === true ? 1 : 0}
-//                     ,'${arr.inOfficeBlocks}'
-//                     ,'${arr.inOfficeBlockHours}'
-//                     ,'${arr.inOfficeBlockTimes}'
-//                     ,'${arr.blocksBiWeeklyCharge}'
-//                     ,'${arr.blocksHourlyRate}'
-//                     ,'${arr.videoTech}'
-//                     ,${arr.cahrgeVideoFee === true ? 1 : 0},
-//                     ${arr.duplicateTable === true ? 1 : 0}
-//                     ,${arr.nonChargeablesTable === true ? 1 : 0}
-//                     ,${arr.associateFeesTable === true ? 1 : 0}
-//                     ,${arr.totalRemittenceTable === true ? 1 : 0}
-//                     ,${arr.nonRemittablesTable === true ? 1 : 0}
-//                     ,${arr.transactionsTable === true ? 1 : 0}
-//                     ,${arr.superviseeTotalTabel === true ? 1 : 0}
-//                     ,${arr.appliedPaymentsTotalTable === true ? 1 : 0}
-//                     ,'${arr.comments}',
-//                     '${arr.adjustmentFee}','${arr.adjustmentPaymentFee}');SELECT SCOPE_IDENTITY() AS new_id;`
-//             )
-//             return { response: 200, new_id: resp.recordset[0] }
-//         }
-//         else {
-//             return {
-//                 response: 500, errMsg: `User ${checkForDuplicate.recordset[0].associateType} ${checkForDuplicate.recordset[0].associateName}
-//             already exists, please set user to inactive before creating a new user with the same name` }
-//         }
-//     } catch (error) {
-//         console.log('insertWorkerProfile Function', error)
-//         return error
-//     }
-// }
-
-// //****************Payment querys**********************/
-// exports.getPaymentData = async (worker, date) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
-//                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
-//                                     AND (superviser like '%${worker}%' OR worker like '%${worker}%')`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log('getPaymentData Function', error)
-//     }
-// }
-// exports.getPaymentDataForWorker = async (tempWorker, date) => {
-//     try {
-//         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
-//                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
-//                                    AND worker like '%${tempWorker}%'`)
-//         return resp.recordset
-//     } catch (error) {
-//         // console.log(error)
-//     }
-// }
-
-// exports.getSuperviseePaymentData = async (supervisee, date) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
-//                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
-//                                     AND (worker like '%${supervisee}%')`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-// exports.getSuperviseeies = async (superviser) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE (supervisor1 = '${superviser}' AND supervisorOneGetsMoney = 'true' AND associateType != 'L1 (Sup Prac)')
-//                                     or (supervisor2 = '${superviser}' AND supervisorTwoGetsMoney = 'true' AND associateType != 'L1 (Sup Prac)')`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-// exports.getSuperviseeiesL1 = async (superviser) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] WHERE (supervisor1 = '${superviser}' AND supervisorOneGetsMoney = 'true' AND associateType = 'L1 (Sup Prac)')
-//                                     or (supervisor2 = '${superviser}' AND supervisorTwoGetsMoney = 'true' AND associateType = 'L1 (Sup Prac)')`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-// exports.getAllPayments = async () => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM financial_view `)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-// exports.getNonRemittables = async () => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[non_remittable]`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-// exports.getSubPrac = async (date, superviser) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
-//                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
-//                                     AND (worker like '%${superviser}%'AND associateType = 'L1 (Sub Prac)')`)
-
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// exports.getWorkerId = async (partialName) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] where associateName like '%${partialName}%'`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// exports.getAssessmentItemEquivalent = async () => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[assessmentItemslookup]`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-
-// exports.getAdjustmentsFees = async (worker, superviser) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`select associateName, adjustmentPaymentFee from profiles WHERE associateName like '%${worker}%'
-//                                     Or supervisor1 like '%${worker}%' or supervisor2 like '%${worker}%'`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// exports.getAdjustmentsFeesWorkerOnly = async (worker, superviser) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`select associateName, adjustmentPaymentFee from profiles WHERE associateName like '%${worker}%'`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-// exports.getAdjustmentsFeesInvoice = async (worker, superviser) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`select associateName, adjustmentFee from profiles WHERE associateName like '%${worker}%'
-//                                     Or supervisor1 like '%${worker}%' or supervisor2 like '%${worker}%'`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// exports.getAdjustmentsFeesWorkerOnlyInvoice = async (worker, superviser) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`select associateName, adjustmentFee from profiles WHERE associateName like '%${worker}%'`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
-
-// // exports.getSuperviserTwo = async (worker, superviser) => {
-// //     try {
-// //         await sql.connect(config)
-// //         let resp = await sql.query(`SELECT [status],[associateType],[associateName],[isSupervised],[supervisor2],[supervisorTwoGetsMoney]
-// //                                     FROM [CFIR].[dbo].[profiles]
-// //                                     WHERE (associateName = '${worker}') and (supervisor2='${superviser}' and isSupervised = 'true')`)
-// //         return resp.recordset
-// //     } catch (error) {
-// //         console.log(error)
-// //     }
-// // }
-
-

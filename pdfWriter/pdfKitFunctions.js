@@ -308,7 +308,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
-                nonRemittables.includes(row.case_program) && doc.addBackground(rectRow, 'pink', 0.15);
+                nonRemittables.includes(row.description) && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
         doc.moveDown();
@@ -361,7 +361,6 @@ exports.formatter = new Intl.NumberFormat('en-US', {
 exports.removeNullStr = (arr, funderName) => {
     arr.map((obj, i) => {
         Object.keys(obj).forEach((key) => {
-            // console.log(obj)
             if (obj[key] === null) {
                 obj[key] = funderName;
             }
@@ -373,16 +372,32 @@ exports.removeNaN = (arr) => {
     return arr.filter(Boolean)
 }
 
-exports.sortByName = (arr) => {
-    arr.sort(
-        firstBy(function (a, b) { return a.worker.localeCompare(b.worker); })
-            .thenBy((a, b) => { return new Date(a.batch_date) - new Date(b.batch_date) })
+exports.sortByDateAndName = (arr) => {
+    return arr.sort(
+        firstBy(function (a, b) { return new Date(a.batch_date) - new Date(b.batch_date) })
+            .thenBy((a, b) => { return a.worker.localeCompare(b.worker); })
     );
 }
+exports.sortByName = (arr) => {
+    return arr.sort(
+        function (a, b) { return a.worker.localeCompare(b.worker); }
+    );
+}
+
+
 exports.sortByDate = (arr) => {
-    arr.sort((a, b) => {
+    return arr.sort(
+        firstBy(function (a, b) { return new Date(a.batch_date) - new Date(b.batch_date) })
+            .thenBy((a, b) => { return a.individual_name.localeCompare(b.individual_name); })
+    );
+}
+exports.sortByJustDate = (arr) => {
+    return arr.sort(function (a, b) {
         return new Date(a.batch_date) - new Date(b.batch_date)
-    })
+    });
+    // return arr.sort(
+    //     new Date(a.batch_date) - new Date(b.batch_date)
+    // );
 }
 
 exports.addNumberTotPages = (doc) => {
@@ -575,81 +590,60 @@ exports.getProfileDateFormatted = async (workerId) => {
 }
 exports.findDuplicates = (arr) => {
     const seen = new Set();
-    return arr.filter(item => {
+    const duplicates = [];
+    arr.forEach(item => {
         const itemAsString = JSON.stringify(item);
         if (seen.has(itemAsString)) {
-            return true;
+            duplicates.push(item);
         } else {
             seen.add(itemAsString);
-            return false;
         }
     });
+    return duplicates;
+
 }
 
 exports.findSplitFees = (arr) => {
     return arr.filter(item => {
-        for (let i = 0; i < arr.length; i++) {
-            if (item.event_id === arr[i].event_id && item.case_file_name === arr[i].case_file_name && item.service_name === arr[i].service_name && item.invoice_id !== arr[i].invoice_id) {
-                return true;
+        let match = false;
+        arr.forEach(compareItem => {
+            if (item.event_id === compareItem.event_id && item.case_file_name === compareItem.case_file_name
+                && item.service_name === compareItem.service_name && item.batch_date === compareItem.batch_date && item.invoice_id !== compareItem.invoice_id) {
+                match = true;
             }
-        }
-        return false;
+        });
+        return match;
     });
-}
-// exports.removeSplitFees = (arr) => {
-//     return arr.filter(item => {
-//         for (let i = 0; i < arr.length; i++) {
-//             if (item.event_id === arr[i].event_id && item.case_file_name === arr[i].case_file_name && item.service_name === arr[i].service_name && item.invoice_id !== arr[i].invoice_id) {
-//                 if (i === 0) return true
-//                 return false;
-//             }
-//         }
-//         return true;
-//     });
-// }
 
-// exports.removeDuplicates = (arr) => {
-//     const seen = new Set();
-//     return arr.filter((item, index) => {
-//         const itemAsString = JSON.stringify((item));
-//         if (seen.has(itemAsString)) {
-//             if (index === 0) return true
-//             return false;
-//         } else {
-//             seen.add(itemAsString);
-//             return true;
-//         }
-//     });
-// }
+}
 
 exports.removeSplitFees = (arr) => {
-    let newArr = [];
-    let seen = new Map();
-    for (let i = 0; i < arr.length; i++) {
-        let item = arr[i];
-        let key = item.event_id + item.case_file_name + item.service_name + item.batch_date;
-        if (!seen.has(key)) {
-            seen.set(key, item);
-        } else {
-            let temp = seen.get(key);
-            if (temp.invoice_id !== item.invoice_id) {
-                seen.set(key, item);
+    let match = false;
+    arr.forEach((item, index) => {
+        arr.forEach((compareItem, compareIndex) => {
+            if (item.event_id === compareItem.event_id && item.case_file_name === compareItem.case_file_name
+                && item.service_name === compareItem.service_name && item.batch_date === compareItem.batch_date && item.invoice_id !== compareItem.invoice_id) {
+                if (!match) {
+                    match = true;
+                } else {
+                    arr.splice(compareIndex, 1);
+                }
             }
-        }
-    }
-    seen.forEach((value) => {
-        newArr.push(value);
+        });
     });
-    return newArr;
+    return arr;
+
 }
 
 exports.removeDuplicates = (arr) => {
-    let uniqueArr = [];
-    for (let i = 0; i < arr.length; i++) {
-        let current = arr[i];
-        if (uniqueArr.indexOf(current) === -1) {
-            uniqueArr.push(current);
+    const seen = new Set();
+    return arr.filter(item => {
+        const itemAsString = JSON.stringify(item);
+        if (seen.has(itemAsString)) {
+            return false;
+        } else {
+            seen.add(itemAsString);
+            return true;
         }
-    }
-    return uniqueArr;
+    });
 }

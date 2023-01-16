@@ -2,7 +2,7 @@ const { formatter } = require("../pdfWriter/pdfKitFunctions")
 
 exports.totalRemittance = (date, associateTotal, netAppliedPayments, finalAssociateAssessmentFees) => {
     let newTotal = 0
-    let fees = Number(associateTotal + finalAssociateAssessmentFees)
+    let fees = Number(associateTotal) + Number(finalAssociateAssessmentFees)
     let feeHeaders = "CFIR invoice total\n (Subtotal + Associateship Fees)"
     newTotal = netAppliedPayments - fees
 

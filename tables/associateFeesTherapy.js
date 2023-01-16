@@ -12,10 +12,11 @@ const getRatesForL1 = (arr) => {
 }
 
 exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees, superviseeFeeCalculation, chargeVideoFee, L1AssociateFee) => {
-    // let blocksBiWeeklyCharge = Number(blockItemFees.datas.map(x => x.newBiWeeklyRate)[0])
     let rate = await this.getRate(count, workerId, false, L1AssociateFee)
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
 
+    let totalWoHST = (count * rate) + finalProccessingFee + blockItemFees + ajustmentFees
+    let hst = totalWoHST * (process.env.HST / 100)
     return {
         title: "CFIR Associate Fees (Therapy Only)",
         subtitle: "From " + date.start + " To " + date.end,
@@ -26,7 +27,7 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
             { label: "Video Fee", renderer: null, align: "center" },
             { label: "Other Fee", renderer: null, align: "center" },
             { label: "Adjustment Fee", renderer: null, align: "center" },
-            { label: "Blocks Charge Fee", renderer: null, align: "center" },
+            { label: "Room Block Fee", renderer: null, align: "center" },
             { label: "HST", renderer: null, align: "center" },
             { label: "Total + HST", renderer: null, align: "center" }
         ],
@@ -39,8 +40,8 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
                 formatter.format(finalProccessingFee.toFixed(2)),
                 formatter.format(ajustmentFees.toFixed(2)),
                 formatter.format(blockItemFees),
-                formatter.format(((count * rate) * process.env.HST - (count * rate)).toFixed(2)),
-                formatter.format((count * rate) * process.env.HST + vidFee + finalProccessingFee + blockItemFees + ajustmentFees)
+                formatter.format(hst),
+                formatter.format(totalWoHST + hst)
             ],
             ...superviseeFeeCalculation
         ],

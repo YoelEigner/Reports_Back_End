@@ -1,10 +1,6 @@
 const moment = require('moment')
 
 exports.mainTable = (data, date) => {
-
-    data.map(x => {
-        x.batch_date = moment(x.batch_date).format('YYYY-MM-DD')
-    })
     return {
         title: "Invoice",
         subtitle: "From " + date.start + " To " + date.end,

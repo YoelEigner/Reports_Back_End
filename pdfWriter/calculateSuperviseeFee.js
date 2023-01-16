@@ -10,6 +10,7 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
 
+
             let superviseeReportedItemdData = removeNullStr(await getDataDate(date, worker.associateName, profileDates), '-')
             let workerPaymentData = await getPaymentDataForWorker(worker.associateName, date, profileDates)
 
@@ -18,6 +19,7 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
             // let { duplicateItems } = removeDuplicateAndSplitFees(superviseeReportedItemdData)
 
             let superviseeWorkerProfile = await getAssociateProfileById(worker.id)
+
             let isSupervised = superviseeWorkerProfile[0].isSupervised
             let isSuperviser = superviseeWorkerProfile[0].isSuperviser
             let IsSupervisedByNonDirector = superviseeWorkerProfile[0].IsSupervisedByNonDirector
@@ -34,7 +36,7 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
                 else if (tableType === 'CBT') return await getRate_CBT(superviseeReportedItemsCount(), worker.id)
                 else if (tableType === 'CPRI') return await getRate_CPRI(superviseeReportedItemsCount(), worker.id)
             }
-            let chargeVideoFee = superviseeWorkerProfile.map(x => x.cahrgeVideoFee)[0]
+            let chargeVideoFee = tableType === 'CFIR' ? superviseeWorkerProfile.map(x => x.cahrgeVideoFee)[0] : false
 
             //Create associate fees table
             // make a Set to hold values from namesToDeleteArr
@@ -44,13 +46,11 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
                 return !itemsToDelete.has(item);
             });
 
-            // let superviseeFinalProccessingFee = calculateProccessingFee(reportedItemDataFiltered, proccessingFeeTypes, superviseeWorkerProfile[0].associateType).reduce((a, b) => a + b, 0)
             let superviseeFinalProccessingFee = tableType === 'CFIR' ? calculateProccessingFee(reportedItemDataFiltered, proccessingFeeTypes, superviseeWorkerProfile[0].associateType).reduce((a, b) => a + b, 0) : 0
 
-            let superviseeBlocksBiWeeklyCharge = parseFloat(superviseeWorkerProfile.map(x => x.blocksBiWeeklyCharge)[0])
+            let superviseeBlocksBiWeeklyCharge = tableType === 'CFIR' ? parseFloat(superviseeWorkerProfile.map(x => x.blocksBiWeeklyCharge)[0]) : 0
             let superviseeHST = ((superviseeReportedItemsCount() * await SuperviseeRate()) * process.env.HST - (superviseeReportedItemsCount() * await SuperviseeRate()))
-            let superviseeAdjustmentFee = JSON.parse(superviseeWorkerProfile.map(x => x.adjustmentFee))
-
+            let superviseeAdjustmentFee = tableType === 'CFIR' ? JSON.parse(superviseeWorkerProfile.map(x => x.adjustmentFee)) : [{ name: 'rtest', value: '0' }]
 
             arr.push(await calculateAssociateFeeForSupervisee(worker.associateName, superviseeReportedItemsCount(), parseFloat(await SuperviseeRate()), videoFee,
                 superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge, superviseeHST, superviseeAdjustmentFee, chargeVideoFee, tableType))
