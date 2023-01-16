@@ -9,7 +9,6 @@ exports.superviseeClientPaymentsTable = (date, data) => {
         headers: [
             { label: "Supervisee", property: 'worker', renderer: null, align: "center" },
             { label: "Cart Item", property: 'description', renderer: null, align: "center" },
-            { label: "Invoice Number", property: 'inv_no', renderer: null, align: "center" },
             { label: "Qty", property: 'qty', renderer: null, align: "center" },
             { label: "Item Total", property: 'applied_amtTemp', renderer: null, align: "center" },
             { label: "Total Payments Applied", property: 'totalTemp', renderer: null, align: "center" },

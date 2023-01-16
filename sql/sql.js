@@ -686,7 +686,7 @@ exports.getAdjustmentsFeesInvoice = async (worker, superviser) => {
     try {
         await sql.connect(config)
         let resp = await sql.query(`select associateName, adjustmentFee from profiles WHERE associateName like '%${worker}%' 
-                                    Or supervisor1 like '%${worker}%' or supervisor2 like '%${worker}%'`)
+                                    Or supervisor1 like '%${worker}%' AND supervisorOneGetsMoney =1 or supervisor2 like '%${worker}%' AND supervisorTwoGetsMoney = 1`)
         return resp.recordset
     } catch (error) {
         console.log(error)
