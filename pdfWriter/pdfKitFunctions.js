@@ -589,17 +589,35 @@ exports.getProfileDateFormatted = async (workerId) => {
     return profileDates
 }
 exports.findDuplicates = (arr) => {
-    const seen = new Set();
-    const duplicates = [];
-    arr.forEach(item => {
-        const itemAsString = JSON.stringify(item);
-        if (seen.has(itemAsString)) {
+    let duplicates = [];
+    let unique = arr.filter(function (item) {
+        let duplicate = arr.filter(function (item2) {
+            return item.individual_name === item2.individual_name &&
+                item.case_file_name === item2.case_file_name &&
+                item.batch_date === item2.batch_date &&
+                item.event_id === item2.event_id &&
+                item.invoice_id === item2.invoice_id &&
+                item.event_service_item_name === item2.event_service_item_name;
+        });
+        if (duplicate.length > 1) {
             duplicates.push(item);
-        } else {
-            seen.add(itemAsString);
+            return false;
         }
+        return true;
     });
     return duplicates;
+
+    // const seen = new Set();
+    // const duplicates = [];
+    // arr.forEach(item => {
+    //     const itemAsString = JSON.stringify(item);
+    //     if (seen.has(itemAsString)) {
+    //         duplicates.push(item);
+    //     } else {
+    //         seen.add(itemAsString);
+    //     }
+    // });
+    // return duplicates;
 
 }
 
@@ -636,14 +654,27 @@ exports.removeSplitFees = (arr) => {
 }
 
 exports.removeDuplicates = (arr) => {
-    const seen = new Set();
-    return arr.filter(item => {
-        const itemAsString = JSON.stringify(item);
-        if (seen.has(itemAsString)) {
-            return false;
-        } else {
-            seen.add(itemAsString);
-            return true;
-        }
+    let unique = arr.filter(function (item) {
+        let duplicate = arr.filter(function (item2) {
+            return item.individual_name === item2.individual_name &&
+                item.case_file_name === item2.case_file_name &&
+                item.batch_date === item2.batch_date &&
+                item.event_id === item2.event_id &&
+                item.invoice_id === item2.invoice_id &&
+                item.event_service_item_name === item2.event_service_item_name;
+        });
+        return duplicate.length === 1;
     });
+    return unique;
+
+    // const seen = new Set();
+    // return arr.filter(item => {
+    //     const itemAsString = JSON.stringify(item);
+    //     if (seen.has(itemAsString)) {
+    //         return false;
+    //     } else {
+    //         seen.add(itemAsString);
+    //         return true;
+    //     }
+    // });
 }
