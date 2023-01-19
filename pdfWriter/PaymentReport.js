@@ -109,7 +109,10 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let non_remittableItems = paymentData.filter(x => non_remittableArr.find(n => n.name === x.description))
 
             //*********transaction calculation****************/
-            let summarizedTransactions = Object.values(getSummarizedData(paymentData)).sort()
+            let tmp = paymentData.filter(x => !nonRemittableItems.includes(x.description))
+            let summarizedTransactions = Object.values(getSummarizedData(tmp)).sort()
+            console.log(summarizedTransactions)
+            *****************************************************************
 
             let filtered = getSummarizedSuperviseeData(paymentData)
 
