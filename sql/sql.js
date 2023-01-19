@@ -46,7 +46,7 @@ exports.getInvoiceDataForWorker = async (date, worker, profileDates) => {
                                     FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                     >='${date.start}' and batch_date <='${date.end}'
                                     AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
-                                    AND [event_primary_worker_name]='${worker}'`)
+                                    AND [event_primary_worker_name]='${worker}' AND event_service_item_name NOT IN (SELECT name FROM non_remittable)`)
         return resp.recordset;
     } catch (err) {
         console.log('getDataDate Function', err);
@@ -56,7 +56,7 @@ exports.getInvoiceDataForWorker = async (date, worker, profileDates) => {
 exports.getSuperviseeDataBySuperviser = async (date, worker, profileDates, superviser) => {
     try {
         await sql.connect(config);
-
+        
         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                     >='${date.start}' and batch_date <='${date.end}'
@@ -84,7 +84,7 @@ exports.getInvoiceData = async (date, worker, profileDates) => {
                                                                             FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                                                             >='${date.start}' and batch_date <='${date.end}'
                                                                             AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
-                                                                            AND [event_primary_worker_name]='${worker}')`
+                                                                            AND [event_primary_worker_name]='${worker}' )`
         )
         return resp.recordset;
     } catch (err) {

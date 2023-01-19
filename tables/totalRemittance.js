@@ -7,8 +7,12 @@ const calculateTotalGoHomePay = (workerProfile, netAppliedPayments, fees) => {
     let isSuperviser = workerProfile[0].isSuperviser
     let isSupervisedByNonDirector = workerProfile[0].IsSupervisedByNonDirector
     let superviserGetMoney = workerProfile[0].supervisorOneGetsMoney || workerProfile[0].supervisorTwoGetsMoney
+    let isSupervisedAndSupervisor = workerProfile[0].isSuperviser && workerProfile[0].isSupervised
 
-    if ((associate_type === 'L1' || associate_type === 'L2') && !isSpervised && !isSuperviser) {
+    if(isSupervisedAndSupervisor){
+        return netAppliedPayments - fees
+    }
+    else if ((associate_type === 'L1' || associate_type === 'L2') && !isSpervised && !isSuperviser) {
         // if(superviserGetMoney) return 0
         return netAppliedPayments - fees
     }

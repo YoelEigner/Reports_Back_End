@@ -34,6 +34,12 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
                 else if (tableType === 'CBT') return await getRate_CBT(superviseeReportedItemsCount(), worker.id)
                 else if (tableType === 'CPRI') return await getRate_CPRI(superviseeReportedItemsCount(), worker.id)
             }
+
+            // if(worker.associateName=== 'Peters (AM-LH), Joshua'){
+            //     console.log(superviseeReportedItemdData, worker.associateName)
+
+            // }
+
             let chargeVideoFee = tableType === 'CFIR' ? superviseeWorkerProfile.map(x => x.cahrgeVideoFee)[0] : false
 
             const itemsToDelete = new Set(nonChargeableItems.concat(duplicateItemsAndSplitFees));

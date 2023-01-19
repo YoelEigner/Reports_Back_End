@@ -1,7 +1,7 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit-table");
 const { sendEmail } = require("../email/sendEmail");
-const { getReportedItems, getNonChargeables, getPaymentTypes, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker, getAdjustmentsFeesWorkerOnlyInvoice, getAdjustmentsFeesInvoice, getProfileDates, getInvoiceDataForWorker, getInvoiceData, getSupervisersAssessments } = require("../sql/sql");
+const { getReportedItems, getNonChargeables, getPaymentTypes, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker, getAdjustmentsFeesWorkerOnlyInvoice, getAdjustmentsFeesInvoice, getProfileDates, getInvoiceDataForWorker, getInvoiceData, getSupervisersAssessments, getNonRemittables } = require("../sql/sql");
 const { adjustmentFeeTable } = require("../tables/adjustmentTable");
 const { associateFeesAssessments } = require("../tables/associateFeesAssessments");
 const { associateFeesTherapy, getRate } = require("../tables/associateFeesTherapy");
@@ -63,6 +63,8 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 })
 
                 let non_chargeables = await getNonChargeables()
+                // let non_remittables = await getNonRemittables()
+                // let nonRemittableItems = non_remittables.map(x => x.name)
                 let non_chargeablesArr = non_chargeables.map(x => x.name)
                 let proccessingFeeTypes = await getPaymentTypes()
                 let workerProfile = await getAssociateProfileById(workerId, profileDates)
@@ -75,6 +77,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let associateFeeAssessmentRate = workerProfile[0].assessmentRate
                 let associateFeeAssessmentRateCBT = workerProfile[0].assessmentRate_c
                 let associateFeeAssessmentRateCPRI = workerProfile[0].assessmentRate_f
+
                 // let equivalentHours = await getAssessmentItemEquivalent()
                 //*********************Create supervisees Tables *******************
                 let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser, profileDates)
@@ -87,7 +90,6 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let nonChargeableItems = reportedItemData.filter(x => non_chargeablesArr.find(n => n === x.event_service_item_name) && x.COUNT)
                 let nonRemittableItemsNames = nonChargeableItems.map(x => x.event_service_item_name)
                 let subtotal = data.map(x => !nonRemittableItemsNames.includes(x.event_service_item_name) && x.event_service_item_total).reduce((a, b) => a + b, 0)
-
 
                 //******************** REMOVING DUPLICATE & SPLIT FEES (event_id && case_file_name) *********************
                 let { duplicateItemsAndSplitFees } = duplicateAndSplitFees(data)
@@ -109,7 +111,6 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 else {
                     let supervisoInvoicerData = removedNonChargablesArr.filter(x => x.event_primary_worker_name === worker)
                     let supervisoPaymenterData = paymentData.filter(x => x.worker === worker)
-
                     invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                     invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                     invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
