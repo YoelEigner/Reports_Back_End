@@ -5,10 +5,11 @@ const formatterCurrency = new Intl.NumberFormat('en-US', {
 
 
 exports.calculateAssociateFeeForSupervisee = async (workerName, reportedItems, rate, videoFee, superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge,
-    superviseeHST, superviseeAdjustmentFee, chargeVideoFee, tableType) => {
+    superviseeAdjustmentFee, chargeVideoFee, tableType) => {
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
     let adjustmentFee = superviseeAdjustmentFee.map(x => Number(x.value)).reduce((a, b) => a + b, 0)
-    let totalWoHST = (reportedItems * rate) + vidFee + superviseeFinalProccessingFee + superviseeBlocksBiWeeklyCharge + adjustmentFee
+    let totalWoHST = (reportedItems * rate) + superviseeBlocksBiWeeklyCharge
+    // let totalWoHST = (reportedItems * rate) + vidFee + superviseeFinalProccessingFee + superviseeBlocksBiWeeklyCharge + adjustmentFee
     let hst = totalWoHST * (process.env.HST / 100)
     let total = totalWoHST + hst
     // let resp = await getReportedItems(date, worker.associateName)
@@ -23,7 +24,7 @@ exports.calculateAssociateFeeForSupervisee = async (workerName, reportedItems, r
             formatterCurrency.format(adjustmentFee),
             formatterCurrency.format(superviseeBlocksBiWeeklyCharge),
             formatterCurrency.format(hst),
-            formatterCurrency.format(total)
+            formatterCurrency.format(totalWoHST + hst + vidFee + superviseeFinalProccessingFee + superviseeBlocksBiWeeklyCharge + adjustmentFee)
         ]
     }
     else {

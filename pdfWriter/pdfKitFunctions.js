@@ -235,7 +235,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, reportedItemsTable, dupl
         reportType !== 'singlepdf' && doc.moveDown();
         reportType !== 'singlepdf' && await supervisies.forEach(async (t) => {
             if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
-            t.rows.map(x => x[4] = this.formatter.format(x[4]))
+            t.rows.map(x => x[5] = this.formatter.format(x[5]))
             await doc.table(t, {
                 prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                     virticalLines(doc, rectCell, indexColumn)
@@ -289,8 +289,8 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
         let showTransactions = tablesToShow.map(x => x.transactionsTable)[0]
         showTransactions && doc.moveDown();
         if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
-        showTransactions && transactionsTable.datas.map(x => x.total_amtTemp = this.formatter.format(x.total_amt))
-        showTransactions && transactionsTable.datas.map(x => x.applied_amtTemp = this.formatter.format(x.applied_amt))
+        showTransactions && transactionsTable.datas.map(x => x.cost = this.formatter.format(x.cost))
+        showTransactions && transactionsTable.datas.map(x => x.sum = this.formatter.format(x.sum))
         showTransactions && await doc.table(transactionsTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -301,8 +301,8 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
         let showsuperviseeTotalTabel = tablesToShow.map(x => x.superviseeTotalTabel)[0]
         showsuperviseeTotalTabel && doc.moveDown();
         if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
-        showsuperviseeTotalTabel && superviseeClientPaymentsTable.datas.map(x => x.totalTemp = this.formatter.format(x.total))
-        showsuperviseeTotalTabel && superviseeClientPaymentsTable.datas.map(x => x.applied_amtTemp = this.formatter.format(x.applied_amt))
+        showsuperviseeTotalTabel && superviseeClientPaymentsTable.datas.map(x => x.total = this.formatter.format(x.total))
+        showsuperviseeTotalTabel && superviseeClientPaymentsTable.datas.map(x => x.applied_amt = this.formatter.format(x.applied_amt))
         showsuperviseeTotalTabel && await doc.table(superviseeClientPaymentsTable, {
             prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
@@ -320,7 +320,8 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             },
         });
         doc.moveDown()
-        reportType !== 'singlepdf' && await l1SupPrac.map(async (t) => {
+
+        reportType !== 'singlepdf' && l1SupPrac[0]?.datas?.length && await l1SupPrac.map(async (t) => {
             if (doc.y > 0.79 * doc.page.height) { doc.addPage() }
             await doc.table(t, {
                 prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
@@ -376,6 +377,12 @@ exports.sortByDateAndName = (arr) => {
     return arr.sort(
         firstBy(function (a, b) { return new Date(a.batch_date) - new Date(b.batch_date) })
             .thenBy((a, b) => { return a.worker.localeCompare(b.worker); })
+    );
+}
+exports.sortByDateAndEvent_primary_worker_name = (arr) => {
+    return arr.sort(
+        firstBy(function (a, b) { return new Date(a.batch_date) - new Date(b.batch_date) })
+            .thenBy((a, b) => { return a.event_primary_worker_name.localeCompare(b.event_primary_worker_name); })
     );
 }
 exports.sortByName = (arr) => {
@@ -443,12 +450,12 @@ exports.addDateToPages = (doc) => {
     }
 }
 
-exports.removeSupPrac = async (arr, worker) => {
-    let superviseies = await getSuperviseeies(worker)
-    let mapedSupervisees = (superviseies.map(x => x.associateName = String(x.associateName.split(",")[1] + " " + x.associateName.split(",")[0]).trim()))
-    let removedArr = arr.filter(x => mapedSupervisees.includes(x.worker))
-    return removedArr
-}
+// exports.removeSupPrac = async (arr, worker) => {
+//     let superviseies = await getSuperviseeies(worker)
+//     let mapedSupervisees = (superviseies.map(x => x.associateName = String(x.associateName.split(",")[1] + " " + x.associateName.split(",")[0]).trim()))
+//     let removedArr = arr.filter(x => mapedSupervisees.includes(x.worker))
+//     return removedArr
+// }
 
 exports.getUniqueItemsMultiKey = (arr, keyProps) => {
     const kvArray = arr.map(entry => {
@@ -479,19 +486,28 @@ exports.removeOrAddAssessments = (paymentData, assessments) => {
                 || !x.case_program.startsWith('A_f_') || !x.case_program.startsWith('T_f_')))
 }
 exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments, isSuperviser, isSupervised, IsSupervisedByNonDirector) => {
-    if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && !isSupervised && !isSuperviser) {
+    if ((wokrerLeval === 'L1' || wokrerLeval === 'L2') && !isSupervised && !isSuperviser) {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
             : data.filter(x => !x.service_name.startsWith('A__') || !x.service_name.startsWith('aa_')
                 && (!x.service_name.startsWith('A_c_') || !x.service_name.startsWith('T_c_')
                     || !x.service_name.startsWith('A_f_') || !x.service_name.startsWith('T_f_')))
     }
-    else if (wokrerLeval === 'L3' || wokrerLeval === 'L4' && !IsSupervisedByNonDirector) {
+    else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && IsSupervisedByNonDirector) {
+        return assessments ?
+            data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
+            : data.filter(x => !x.service_name.startsWith('A__') || !x.service_name.startsWith('aa_')
+                && !(x.service_name.startsWith('A_c_') || !x.service_name.startsWith('T_c_')
+                    || !x.service_name.startsWith('A_f_') || !x.service_name.startsWith('T_f_')))
+        // paymentData.filter(x => x.case_program.startsWith('A__'))
+        // : paymentData.filter(x => x.case_program.startsWith('T__'))
+    }
+    else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && !IsSupervisedByNonDirector) {
         return assessments ?
             paymentData.filter(x => x.case_program.startsWith('A__'))
             : paymentData.filter(x => x.case_program.startsWith('T__'))
     }
-    else if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && isSuperviser) {
+    else if ((wokrerLeval === 'L1' || wokrerLeval === 'L2') && isSuperviser) {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
             : data.filter(x => !x.service_name.startsWith('A__') || !x.service_name.startsWith('aa_')
@@ -521,17 +537,22 @@ exports.removeOrAddAssessmentsCBT = (paymentData, assessments) => {
 
 
 exports.calculateWorkerFeeByLevalCBT = (wokrerLeval, data, paymentData, assessments, isSuperviser, isSupervised, IsSupervisedByNonDirector) => {
-    if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && !isSupervised && !isSuperviser) {
+    if ((wokrerLeval === 'L1' || wokrerLeval === 'L2') && !isSupervised && !isSuperviser) {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A_c_'))
             : data.filter(x => x.service_name.startsWith('T_c_'))
     }
-    else if (wokrerLeval === 'L3' || wokrerLeval === 'L4' && !IsSupervisedByNonDirector) {
+    else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && !IsSupervisedByNonDirector) {
+        return assessments ?
+            data.filter(x => x.service_name.startsWith('A_c_'))
+            : data.filter(x => x.service_name.startsWith('T_c_'))
+    }
+    else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && IsSupervisedByNonDirector) {
         return assessments ?
             paymentData.filter(x => x.case_program.startsWith('A_c_'))
             : paymentData.filter(x => x.case_program.startsWith('T_c_'))
     }
-    else if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && isSuperviser) {
+    else if ((wokrerLeval === 'L1' || wokrerLeval === 'L2') && isSuperviser) {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A_c_'))
             : data.filter(x => x.service_name.startsWith('T_c_'))
@@ -555,17 +576,22 @@ exports.removeOrCPRI = (paymentData, assessments) => {
         : paymentData.filter(x => x.case_program.startsWith('T_f_'))
 }
 exports.calculateWorkerFeeByLevalCPRI = (wokrerLeval, data, paymentData, assessments, isSuperviser, isSupervised, IsSupervisedByNonDirector) => {
-    if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && !isSupervised && !isSuperviser) {
+    if ((wokrerLeval === 'L1' || wokrerLeval === 'L2') && !isSupervised && !isSuperviser) {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A_f_'))
             : data.filter(x => x.service_name.startsWith('T_f_'))
     }
-    else if (wokrerLeval === 'L3' || wokrerLeval === 'L4' && !IsSupervisedByNonDirector) {
+    else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && !IsSupervisedByNonDirector) {
+        return assessments ?
+            data.filter(x => x.service_name.startsWith('A_f_'))
+            : data.filter(x => x.service_name.startsWith('T_f_'))
+    }
+    else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && IsSupervisedByNonDirector) {
         return assessments ?
             paymentData.filter(x => x.case_program.startsWith('A_f_'))
             : paymentData.filter(x => x.case_program.startsWith('T_f_'))
     }
-    else if (wokrerLeval === 'L1' || wokrerLeval === 'L2' && isSuperviser) {
+    else if ((wokrerLeval === 'L1' || wokrerLeval === 'L2') && isSuperviser) {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A_f_'))
             : data.filter(x => x.service_name.startsWith('T_f_'))
@@ -655,7 +681,7 @@ exports.removeSplitFees = (arr) => {
 
 exports.removeDuplicates = (arr) => {
     let seen = new Set();
-    let unique = arr.filter(function(item) {
+    let unique = arr.filter(function (item) {
         let key = item.individual_name + item.case_file_name + item.batch_date + item.event_id + item.invoice_id + item.event_service_item_name;
         if (!seen.has(key)) {
             seen.add(key);
@@ -664,17 +690,66 @@ exports.removeDuplicates = (arr) => {
         return false;
     });
     return unique;
-    
-    
+}
 
-    // const seen = new Set();
-    // return arr.filter(item => {
-    //     const itemAsString = JSON.stringify(item);
-    //     if (seen.has(itemAsString)) {
-    //         return false;
-    //     } else {
-    //         seen.add(itemAsString);
-    //         return true;
-    //     }
-    // });
+exports.getSummarizedData = (data) => {
+    const summarizedData = data.reduce((acc, item) => {
+        const key = `${item.reason_type}-${item.applied_amt}`;
+        if (!acc[key]) {
+            acc[key] = {
+                superviser: item.superviser,
+                worker: item.worker,
+                reason_type: item.reason_type,
+                cost: item.applied_amt,
+                quantity: 0,
+                sum: 0
+            };
+        }
+        acc[key].quantity += 1;
+        acc[key].sum += item.applied_amt;
+        return acc;
+    }, {});
+    return summarizedData
+
+}
+exports.getSummarizedSuperviseeData = (arr) => {
+    return arr.reduce((acc, curr) => {
+        let group = acc.find(g => g.description === curr.description && g.applied_amt === curr.applied_amt);
+        if (!group) {
+            group = {
+                worker: curr.worker,
+                description: curr.description,
+                applied_amt: curr.applied_amt,
+                qty: 0,
+                total: 0,
+            };
+            acc.push(group);
+        }
+        group.qty++;
+        group.total += curr.applied_amt;
+        return acc;
+    }, []);
+
+}
+
+exports.calculateProcessingFeeTemp = (reasonTypeArray, costArray) => {
+    let arr = []
+    costArray.forEach(costObj => {
+        let matchingFee = reasonTypeArray.find(fee => fee.name === costObj.reason_type);
+        if (matchingFee) {
+            let percentage = parseFloat(matchingFee.percentage) / 100;
+            let amount = parseFloat(matchingFee.ammount.replace("$", ""));
+            arr.push(
+                {
+                    worker: costObj.worker,
+                    reason_type: costObj.reason_type,
+                    sum: costObj.sum,
+                    amount: amount,
+                    percentage: percentage,
+                    qty: costObj.quantity,
+                    proccessingFee: (costObj.sum * percentage) + (amount * costObj.quantity)
+                })
+        }
+    });
+    return arr
 }

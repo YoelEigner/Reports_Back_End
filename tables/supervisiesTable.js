@@ -1,24 +1,5 @@
 const { getSupervisers, getReportedItems, getAssociateFeeBaseRate, getAssociateVideoFee } = require("../sql/sql")
 const { calculateAssociateFeeForSupervisee } = require("./calculateAssociateFeeForSupervisee.js")
-// const { getRate } = require("./associateFees")
-
-// exports.getRates = async (count, workerId) => {
-//     const associateFees = await getAssociateFeeBaseRate(workerId)
-//     if (associateFees[0] !== undefined) {
-//         if (count >= 34) {
-//             return associateFees[0].associateFeeBaseRateOverrideGreaterThen
-//         }
-//         else if (parseFloat(associateFees[0].associateFeeBaseRateOverrideLessThen) !== 0 && count <= 33) {
-//             return associateFees[0].associateFeeBaseRateOverrideLessThen
-//         }
-//         else {
-//             return associateFees[0].associateFeeBaseRate
-//         }
-//     }
-// }
-
-
-
 
 exports.getSupervisiesFunc = async (date, non_chargeablesArr, respSuperviser, profileDates) => {
     try {
@@ -46,13 +27,14 @@ exports.supervisiesTable = (data, date, supervisee, subtotal, non_chargeablesArr
         headers: [
             { label: "Supervisee", property: 'event_primary_worker_name', renderer: null, align: "center" },
             { label: "Cart Item", property: 'service_name', renderer: null, align: "center" },
+            { label: "Invoice ID", property: 'invoice_id', renderer: null, align: "center" },
             { label: "Reported Items", property: 'COUNT', renderer: null, align: "center" },
             { label: "Item Total", property: 'itemTotal', renderer: null, align: "center" },
             { label: "Total", property: 'TOTAL', renderer: null, align: "center" },
         ],
         datas: [...data],
         rows: [
-            ['Total', "-", reportedItemsCount, "-", + subtotal],
+            ['Total', "-","-", reportedItemsCount, "-", + subtotal],
         ],
     };
 }

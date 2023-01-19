@@ -1,8 +1,12 @@
 const { formatter } = require("../pdfWriter/pdfKitFunctions")
 
-exports.totalAppliedPaymentsTable = (date, clientPayments, clientHours, superviseeClientsPayment, superviseeClientsHours, ajustmentFeesTotal, totalAppliedAmount, totalSupPracAmount) => {
-    let total = clientPayments - superviseeClientsPayment - totalAppliedAmount - totalSupPracAmount + ajustmentFeesTotal
+exports.totalAppliedPaymentsTable = (date, clientPayments, clientHours, superviseeClientsPayment, superviseeClientsHours, ajustmentFeesTotal, totalAppliedAmount, totalSupPracAmount, totalSupPraHours, totalAppliedHrs) => {
+    let superviseePaymentAmt = (superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount
+    let superviseeHrs = (superviseeClientsHours - totalAppliedHrs) + totalSupPraHours
+    let total = clientPayments + superviseePaymentAmt + ajustmentFeesTotal
+
     // let total = clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) + -190 
+
     return {
         title: "Applied Payments Total",
         subtitle: "From " + date.start + " To " + date.end,
@@ -17,8 +21,8 @@ exports.totalAppliedPaymentsTable = (date, clientPayments, clientHours, supervis
         rows: [[
             formatter.format(clientPayments),
             clientHours.toFixed(0),
-            formatter.format((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount),
-            superviseeClientsHours.toFixed(0),
+            formatter.format(superviseePaymentAmt),
+            superviseeHrs.toFixed(0),
             formatter.format(ajustmentFeesTotal),
             formatter.format(total),
         ]],

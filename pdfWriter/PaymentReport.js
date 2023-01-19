@@ -1,7 +1,7 @@
-const { createPaymentTableFunc, getUniqueItemsMultiKey, calculateProccessingFee, getProfileDateFormatted } = require("./pdfKitFunctions")
+const { createPaymentTableFunc, getProfileDateFormatted, getSummarizedData, calculateProcessingFeeTemp, getSummarizedSuperviseeData } = require("./pdfKitFunctions")
 const PDFDocument = require("pdfkit-table");
 const { nonRemittablesTable } = require("../tables/nonRemittablesTable");
-const { getPaymentData, getNonRemittables, getAssociateProfileById, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes, getNonChargeables, getAdjustmentsFees, getAdjustmentsFeesWorkerOnly, getTablesToShow } = require("../sql/sql");
+const { getPaymentData, getNonRemittables, getAssociateProfileById, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes, getAdjustmentsFees, getAdjustmentsFeesWorkerOnly, getTablesToShow, getSuperviseeiesL1Assessments } = require("../sql/sql");
 const { totalAppliedPaymentsTable } = require("../tables/totalAppliedPaymentsTable");
 const { appliedPaymentsTable } = require("../tables/appliedPaymentsTable");
 const { transactionsTable } = require("../tables/transactionsTable");
@@ -47,6 +47,9 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let proccessingFeeTypes = await getPaymentTypes()
             let non_remittableArr = await getNonRemittables()
             let nonRemittableItems = non_remittableArr.map(x => x.name)
+            let assessmentMoneyNotToSupervisor = await getSuperviseeiesL1Assessments(worker)
+            let assessmentMoneyNotToSupervisorWorkers = assessmentMoneyNotToSupervisor.map(x => x.associateName)
+
             let tablesToShow = await getTablesToShow(workerId)
             let adjustmentFees = reportType === 'singlepdf' ? await getAdjustmentsFeesWorkerOnly(worker) : await getAdjustmentsFees(worker)
 
@@ -61,23 +64,27 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             const getClientPayments = () => { return (paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
             const getClientHours = () => { return (paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
 
+            const getSuperviseeiesClientsPayments = () => { return (paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
+            const getSuperviseeiesClientsHours = () => { return (paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
+
             let clientPayments = 0
             let clientHours = 0
             let superviseeClientsPayment = 0
             let superviseeClientsHours = 0
 
             if (workerProfile[0].associateType === 'L1 (Sup Prac)') {
+                // if(workerProfile[0].associateType){}
                 clientPayments = getClientPayments()
                 clientHours = getClientHours()
-                superviseeClientsPayment = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
-                superviseeClientsHours = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+                superviseeClientsPayment = getSuperviseeiesClientsPayments()
+                superviseeClientsHours = getSuperviseeiesClientsHours()
             }
 
             else if (workerProfile[0].isSuperviser) {
                 clientPayments = getClientPayments()
                 clientHours = getClientHours()
-                superviseeClientsPayment = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
-                superviseeClientsHours = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+                superviseeClientsPayment = getSuperviseeiesClientsPayments()
+                superviseeClientsHours = getSuperviseeiesClientsHours()
             }
             else {
                 if (workerProfile[0].supervisorOneGetsMoney === true || workerProfile[0].supervisorTwoGetsMoney === true) {
@@ -89,38 +96,22 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 else {
                     clientPayments = getClientPayments()
                     clientHours = getClientHours()
-                    superviseeClientsPayment = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)
-                    superviseeClientsHours = paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+                    superviseeClientsPayment = getSuperviseeiesClientsPayments()
+                    superviseeClientsHours = getSuperviseeiesClientsHours()
                 }
             }
             //**********L1 Sup PRac Table****************/
+            // let superviseeWorkers = await getSuperviseeiesL1Assessments(worker)
             let superviseeWorkers = await getSuperviseeiesL1(worker)
-            let L1Tables = superviseeWorkers.map(async (x) => await L1SupPracTable(date, paymentData, x.id, x.associateName))
+            let L1Tables = superviseeWorkers.map(async (x) => await L1SupPracTable(date, paymentData, x.id, x.associateName, worker))
 
             //**********Non remittable calculation**************/
             let non_remittableItems = paymentData.filter(x => non_remittableArr.find(n => n.name === x.description))
 
             //*********transaction calculation****************/
+            let summarizedTransactions = Object.values(getSummarizedData(paymentData)).sort()
 
-            const uniqueTransactions = [...new Set(paymentData.map(item => item.rec_id))]
-            let arrayOftransations = uniqueTransactions.map(x => paymentData.filter(i => i.rec_id === x))
-
-            arrayOftransations.sort()
-            arrayOftransations.map((x) => {
-                x.map(i => i.quantity = x.length)
-                x[0].total_amt = x.map(i => i.applied_amt).reduce((a, b) => a + b, 0)
-                x.map(i => i.applied_amt = i.applied_amt)
-            })
-
-
-
-            //*************** to be detucted tbale (superviseeClientPaymentsTable) **************/
-            let filtered = getUniqueItemsMultiKey(paymentData, ['worker', 'description'])
-            filtered.map(async (x) => {
-                x.qty = paymentData.filter(i => i.description === x.description && i.worker === x.worker).length
-                x.total = paymentData.filter(i => i.description === x.description && i.worker === x.worker)
-                    .map(i => i.applied_amt).reduce((a, b) => a + b, 0)
-            })
+            let filtered = getSummarizedSuperviseeData(paymentData)
 
             //****************adjustment fee table *************/
             let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFees)
@@ -130,13 +121,14 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             Promise.all(L1Tables).then((l1SupPrac) => {
                 let totalAppliedAmount = l1SupPrac.map(x => x.rows.map(r => r[6])).map(x => Number(x[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
                 let totalSupPracAmount = l1SupPrac.map(x => x.amountForSuperviser).reduce((a, b) => a + b, 0)
-
+                let totalAppliedHrs = l1SupPrac.map(x => x.rows.map(r => r[5])).map(x => x[0]).reduce((a, b) => a + b, 0)
+                let totalSupPraHours = l1SupPrac.map(x => x.hoursForSuperviser).reduce((a, b) => a + b, 0)
 
                 createPaymentTableFunc(doc, worker, non_remittableArr,
                     /*Applied PAyments Table*/appliedPaymentsTableTemp,
-                    /*Total applied payments table */ totalAppliedPaymentsTable(date, clientPayments, clientHours, superviseeClientsPayment, superviseeClientsHours, ajustmentFeesTotal, totalAppliedAmount, totalSupPracAmount),
+                    /*Total applied payments table */ totalAppliedPaymentsTable(date, clientPayments, clientHours, superviseeClientsPayment, superviseeClientsHours, ajustmentFeesTotal, totalAppliedAmount, totalSupPracAmount, totalSupPraHours, totalAppliedHrs),
                     /*nonRemittable Tables*/nonRemittablesTable(date, non_remittableItems),
-                    /*Transactions table */transactionsTable(date, arrayOftransations),
+                    /*Transactions table */transactionsTable(date, summarizedTransactions),
                     /*supervisees clients payments table */ superviseeClientPaymentsTable(date, filtered),
                     /*adjustment fee table */ adjustmentFeeTableData,
                     /*show Adjustment Fee Table or not*/showAdjustmentFeeTable,
@@ -146,17 +138,15 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 )
 
                 //**********calculations for invoice report ************/
-                arrayOftransations.flat().map(x => x.applied_amt = Number(x.applied_amt.replace(/[^0-9.-]+/g, "")))
                 let tempQty = paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
-                /*remove non chargables*/
-                let tempArrayOftransations = arrayOftransations.map(x => x[0]).filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
-                /*remove non chargables*/
-                // netAppliedTotal = (clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) - ajustmentFeesTotal)
+
                 netAppliedTotal = reportType === 'singlepdf' ? (clientPayments + ajustmentFeesTotal)
-                    : clientPayments - superviseeClientsPayment - totalAppliedAmount - totalSupPracAmount + ajustmentFeesTotal
+                    : clientPayments + (superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount + ajustmentFeesTotal
                 duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 qty = tempQty.length
-                proccessingFee = calculateProccessingFee(tempArrayOftransations, proccessingFeeTypes, workerProfile[0].associateType).reduce((a, b) => a + b, 0)
+
+                proccessingFee = calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.worker === worker).map(x => x.proccessingFee).reduce((a, b) => a + b, 0)
+                // proccessingFee = calculateProccessingFee(tempArrayOftransations, proccessingFeeTypes, workerProfile[0].associateType).reduce((a, b) => a + b, 0)
 
             })
         } catch (error) {
@@ -164,4 +154,8 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
         }
     })
 
+}
+
+function compareNames(name1, name2) {
+    return name1.includes(name2) || name2.includes(name1);
 }

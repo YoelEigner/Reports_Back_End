@@ -1,16 +1,22 @@
 const { formatter } = require("../pdfWriter/pdfKitFunctions")
+const { superviserGetsAssessmentMoney } = require("../sql/sql")
 const { getRate } = require("./associateFeesTherapy")
 
-exports.L1SupPracTable = async (date, paymentData, workerId, name) => {
+exports.L1SupPracTable = async (date, paymentData, workerId, name, superviser) => {
     let filterWorkers = paymentData.filter(x => x.worker === name)
-
     let totalAppliedAmt = filterWorkers.map(x => Number(x.applied_amt)).reduce((a, b) => a + b, 0)
     let totalDuration_hrs = filterWorkers.map(x => Number(x.duration_hrs)).reduce((a, b) => a + b, 0)
 
     //****************calculate L1 Sup Practice amount***************/
     let rate = await getRate(paymentData.length, workerId, true)
+    let superViserArr = await superviserGetsAssessmentMoney(workerId)
+    let superviserGetsAssessmentMoneyVar = superViserArr.map(x =>
+        (x.supervisor1 === superviser) && x.assessmentMoneyToSupervisorOne === true || (x.supervisor2 === superviser) && x.assessmentMoneyToSupervisorTwo === true)
     let subPracTotal = 0
-    let superviserRate = rate.superviserRate * filterWorkers.length
+    let superviserRate = superviserGetsAssessmentMoneyVar[0] ? rate.superviserRate * filterWorkers.length : 0
+    let superviserHours = superviserGetsAssessmentMoneyVar[0] ? filterWorkers.map(x => x.duration_hrs).reduce((a, b) => a + b, 0) : 0
+
+    filterWorkers.map(x => { return (x.superviorTotal = superviserRate, x.supervisorTotalHours = superviserHours) })
     if (rate !== undefined && rate.isZero) {
         filterWorkers.map(x => x.subPracAmount = formatter.format(Number(x.applied_amt) - rate.associateRate)).reduce((a, b) => a + b, 0)
         subPracTotal = filterWorkers.map(x => Number(x.subPracAmount.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
@@ -38,5 +44,6 @@ exports.L1SupPracTable = async (date, paymentData, workerId, name) => {
             ['Total', "-", "-", "-", "-", totalDuration_hrs, formatter.format(totalAppliedAmt), formatter.format(subPracTotal)],
         ],
         amountForSuperviser: superviserRate,
+        hoursForSuperviser: superviserHours,
     }
 }
