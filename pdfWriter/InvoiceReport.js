@@ -61,10 +61,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 reportedItemDataFiltered.map(x => {
                     x.qty = data.filter(i => i.event_service_item_name === x.event_service_item_name).length
                 })
-
                 let non_chargeables = await getNonChargeables()
-                // let non_remittables = await getNonRemittables()
-                // let nonRemittableItems = non_remittables.map(x => x.name)
                 let non_chargeablesArr = non_chargeables.map(x => x.name)
                 let proccessingFeeTypes = await getPaymentTypes()
                 let workerProfile = await getAssociateProfileById(workerId, profileDates)
@@ -78,7 +75,6 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let associateFeeAssessmentRateCBT = workerProfile[0].assessmentRate_c
                 let associateFeeAssessmentRateCPRI = workerProfile[0].assessmentRate_f
 
-                // let equivalentHours = await getAssessmentItemEquivalent()
                 //*********************Create supervisees Tables *******************
                 let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser, profileDates)
 
@@ -114,10 +110,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                     invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                     invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                     invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
-
-
                 }
-
 
                 //***************adjustment fees *****************/
                 let adjustmentFeeTableData = adjustmentFeeTable(date, reportType === 'singlepdf' ? adjustmentFees : await getAdjustmentsFeesInvoice(worker, profileDates))
@@ -167,7 +160,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 createInvoiceTableFunc(doc,
                 /*Main Table*/  mainTable(data, date),
-                /*Reported Items Table*/await reportedItemsTable(reportedItemDataFiltered, date, subtotal, workerId),
+                /*Reported Items Table*/await reportedItemsTable(reportedItemDataFiltered, date, subtotal, workerId, data),
                 /*Duplicate Items Table*/duplicateTable(duplicateItemsAndSplitFees, date),
                 /*Non Chargables Table*/nonChargeables(nonChargeableItems, date),
                 /*Adjustment fee table*/adjustmentFeeTableData,

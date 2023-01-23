@@ -56,7 +56,7 @@ exports.getInvoiceDataForWorker = async (date, worker, profileDates) => {
 exports.getSuperviseeDataBySuperviser = async (date, worker, profileDates, superviser) => {
     try {
         await sql.connect(config);
-        
+
         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                     >='${date.start}' and batch_date <='${date.end}'
@@ -637,6 +637,18 @@ exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                    AND worker like '%${tempWorker}%'`)
+        return resp.recordset
+    } catch (error) {
+        // console.log(error)
+    }
+}
+exports.getPaymentDataForWorkerBySupervisor = async (tempWorker, date, profileDates, supervisor) => {
+    try {
+        console.log
+        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
+                                    WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
+                                    AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                                   AND worker like '%${tempWorker}%' AND superviser like '${supervisor}'`)
         return resp.recordset
     } catch (error) {
         // console.log(error)

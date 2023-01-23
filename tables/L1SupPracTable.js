@@ -13,6 +13,7 @@ exports.L1SupPracTable = async (date, paymentData, workerId, name, superviser) =
     let superviserGetsAssessmentMoneyVar = superViserArr.map(x =>
         (x.supervisor1 === superviser) && x.assessmentMoneyToSupervisorOne === true || (x.supervisor2 === superviser) && x.assessmentMoneyToSupervisorTwo === true)
     let subPracTotal = 0
+    // let superviserRate = rate.superviserRate * filterWorkers.length
     let superviserRate = superviserGetsAssessmentMoneyVar[0] ? rate.superviserRate * filterWorkers.length : 0
     let superviserHours = superviserGetsAssessmentMoneyVar[0] ? filterWorkers.map(x => x.duration_hrs).reduce((a, b) => a + b, 0) : 0
 

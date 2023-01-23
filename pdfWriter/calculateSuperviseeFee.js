@@ -1,4 +1,4 @@
-const { getAssociateProfileById, getPaymentDataForWorker, getDataDate, getSuperviseeDataBySuperviser } = require("../sql/sql")
+const { getAssociateProfileById, getPaymentDataForWorker, getDataDate, getSuperviseeDataBySuperviser, getPaymentDataForWorkerBySupervisor } = require("../sql/sql")
 const { getRate, getRate_CBT, getRate_CPRI } = require("../tables/associateFeesTherapy")
 const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js")
 const { removeNullStr, removeNaN, calculateProccessingFee, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI, calculateProcessingFeeTemp, getSummarizedData } = require("./pdfKitFunctions")
@@ -12,8 +12,8 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
 
 
             let superviseeReportedItemdData = removeNullStr(await getSuperviseeDataBySuperviser(date, worker.associateName, profileDates, superviser), '-')
-            let workerPaymentData = await getPaymentDataForWorker(worker.associateName, date, profileDates)
-
+            let workerPaymentData = await getPaymentDataForWorkerBySupervisor(worker.associateName, date, profileDates, superviser)
+            
             let { duplicateItemsAndSplitFees } = duplicateAndSplitFees(superviseeReportedItemdData)
             let superviseeWorkerProfile = await getAssociateProfileById(worker.id)
 
@@ -53,7 +53,7 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
             let superviseeBlocksBiWeeklyCharge = tableType === 'CFIR' ? parseFloat(superviseeWorkerProfile.map(x => x.blocksBiWeeklyCharge)[0]) : 0
 
             let superviseeAdjustmentFee = tableType === 'CFIR' ? JSON.parse(superviseeWorkerProfile.map(x => x.adjustmentFee)) : [{ name: 'rtest', value: '0' }]
-
+            // console.log(superviser, superviseeReportedItemsCount(), '--', superviseeReportedItemdData.length, '---', workerPaymentData.length)
             arr.push(await calculateAssociateFeeForSupervisee(worker.associateName, superviseeReportedItemsCount(), parseFloat(await SuperviseeRate()), videoFee,
                 superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge, superviseeAdjustmentFee, chargeVideoFee, tableType))
         })

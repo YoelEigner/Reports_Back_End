@@ -390,6 +390,11 @@ exports.sortByName = (arr) => {
         function (a, b) { return a.worker.localeCompare(b.worker); }
     );
 }
+exports.sortByIndividualName = (arr) => {
+    return arr.sort(
+        function (a, b) { return a.individual_name.localeCompare(b.individual_name); }
+    );
+}
 
 
 exports.sortByDate = (arr) => {
@@ -632,41 +637,53 @@ exports.findDuplicates = (arr) => {
         return true;
     });
     return duplicates;
-
-    // const seen = new Set();
-    // const duplicates = [];
-    // arr.forEach(item => {
-    //     const itemAsString = JSON.stringify(item);
-    //     if (seen.has(itemAsString)) {
-    //         duplicates.push(item);
-    //     } else {
-    //         seen.add(itemAsString);
-    //     }
-    // });
-    // return duplicates;
-
 }
 
 exports.findSplitFees = (arr) => {
+    //case_file_id
     return arr.filter(item => {
         let match = false;
         arr.forEach(compareItem => {
-            if (item.event_id === compareItem.event_id && item.case_file_name === compareItem.case_file_name
-                && item.service_name === compareItem.service_name && item.batch_date === compareItem.batch_date && item.invoice_id !== compareItem.invoice_id) {
+            // if (
+            //     item.case_file_id === compareItem.case_file_id
+            //     && item.event_id === compareItem.event_id
+            //     && item.event_service_item_name === compareItem.event_service_item_name
+            //     && item.event_service_item_total === compareItem.event_service_item_total
+            //     && item.batch_date === compareItem.batch_date
+            //     && item.invoice_id !== compareItem.invoice_id) {
+            //     match = true;
+            // }
+            if (
+                item.event_id === compareItem.event_id
+                && item.case_file_name === compareItem.case_file_name
+                && item.service_name === compareItem.service_name
+                && item.batch_date === compareItem.batch_date
+                && item.invoice_id !== compareItem.invoice_id) {
                 match = true;
             }
         });
         return match;
     });
-
 }
 
 exports.removeSplitFees = (arr) => {
     let match = false;
     arr.forEach((item, index) => {
         arr.forEach((compareItem, compareIndex) => {
-            if (item.event_id === compareItem.event_id && item.case_file_name === compareItem.case_file_name
-                && item.service_name === compareItem.service_name && item.batch_date === compareItem.batch_date && item.invoice_id !== compareItem.invoice_id) {
+            if (
+                // item.case_file_id === compareItem.case_file_id
+                // && item.event_id === compareItem.event_id
+                // && item.event_service_item_name === compareItem.event_service_item_name
+                // && item.event_service_item_total === compareItem.event_service_item_total
+                // && item.batch_date === compareItem.batch_date
+                // && item.invoice_id !== compareItem.invoice_id
+
+                item.event_id === compareItem.event_id
+                && item.case_file_name === compareItem.case_file_name
+                && item.service_name === compareItem.service_name
+                && item.batch_date === compareItem.batch_date
+                && item.invoice_id !== compareItem.invoice_id
+            ) {
                 if (!match) {
                     match = true;
                 } else {

@@ -17,6 +17,7 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
 
     let totalWoHST = (count * rate) + blockItemFees
     let hst = totalWoHST * (process.env.HST / 100)
+
     // console.log(superviseeFeeCalculation)
     return {
         title: "CFIR Associate Fees (Therapy Only)",
@@ -42,7 +43,7 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
                 formatter.format(ajustmentFees.toFixed(2)),
                 formatter.format(blockItemFees),
                 formatter.format(hst),
-                formatter.format(totalWoHST + hst + blockItemFees + vidFee + finalProccessingFee + ajustmentFees)
+                formatter.format(totalWoHST + hst  + vidFee + finalProccessingFee + ajustmentFees)
             ],
             ...superviseeFeeCalculation
         ],

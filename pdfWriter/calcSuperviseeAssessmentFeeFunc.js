@@ -1,4 +1,4 @@
-const { getAssociateProfileById, getPaymentDataForWorker, getDataDate, getAssessmentDataBySuperviser, getSuperviseeDataBySuperviser } = require("../sql/sql")
+const { getAssociateProfileById, getPaymentDataForWorker, getDataDate, getAssessmentDataBySuperviser, getSuperviseeDataBySuperviser, getPaymentDataForWorkerBySupervisor } = require("../sql/sql")
 const { removeNullStr, removeNaN, calculateProccessingFee, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI, formatter } = require("./pdfKitFunctions")
 const { duplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees")
 
@@ -9,7 +9,7 @@ exports.calcSuperviseeAssessmentFeeFunc = (date, respSuperviser, tableType, prof
         let loop = respSuperviser.map(async (worker) => {
 
             let superviseeReportedItemdData = removeNullStr(await getSuperviseeDataBySuperviser(date, worker.associateName, profileDates, superviser), '-')
-            let workerPaymentData = await getPaymentDataForWorker(worker.associateName, date, profileDates)
+            let workerPaymentData = await getPaymentDataForWorkerBySupervisor(worker.associateName, date, profileDates, superviser)
 
             let { duplicateItemsAndSplitFeesRemoved } = duplicateAndSplitFeesRemoved(superviseeReportedItemdData)
 

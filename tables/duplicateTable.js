@@ -1,7 +1,8 @@
-const { formatter } = require("../pdfWriter/pdfKitFunctions")
+const { formatter, sortByIndividualName } = require("../pdfWriter/pdfKitFunctions")
 
 exports.duplicateTable = (data, date) => {
     const total = data.map(x => x.event_service_item_total).reduce((a, b) => a + b, 0).toFixed(2)
+    sortByIndividualName(data)
     return {
         title: "Duplicate & split fees",
         subtitle: "From " + date.start + " To " + date.end,

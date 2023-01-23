@@ -111,8 +111,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             //*********transaction calculation****************/
             let tmp = paymentData.filter(x => !nonRemittableItems.includes(x.description))
             let summarizedTransactions = Object.values(getSummarizedData(tmp)).sort()
-            console.log(summarizedTransactions)
-            *****************************************************************
+            // console.log(summarizedTransactions)
 
             let filtered = getSummarizedSuperviseeData(paymentData)
 
@@ -120,6 +119,9 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFees)
             let showAdjustmentFeeTable = !adjustmentFeeTableData.datas.every(x => x.name === "-")
             let ajustmentFeesTotal = Number(adjustmentFeeTableData.rows[0][2].replace(/[^0-9.-]+/g, ""))
+
+
+            let superviseeTbale = superviseeClientPaymentsTable(date, filtered)
 
             Promise.all(L1Tables).then((l1SupPrac) => {
                 let totalAppliedAmount = l1SupPrac.map(x => x.rows.map(r => r[6])).map(x => Number(x[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
@@ -132,7 +134,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     /*Total applied payments table */ totalAppliedPaymentsTable(date, clientPayments, clientHours, superviseeClientsPayment, superviseeClientsHours, ajustmentFeesTotal, totalAppliedAmount, totalSupPracAmount, totalSupPraHours, totalAppliedHrs),
                     /*nonRemittable Tables*/nonRemittablesTable(date, non_remittableItems),
                     /*Transactions table */transactionsTable(date, summarizedTransactions),
-                    /*supervisees clients payments table */ superviseeClientPaymentsTable(date, filtered),
+                    /*supervisees clients payments table */ superviseeTbale,
                     /*adjustment fee table */ adjustmentFeeTableData,
                     /*show Adjustment Fee Table or not*/showAdjustmentFeeTable,
                     /*L1 Sup PRac tables*/l1SupPrac,
@@ -149,7 +151,6 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 qty = tempQty.length
 
                 proccessingFee = calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.worker === worker).map(x => x.proccessingFee).reduce((a, b) => a + b, 0)
-                // proccessingFee = calculateProccessingFee(tempArrayOftransations, proccessingFeeTypes, workerProfile[0].associateType).reduce((a, b) => a + b, 0)
 
             })
         } catch (error) {
