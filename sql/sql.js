@@ -61,7 +61,8 @@ exports.getSuperviseeDataBySuperviser = async (date, worker, profileDates, super
                                     FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                     >='${date.start}' and batch_date <='${date.end}'
                                     AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
-                                    AND [event_primary_worker_name]='${worker}' AND [event_invoice_details_worker_name]='${superviser}'`)
+                                    AND [event_primary_worker_name]='${worker}' AND [event_invoice_details_worker_name]='${superviser}'
+                                    AND event_service_item_name NOT IN (SELECT name FROM non_remittable)`)
         return resp.recordset;
     } catch (err) {
         console.log('getDataDate Function', err);
@@ -77,14 +78,16 @@ exports.getInvoiceData = async (date, worker, profileDates) => {
                                         WHERE i.batch_date >= '${date.start}' AND i.batch_date <= '${date.end}'
                                         AND i.batch_date >= '${profileDates.startDate}' AND i.batch_date <= '${profileDates.endDate}'
                                         AND (i.event_primary_worker_name = '${worker}' OR i.event_invoice_details_worker_name='${worker}')
-                                        AND (p.supervisor1 = '${worker}' AND p.supervisorOneGetsMoney = 1 OR p.supervisor2 = '${worker}' AND p.supervisorTwoGetsMoney = 1))
+                                        AND (p.supervisor1 = '${worker}' AND p.supervisorOneGetsMoney = 1 OR p.supervisor2 = '${worker}' AND p.supervisorTwoGetsMoney = 1)
+                                        AND event_service_item_name NOT IN (SELECT name FROM non_remittable))
                                         UNION
                                         (
                                         select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
                                                                             FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                                                             >='${date.start}' and batch_date <='${date.end}'
                                                                             AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
-                                                                            AND [event_primary_worker_name]='${worker}' )`
+                                                                            AND [event_primary_worker_name]='${worker}'
+                                                                            AND event_service_item_name NOT IN (SELECT name FROM non_remittable))`
         )
         return resp.recordset;
     } catch (err) {
@@ -235,16 +238,18 @@ exports.resetAdjustmentFees = async () => {
     }
 }
 
-exports.getReportedItems = async (date, worker, profileDates) => {
+exports.getReportedItems = async (date, worker, profileDates, supervisor) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`select [receipt_reason],[invoice_id], [service_name], [event_service_item_name],event_primary_worker_name, FORMAT(sum([event_service_item_total]), 'c') as TOTAL, sum([event_service_item_total]) as event_service_item_total,
+        console.log
+        let resp = await sql.query(`select  [receipt_reason],[invoice_id], [service_name], [event_service_item_name],event_primary_worker_name, FORMAT(sum([event_service_item_total]), 'c') as TOTAL, sum([event_service_item_total]) as event_service_item_total,
                                     FORMAT([event_service_item_total], 'c') as itemTotal, COUNT([event_service_item_name]) as COUNT
                                     FROM [CFIR].[dbo].[invoice_data] 
                                     WHERE batch_date >= '${date.start}' and batch_date <= '${date.end}'
                                     AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
-                                    AND [event_primary_worker_name]='${worker}'                                    
-                                    GROUP BY [event_service_item_name], event_service_item_total,event_primary_worker_name,[receipt_reason],[service_name],[invoice_id]`)
+                                    AND [event_primary_worker_name]='${worker}'
+                                    AND event_invoice_details_worker_name like '${supervisor}'
+                                    GROUP BY  [event_service_item_name], event_service_item_total,event_primary_worker_name,[receipt_reason],[service_name],[invoice_id]`)
         return resp.recordset
     } catch (err) {
         console.log(err); return err
@@ -612,13 +617,14 @@ exports.getPaymentData = async (worker, date, profileDates) => {
                                         AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                         AND (fv.superviser like '%${worker}%' OR worker like '%${worker}%')
                                         AND (p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 OR p.supervisor2 = fv.superviser AND p.supervisorTwoGetsMoney = 1)
-                                        )
+                                        AND description NOT IN (select name from non_remittable))
                                         UNION
                                         (
                                             SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
                                             WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                             AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                             AND worker like '%${worker}%'
+                                            AND description NOT IN (select name from non_remittable)
                                         )`)
         // let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
         //                             WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
@@ -636,7 +642,8 @@ exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
-                                   AND worker like '%${tempWorker}%'`)
+                                   AND worker like '%${tempWorker}%'
+                                   AND description NOT IN (select name from non_remittable)`)
         return resp.recordset
     } catch (error) {
         // console.log(error)
@@ -644,11 +651,11 @@ exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
 }
 exports.getPaymentDataForWorkerBySupervisor = async (tempWorker, date, profileDates, supervisor) => {
     try {
-        console.log
         let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
-                                   AND worker like '%${tempWorker}%' AND superviser like '${supervisor}'`)
+                                   AND worker like '%${tempWorker}%' AND superviser like '${supervisor}'
+                                   AND description NOT IN (select name from non_remittable)`)
         return resp.recordset
     } catch (error) {
         // console.log(error)

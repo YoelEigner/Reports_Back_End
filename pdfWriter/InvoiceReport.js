@@ -18,6 +18,7 @@ const { createInvoiceTableFunc, sortByDate, removeNullStr, getUniqueItemsMultiKe
 const { duplicateAndSplitFees, duplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees");
 const moment = require('moment');
 const { calcSuperviseeAssessmentFeeFunc } = require("./calcSuperviseeAssessmentFeeFunc");
+const { probonoTable } = require("../tables/probonoTable");
 
 exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netAppliedTotal, duration_hrs, videoFee, paymentQty, proccessingFee, action, associateEmail, emailPassword, reportType, index) => {
     return new Promise(async (resolve, reject) => {
@@ -76,7 +77,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let associateFeeAssessmentRateCPRI = workerProfile[0].assessmentRate_f
 
                 //*********************Create supervisees Tables *******************
-                let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser, profileDates)
+                let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser, profileDates, worker)
 
                 //*********************format date *******************/
                 date = { start: moment(dateUnformatted.start).format('YYYY-MM-DD'), end: moment(dateUnformatted.end).format('YYYY-MM-DD') }
@@ -112,6 +113,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                     invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                 }
 
+                //***************probono cases ******************/
+                let probonoItems = data.filter(x => x.event_service_item_name === 'Counselling 030 + HST' || x.event_service_item_name === 'Counselling 033.90')
+
                 //***************adjustment fees *****************/
                 let adjustmentFeeTableData = adjustmentFeeTable(date, reportType === 'singlepdf' ? adjustmentFees : await getAdjustmentsFeesInvoice(worker, profileDates))
                 let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
@@ -135,7 +139,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 }
 
                 //***************calculate associateship fees  */
-                let finalAdjustmentFee = adjustmentFees.map(x => JSON.parse(x.adjustmentFee)[0].value) ? adjustmentFees.map(x => JSON.parse(x.adjustmentFee)[0].value) : 0
+                let finalAdjustmentFee = adjustmentFees.filter(x => x.associateName === worker).map(x => JSON.parse(x.adjustmentFee))[0].map(x => Number(x.value)).reduce((a, b) => a + b, 0)
+                // let finalAdjustmentFee = adjustmentFees.map(x => JSON.parse(x.adjustmentFee)[0].value) ? adjustmentFees.map(x => JSON.parse(x.adjustmentFee)[0].value) : 0
+
                 let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
                     Number(finalAdjustmentFee), await superviseeFeeCalculationTemp('CFIR'), chargeVideoFee, respSuperviser, removedNonChargablesArr.length)
                 let associateFeeBaseRateTablesCBT = await associateFeesTherapyCBT(worker, invoiceQtyCBT, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
@@ -158,8 +164,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                     + associateFeeAssessmentTableCBT.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
                     + associateFeeAssessmentTableCPRI.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
 
-                createInvoiceTableFunc(doc,
+                await createInvoiceTableFunc(doc,
                 /*Main Table*/  mainTable(data, date),
+                /*probono table */probonoTable(probonoItems, date),
                 /*Reported Items Table*/await reportedItemsTable(reportedItemDataFiltered, date, subtotal, workerId, data),
                 /*Duplicate Items Table*/duplicateTable(duplicateItemsAndSplitFees, date),
                 /*Non Chargables Table*/nonChargeables(nonChargeableItems, date),

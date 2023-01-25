@@ -4,6 +4,7 @@ const { getRate } = require("./associateFeesTherapy")
 
 exports.L1SupPracTable = async (date, paymentData, workerId, name, superviser) => {
     let filterWorkers = paymentData.filter(x => x.worker === name)
+
     let totalAppliedAmt = filterWorkers.map(x => Number(x.applied_amt)).reduce((a, b) => a + b, 0)
     let totalDuration_hrs = filterWorkers.map(x => Number(x.duration_hrs)).reduce((a, b) => a + b, 0)
 
@@ -14,8 +15,15 @@ exports.L1SupPracTable = async (date, paymentData, workerId, name, superviser) =
         (x.supervisor1 === superviser) && x.assessmentMoneyToSupervisorOne === true || (x.supervisor2 === superviser) && x.assessmentMoneyToSupervisorTwo === true)
     let subPracTotal = 0
     // let superviserRate = rate.superviserRate * filterWorkers.length
-    let superviserRate = superviserGetsAssessmentMoneyVar[0] ? rate.superviserRate * filterWorkers.length : 0
-    let superviserHours = superviserGetsAssessmentMoneyVar[0] ? filterWorkers.map(x => x.duration_hrs).reduce((a, b) => a + b, 0) : 0
+    // let assessmentItemsArr = filterWorkers.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_') || x.service_name.startsWith('A_c_') || x.service_name.startsWith('A_f_'))
+
+
+    let therapyItemsArr = filterWorkers.filter(x => !x.service_name.startsWith('A__') && !x.service_name.startsWith('aa_') && !x.service_name.startsWith('A_c_') && !x.service_name.startsWith('A_f_'))
+    let therapyitemCount = therapyItemsArr.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+    let allItemCount = filterWorkers.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+
+    let superviserRate = superviserGetsAssessmentMoneyVar[0] ? rate.superviserRate * allItemCount : rate.superviserRate * therapyitemCount
+    let superviserHours = superviserGetsAssessmentMoneyVar[0] ? allItemCount : therapyitemCount
 
     filterWorkers.map(x => { return (x.superviorTotal = superviserRate, x.supervisorTotalHours = superviserHours) })
     if (rate !== undefined && rate.isZero) {

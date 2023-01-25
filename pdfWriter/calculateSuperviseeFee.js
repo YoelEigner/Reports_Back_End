@@ -2,7 +2,7 @@ const { getAssociateProfileById, getPaymentDataForWorker, getDataDate, getSuperv
 const { getRate, getRate_CBT, getRate_CPRI } = require("../tables/associateFeesTherapy")
 const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js")
 const { removeNullStr, removeNaN, calculateProccessingFee, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI, calculateProcessingFeeTemp, getSummarizedData } = require("./pdfKitFunctions")
-const { removeDuplicateAndSplitFees, duplicateAndSplitFees } = require("./removeDuplicateAndSplitFees")
+const { removeDuplicateAndSplitFees, duplicateAndSplitFees, duplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees")
 
 
 exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, nonChargeableItems, proccessingFeeTypes, videoFee, tableType, profileDates, superviser) => {
@@ -10,11 +10,12 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
 
-
             let superviseeReportedItemdData = removeNullStr(await getSuperviseeDataBySuperviser(date, worker.associateName, profileDates, superviser), '-')
             let workerPaymentData = await getPaymentDataForWorkerBySupervisor(worker.associateName, date, profileDates, superviser)
-            
+
             let { duplicateItemsAndSplitFees } = duplicateAndSplitFees(superviseeReportedItemdData)
+            let { duplicateItemsAndSplitFeesRemoved } = duplicateAndSplitFeesRemoved(superviseeReportedItemdData)
+
             let superviseeWorkerProfile = await getAssociateProfileById(worker.id)
 
             let isSupervised = superviseeWorkerProfile[0].isSupervised
@@ -24,9 +25,9 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
 
 
             let superviseeReportedItemsCount = () => {
-                if (tableType === 'CFIR') return calculateWorkerFeeByLeval(associateType, superviseeReportedItemdData, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
-                else if (tableType === 'CBT') return calculateWorkerFeeByLevalCBT(associateType, superviseeReportedItemdData, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
-                else if (tableType === 'CPRI') return calculateWorkerFeeByLevalCPRI(associateType, superviseeReportedItemdData, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
+                if (tableType === 'CFIR') return calculateWorkerFeeByLeval(associateType, duplicateItemsAndSplitFeesRemoved, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
+                else if (tableType === 'CBT') return calculateWorkerFeeByLevalCBT(associateType, duplicateItemsAndSplitFeesRemoved, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
+                else if (tableType === 'CPRI') return calculateWorkerFeeByLevalCPRI(associateType, duplicateItemsAndSplitFeesRemoved, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
             }
 
             let SuperviseeRate = async () => {

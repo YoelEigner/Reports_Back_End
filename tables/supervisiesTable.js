@@ -1,12 +1,12 @@
 const { getSupervisers, getReportedItems, getAssociateFeeBaseRate, getAssociateVideoFee } = require("../sql/sql")
 const { calculateAssociateFeeForSupervisee } = require("./calculateAssociateFeeForSupervisee.js")
 
-exports.getSupervisiesFunc = async (date, non_chargeablesArr, respSuperviser, profileDates) => {
+exports.getSupervisiesFunc = async (date, non_chargeablesArr, respSuperviser, profileDates, supervisor) => {
     try {
         let tempSupervisies = []
         let total = []
         respSuperviser.forEach(async (x) => {
-            let resp = await getReportedItems(date, x.associateName, profileDates)
+            let resp = await getReportedItems(date, x.associateName, profileDates, supervisor)
             let subtotal = resp.map(x => !non_chargeablesArr.find(n => n === x.service_name) && x.event_service_item_total).reduce((a, b) => a + b, 0)
             total.push(subtotal)
             tempSupervisies.total = total
@@ -34,7 +34,7 @@ exports.supervisiesTable = (data, date, supervisee, subtotal, non_chargeablesArr
         ],
         datas: [...data],
         rows: [
-            ['Total', "-","-", reportedItemsCount, "-", + subtotal],
+            ['Total', "-", "-", reportedItemsCount, "-", + subtotal],
         ],
     };
 }

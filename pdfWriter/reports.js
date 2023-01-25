@@ -52,9 +52,7 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
         let invoice = await getNetTotal(res, date, users[0], action, reportType)
         InvoicePromiseGenerator(res, date, users, invoice.netAppliedTotal, reportType, invoice.duration_hrs, videoFee, invoice.qty, invoice.proccessingFee)
     }
-
     if (reportType === 'multipdf') {
-
         let promise = users.map(async (worker, index) => {
             if (actionType === 'payment') {
                 return createPaymentReportTable(res, date, worker.associateName, worker.id, worker.associateEmail, emailPassword, action, reportType, index).then(async (resp) => {
