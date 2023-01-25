@@ -48,7 +48,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let non_remittableArr = await getNonRemittables()
             let nonRemittableItems = non_remittableArr.map(x => x.name)
             let assessmentMoneyNotToSupervisor = await getSuperviseeiesL1Assessments(worker)
-            let assessmentMoneyNotToSupervisorWorkers = assessmentMoneyNotToSupervisor.map(x => x.associateName)
+            // let assessmentMoneyNotToSupervisorWorkers = assessmentMoneyNotToSupervisor.map(x => x.associateName)
 
             let tablesToShow = await getTablesToShow(workerId)
             let adjustmentFees = reportType === 'singlepdf' ? await getAdjustmentsFeesWorkerOnly(worker) : await getAdjustmentsFees(worker)
@@ -123,13 +123,14 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
             let superviseeTbale = superviseeClientPaymentsTable(date, filtered)
 
-            Promise.all(L1Tables).then((l1SupPrac) => {
+            Promise.all(L1Tables).then(async (l1SupPrac) => {
                 let totalAppliedAmount = l1SupPrac.map(x => x.rows.map(r => r[6])).map(x => Number(x[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
                 let totalSupPracAmount = l1SupPrac.map(x => x.amountForSuperviser).reduce((a, b) => a + b, 0)
                 let totalAppliedHrs = l1SupPrac.map(x => x.rows.map(r => r[5])).map(x => x[0]).reduce((a, b) => a + b, 0)
                 let totalSupPraHours = l1SupPrac.map(x => x.hoursForSuperviser).reduce((a, b) => a + b, 0)
 
-                createPaymentTableFunc(doc, worker, non_remittableArr,
+                
+                await createPaymentTableFunc(doc, worker, non_remittableArr,
                     /*Applied PAyments Table*/appliedPaymentsTableTemp,
                     /*Total applied payments table */ totalAppliedPaymentsTable(date, clientPayments, clientHours, superviseeClientsPayment, superviseeClientsHours, ajustmentFeesTotal, totalAppliedAmount, totalSupPracAmount, totalSupPraHours, totalAppliedHrs),
                     /*nonRemittable Tables*/nonRemittablesTable(date, non_remittableItems),
@@ -149,9 +150,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     : clientPayments + (superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount + ajustmentFeesTotal
                 duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 qty = tempQty.length
-
-                proccessingFee = calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.worker === worker).map(x => x.proccessingFee).reduce((a, b) => a + b, 0)
-
+                proccessingFee = calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.worker.includes(worker)).map(x => x.proccessingFee).reduce((a, b) => a + b, 0)
             })
         } catch (error) {
             console.log(error)
