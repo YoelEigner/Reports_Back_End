@@ -5,7 +5,7 @@ const { removeNullStr, removeNaN, calculateProccessingFee, calculateWorkerFeeByL
 const { removeDuplicateAndSplitFees, duplicateAndSplitFees, duplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees")
 
 
-exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, nonChargeableItems, proccessingFeeTypes, videoFee, tableType, profileDates, superviser,supervisorsProbono) => {
+exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, nonChargeableItems, proccessingFeeTypes, videoFee, tableType, profileDates, superviser, supervisorsProbono) => {
     let arr = []
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
@@ -24,8 +24,13 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
             let probonoRate = superviseeWorkerProfile[0].probono
 
             let probonoItems = superviseeReportedItemdData.filter(x => x.event_service_item_name === 'Counselling 030 + HST' || x.event_service_item_name === 'Counselling 033.90')
+            let superviserGetsAssessmentMoney =
+                (worker.supervisor1 === superviseeWorkerProfile[0].supervisor1) && superviseeWorkerProfile[0].assessmentMoneyToSupervisorOne
+                ||
+                (worker.supervisor2 === superviseeWorkerProfile[0].supervisor2) && superviseeWorkerProfile[0].assessmentMoneyToSupervisorTwo
 
-            let superviseeReportedItemsCount = () => {
+
+                let superviseeReportedItemsCount = () => {
                 if (tableType === 'CFIR') return calculateWorkerFeeByLeval(associateType, duplicateItemsAndSplitFeesRemoved, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
                 else if (tableType === 'CBT') return calculateWorkerFeeByLevalCBT(associateType, duplicateItemsAndSplitFeesRemoved, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
                 else if (tableType === 'CPRI') return calculateWorkerFeeByLevalCPRI(associateType, duplicateItemsAndSplitFeesRemoved, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;

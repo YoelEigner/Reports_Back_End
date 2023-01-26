@@ -133,7 +133,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 let superviseeAssessmentFeeCalculation = async (tableType) => {
                     if (respSuperviser.length >= 0 && reportType !== 'singlepdf') {
-                        return (await calcSuperviseeAssessmentFeeFunc(dateUnformatted, respSuperviserAssessments, tableType, profileDates, worker))
+                        return (await calcSuperviseeAssessmentFeeFunc(dateUnformatted, respSuperviserAssessments, tableType, profileDates, worker, proccessingFeeTypes))
                     }
                     else return ([])
                 }

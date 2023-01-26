@@ -1,9 +1,9 @@
 const { getAssociateProfileById, getPaymentDataForWorker, getDataDate, getAssessmentDataBySuperviser, getSuperviseeDataBySuperviser, getPaymentDataForWorkerBySupervisor } = require("../sql/sql")
-const { removeNullStr, removeNaN, calculateProccessingFee, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI, formatter } = require("./pdfKitFunctions")
+const { removeNullStr, removeNaN, calculateProccessingFee, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI, formatter, getSummarizedData, calculateProcessingFeeTemp } = require("./pdfKitFunctions")
 const { duplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees")
 
 
-exports.calcSuperviseeAssessmentFeeFunc = (date, respSuperviser, tableType, profileDates, superviser) => {
+exports.calcSuperviseeAssessmentFeeFunc = (date, respSuperviser, tableType, profileDates, superviser, proccessingFeeTypes) => {
     let arr = []
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
@@ -37,6 +37,11 @@ exports.calcSuperviseeAssessmentFeeFunc = (date, respSuperviser, tableType, prof
                 else if (tableType === 'CBT') return superviseeWorkerProfile[0].assessmentRate_c
                 else if (tableType === 'CPRI') return superviseeWorkerProfile[0].assessmentRate_f
             }
+            let assessmentPaymentData = workerPaymentData.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
+            let summarizedTransactions = Object.values(getSummarizedData(assessmentPaymentData)).sort()
+            
+            let assessmentProccessingFee = tableType === 'CFIR' ? calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.worker === superviseeWorkerProfile[0].associateName).map(x => x.proccessingFee).reduce((a, b) => a + b, 0) : 0
+
             let totalAssessment = superviseeReportedItemsCount().map(x => x.totalOfAllItems = x.applied_amt ? x.applied_amt : Number(x.TOTAL.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
             let fee = superviseeReportedItemsCount().map(x => x.assessmentAssociateFee = x.applied_amt ? (x.applied_amt / 100) * SuperviseeRate() : (Number(x.TOTAL.replace(/[^0-9.-]+/g, "")) / 100) * SuperviseeRate()).reduce((a, b) => a + b, 0)
 
