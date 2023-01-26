@@ -78,7 +78,8 @@ exports.getInvoiceData = async (date, worker, profileDates) => {
                                         WHERE i.batch_date >= '${date.start}' AND i.batch_date <= '${date.end}'
                                         AND i.batch_date >= '${profileDates.startDate}' AND i.batch_date <= '${profileDates.endDate}'
                                         AND (i.event_primary_worker_name = '${worker}' OR i.event_invoice_details_worker_name='${worker}')
-                                        AND (p.supervisor1 = '${worker}' AND p.supervisorOneGetsMoney = 1 OR p.supervisor2 = '${worker}' AND p.supervisorTwoGetsMoney = 1)
+                                        AND ((p.supervisor1 = '${worker}' AND p.supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1) 
+                                        OR (p.supervisor2 = '${worker}' AND p.supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo = 1))
                                         AND event_service_item_name NOT IN (SELECT name FROM non_remittable))
                                         UNION
                                         (
@@ -350,11 +351,12 @@ exports.getSupervisers = async (name) => {
 exports.getSupervisersAssessments = async (name) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, 
-                                    supervisorTwoGetsMoney,assessmentMoneyToSupervisorOne,assessmentMoneyToSupervisorTwo FROM [CFIR].[dbo].[profiles] where
-                                    (supervisor1='${name}' AND supervisorOneGetsMoney = 'true' AND assessmentMoneyToSupervisorOne = 'true' 
-                                    OR supervisor2='${name}' AND supervisorTwoGetsMoney = 'true'AND assessmentMoneyToSupervisorTwo = 'true' 
-                            )`)
+        let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney, 
+                                        assessmentMoneyToSupervisorOne,
+                                        assessmentMoneyToSupervisorTwo FROM [CFIR].[dbo].[profiles] where
+                                        (supervisor1='${name}' AND assessmentMoneyToSupervisorOne = 1)
+                                        OR (supervisor2='${name}' AND assessmentMoneyToSupervisorTwo = 1)`)
+
         // let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where
         //                             (associateType != 'L1 (Sup Prac)') AND (supervisor1='${name}' AND supervisorOneGetsMoney = 'true' OR supervisor2='${name}' AND supervisorTwoGetsMoney = 'true')`)
 
@@ -442,7 +444,8 @@ exports.UpdateWorkerPreofile = async (arr, id) => {
                         appliedPaymentsTotalTable = '${arr.appliedPaymentsTotalTable}',
                         comments = '${arr.comments}',
                         adjustmentFee = '${arr.adjustmentFee}',
-                        adjustmentPaymentFee = '${arr.adjustmentPaymentFee}'
+                        adjustmentPaymentFee = '${arr.adjustmentPaymentFee}',
+                        probono = ${arr.probono}
                         WHERE id = ${id}`)
                 return 200
 
@@ -529,7 +532,8 @@ exports.insertWorkerProfile = async (arr) => {
                 appliedPaymentsTotalTable,
                 comments,
                 adjustmentFee,
-                adjustmentPaymentFee)
+                adjustmentPaymentFee,
+                probono)
             VALUES (${arr.status === true ? 1 : 0}
                     ,'${date}'
                     ,'${endDate}'
@@ -591,7 +595,9 @@ exports.insertWorkerProfile = async (arr) => {
                     ,${arr.superviseeTotalTabel === true ? 1 : 0}
                     ,${arr.appliedPaymentsTotalTable === true ? 1 : 0}
                     ,'${arr.comments}'
-                    ,'${arr.adjustmentFee}','${arr.adjustmentPaymentFee}');SELECT SCOPE_IDENTITY() AS new_id;`
+                    ,'${arr.adjustmentFee}'
+                    ,'${arr.adjustmentPaymentFee}'
+                    ,${arr.probono});SELECT SCOPE_IDENTITY() AS new_id;`
             )
             return { response: 200, new_id: resp.recordset[0] }
         }
@@ -616,7 +622,8 @@ exports.getPaymentData = async (worker, date, profileDates) => {
                                         WHERE DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) BETWEEN '${date.start}' AND '${date.end}'
                                         AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                         AND (fv.superviser like '%${worker}%' OR worker like '%${worker}%')
-                                        AND (p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 OR p.supervisor2 = fv.superviser AND p.supervisorTwoGetsMoney = 1)
+                                        AND ((p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1)
+                                        OR (p.supervisor2 = fv.superviser AND p.supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo= 1))
                                         AND description NOT IN (select name from non_remittable))
                                         UNION
                                         (
@@ -675,11 +682,14 @@ exports.getPaymentDataForWorkerBySupervisor = async (tempWorker, date, profileDa
 exports.getSuperviseeiesL1 = async (superviser) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] WHERE (supervisor1 = '${superviser}' AND supervisorOneGetsMoney = 'true' AND associateType = 'L1 (Sup Prac)')
-                                    or (supervisor2 = '${superviser}' AND supervisorTwoGetsMoney = 'true' AND associateType = 'L1 (Sup Prac)')`)
+        let resp = await sql.query(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] WHERE
+                                    ((supervisor1 = '${superviser}' AND supervisorOneGetsMoney = 1)
+                                    OR (supervisor1 = '${superviser}' AND assessmentMoneyToSupervisorOne = 1) AND associateType = 'L1 (Sup Prac)')
+                                    OR ((supervisor2 = '${superviser}' AND supervisorTwoGetsMoney = 'true') 
+                                    OR (supervisor2 = '${superviser}' AND assessmentMoneyToSupervisorTwo = 1) AND associateType = 'L1 (Sup Prac)')`)
         return resp.recordset
     } catch (error) {
-        console.log(error)
+        console.log(error, 'getSuperviseeiesL1')
     }
 }
 exports.getSuperviseeiesL1Assessments = async (superviser) => {
@@ -697,8 +707,9 @@ exports.getSuperviseeiesL1Assessments = async (superviser) => {
 exports.superviserGetsAssessmentMoney = async (workerId) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`select supervisor1, supervisor2, assessmentMoneyToSupervisorOne, assessmentMoneyToSupervisorTwo 
-                                        FROM profiles where id = '${workerId}'`)
+        let resp = await sql.query(`select supervisor1, supervisor2, supervisorOneGetsMoney,
+                            supervisorTwoGetsMoney,assessmentMoneyToSupervisorOne, assessmentMoneyToSupervisorTwo 
+                            FROM profiles where id ='${workerId}'`)
         return resp.recordset
     } catch (error) {
         console.log(error)

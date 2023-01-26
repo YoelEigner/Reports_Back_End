@@ -13,17 +13,36 @@ exports.L1SupPracTable = async (date, paymentData, workerId, name, superviser) =
     let superViserArr = await superviserGetsAssessmentMoney(workerId)
     let superviserGetsAssessmentMoneyVar = superViserArr.map(x =>
         (x.supervisor1 === superviser) && x.assessmentMoneyToSupervisorOne === true || (x.supervisor2 === superviser) && x.assessmentMoneyToSupervisorTwo === true)
-    let subPracTotal = 0
-    // let superviserRate = rate.superviserRate * filterWorkers.length
-    // let assessmentItemsArr = filterWorkers.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_') || x.service_name.startsWith('A_c_') || x.service_name.startsWith('A_f_'))
+    let superviserGetsTherapyMoneyVar = superViserArr.map(x =>
+        (x.supervisor1 === superviser) && x.supervisorOneGetsMoney === true || (x.supervisor2 === superviser) && x.supervisorTwoGetsMoney === true)
 
+    let subPracTotal = 0
 
     let therapyItemsArr = filterWorkers.filter(x => !x.service_name.startsWith('A__') && !x.service_name.startsWith('aa_') && !x.service_name.startsWith('A_c_') && !x.service_name.startsWith('A_f_'))
     let therapyitemCount = therapyItemsArr.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+    let assessmentItemsArr = filterWorkers.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_') || x.service_name.startsWith('A_c_') && !x.service_name.startsWith('A_f_'))
+    let assessmentItemCount = assessmentItemsArr.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+
+
     let allItemCount = filterWorkers.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
 
-    let superviserRate = superviserGetsAssessmentMoneyVar[0] ? rate.superviserRate * allItemCount : rate.superviserRate * therapyitemCount
-    let superviserHours = superviserGetsAssessmentMoneyVar[0] ? allItemCount : therapyitemCount
+    let superviserRate = 0
+    let superviserHours = 0
+
+    if (superviserGetsAssessmentMoneyVar[0] && !superviserGetsTherapyMoneyVar[0]) {
+        superviserRate = rate.superviserRate * assessmentItemCount
+        superviserHours = assessmentItemCount
+    }
+    else if (!superviserGetsAssessmentMoneyVar[0] && superviserGetsTherapyMoneyVar[0]) {
+        superviserRate = rate.superviserRate * therapyitemCount
+        superviserHours = therapyitemCount
+
+    }
+    else {
+        superviserRate = rate.superviserRate * allItemCount
+        superviserHours = allItemCount
+    }
+
 
     filterWorkers.map(x => { return (x.superviorTotal = superviserRate, x.supervisorTotalHours = superviserHours) })
     if (rate !== undefined && rate.isZero) {
@@ -35,7 +54,6 @@ exports.L1SupPracTable = async (date, paymentData, workerId, name, superviser) =
         subPracTotal = filterWorkers.map(x => Number(x.subPracAmount.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
     }
     return {
-        // test: console.log(subPracTotal, name),
         title: "Supervisees (L1 Supervised Practice) " + name,
         subtitle: "From " + date.start + " To " + date.end,
         headers: [

@@ -24,8 +24,8 @@ exports.calcSuperviseeAssessmentFeeFunc = (date, respSuperviser, tableType, prof
                 ||
                 (worker.supervisor2 === superviseeWorkerProfile[0].supervisor2) && superviseeWorkerProfile[0].assessmentMoneyToSupervisorTwo
 
-            // console.log((worker.supervisor1 === superviseeWorkerProfile[0].supervisor1) && superviseeWorkerProfile[0].assessmentMoneyToSupervisorOne, worker)
 
+            // console.log(superviserGetsAssessmentMoney)
             let superviseeReportedItemsCount = () => {
                 if (tableType === 'CFIR') return calculateWorkerFeeByLeval(associateType, duplicateItemsAndSplitFeesRemoved, workerPaymentData, true, isSuperviser, isSupervised, IsSupervisedByNonDirector);
                 else if (tableType === 'CBT') return calculateWorkerFeeByLevalCBT(associateType, duplicateItemsAndSplitFeesRemoved, workerPaymentData, true, isSuperviser, isSupervised, IsSupervisedByNonDirector);

@@ -5,7 +5,7 @@ const { removeNullStr, removeNaN, calculateProccessingFee, calculateWorkerFeeByL
 const { removeDuplicateAndSplitFees, duplicateAndSplitFees, duplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees")
 
 
-exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, nonChargeableItems, proccessingFeeTypes, videoFee, tableType, profileDates, superviser) => {
+exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, nonChargeableItems, proccessingFeeTypes, videoFee, tableType, profileDates, superviser,supervisorsProbono) => {
     let arr = []
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
@@ -17,12 +17,13 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
             let { duplicateItemsAndSplitFeesRemoved } = duplicateAndSplitFeesRemoved(superviseeReportedItemdData)
 
             let superviseeWorkerProfile = await getAssociateProfileById(worker.id)
-
             let isSupervised = superviseeWorkerProfile[0].isSupervised
             let isSuperviser = superviseeWorkerProfile[0].isSuperviser
             let IsSupervisedByNonDirector = superviseeWorkerProfile[0].IsSupervisedByNonDirector
             let associateType = superviseeWorkerProfile[0].associateType
+            let probonoRate = superviseeWorkerProfile[0].probono
 
+            let probonoItems = superviseeReportedItemdData.filter(x => x.event_service_item_name === 'Counselling 030 + HST' || x.event_service_item_name === 'Counselling 033.90')
 
             let superviseeReportedItemsCount = () => {
                 if (tableType === 'CFIR') return calculateWorkerFeeByLeval(associateType, duplicateItemsAndSplitFeesRemoved, workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length;
@@ -35,12 +36,6 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
                 else if (tableType === 'CBT') return await getRate_CBT(superviseeReportedItemsCount(), worker.id)
                 else if (tableType === 'CPRI') return await getRate_CPRI(superviseeReportedItemsCount(), worker.id)
             }
-
-            // if(worker.associateName=== 'Peters (AM-LH), Joshua'){
-            //     console.log(superviseeReportedItemdData, worker.associateName)
-
-            // }
-
             let chargeVideoFee = tableType === 'CFIR' ? superviseeWorkerProfile.map(x => x.cahrgeVideoFee)[0] : false
 
             const itemsToDelete = new Set(nonChargeableItems.concat(duplicateItemsAndSplitFees));
@@ -56,7 +51,7 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
             let superviseeAdjustmentFee = tableType === 'CFIR' ? JSON.parse(superviseeWorkerProfile.map(x => x.adjustmentFee)) : [{ name: 'rtest', value: '0' }]
             // console.log(superviser, superviseeReportedItemsCount(), '--', superviseeReportedItemdData.length, '---', workerPaymentData.length)
             arr.push(await calculateAssociateFeeForSupervisee(worker.associateName, superviseeReportedItemsCount(), parseFloat(await SuperviseeRate()), videoFee,
-                superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge, superviseeAdjustmentFee, chargeVideoFee, tableType))
+                superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge, superviseeAdjustmentFee, chargeVideoFee, tableType, probonoRate, probonoItems, supervisorsProbono))
         })
         Promise.all(loop).then(() => {
             resolve(arr)

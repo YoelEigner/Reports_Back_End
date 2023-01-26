@@ -529,7 +529,7 @@ exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments
     }
     else if (wokrerLeval === 'L1 (Sup Prac)') {
         return assessments ?
-            paymentData.filter(x => x.case_program.startsWith('A__'))
+            data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
             : paymentData.filter(x => x.case_program.startsWith('T__'))
     }
     else {
@@ -572,7 +572,7 @@ exports.calculateWorkerFeeByLevalCBT = (wokrerLeval, data, paymentData, assessme
     }
     else if (wokrerLeval === 'L1 (Sup Prac)') {
         return assessments ?
-            paymentData.filter(x => x.case_program.startsWith('A_c_'))
+            data.filter(x => x.service_name.startsWith('A_c_'))
             : paymentData.filter(x => x.case_program.startsWith('T_c_'))
     }
     else {
@@ -611,7 +611,7 @@ exports.calculateWorkerFeeByLevalCPRI = (wokrerLeval, data, paymentData, assessm
     }
     else if (wokrerLeval === 'L1 (Sup Prac)') {
         return assessments ?
-            paymentData.filter(x => x.case_program.startsWith('A_f_'))
+            data.filter(x => x.service_name.startsWith('A_f_'))
             : paymentData.filter(x => x.case_program.startsWith('T_f_'))
     }
     else {

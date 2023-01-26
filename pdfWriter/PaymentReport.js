@@ -129,7 +129,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 let totalAppliedHrs = l1SupPrac.map(x => x.rows.map(r => r[5])).map(x => x[0]).reduce((a, b) => a + b, 0)
                 let totalSupPraHours = l1SupPrac.map(x => x.hoursForSuperviser).reduce((a, b) => a + b, 0)
 
-                
+                // console.log(totalSupPracAmount,totalSupPraHours)
                 await createPaymentTableFunc(doc, worker, non_remittableArr,
                     /*Applied PAyments Table*/appliedPaymentsTableTemp,
                     /*Total applied payments table */ totalAppliedPaymentsTable(date, clientPayments, clientHours, superviseeClientsPayment, superviseeClientsHours, ajustmentFeesTotal, totalAppliedAmount, totalSupPracAmount, totalSupPraHours, totalAppliedHrs),

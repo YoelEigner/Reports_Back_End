@@ -1,3 +1,4 @@
+const { map } = require("mssql")
 const { formatter, isSuperviserOne, removeNaN } = require("../pdfWriter/pdfKitFunctions")
 const { getAssociateFeeBaseRate, getProcessingFee, getPaymentTypes } = require("../sql/sql")
 
@@ -11,40 +12,47 @@ const getRatesForL1 = (arr) => {
     return arr.map(x => x !== undefined ? Number(x.replace(/[^0-9.-]+/g, "")) : 0).reduce((a, b) => a + b, 0)
 }
 
-exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees, superviseeFeeCalculation, chargeVideoFee, L1AssociateFee, removedNonChargablesArr) => {
+exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees,
+    superviseeFeeCalculation, chargeVideoFee, L1AssociateFee, removedNonChargablesArr, probonoRate, probonoItems) => {
     let rate = await this.getRate(removedNonChargablesArr, workerId, false, L1AssociateFee)
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
-
-    let totalWoHST = (count * rate) + blockItemFees
+    let probonoQty = probonoItems.length
+    let totalWoHST = ((count - probonoQty) * rate) + (probonoQty * probonoRate) + blockItemFees
     let hst = totalWoHST * (process.env.HST / 100)
 
-    // console.log(superviseeFeeCalculation)
+    let superviseeProbono = superviseeFeeCalculation.map(x => x.length).includes(11)
+
+    let headers = [
+        { label: "Worker", renderer: null, align: "center" },
+        { label: "Quantity", renderer: null, align: "center" },
+        { label: "Fee Base Rate", renderer: null, align: "center" },
+        { label: "Video Fee", renderer: null, align: "center" },
+        { label: "Other Fee", renderer: null, align: "center" },
+        { label: "Adjustment Fee", renderer: null, align: "center" },
+        { label: "Room Block Fee", renderer: null, align: "center" },
+        { label: "HST", renderer: null, align: "center" },
+        { label: "Total + HST", renderer: null, align: "center" }
+    ]
+    let rows = [
+        worker,
+        (count - probonoQty),
+        formatter.format(rate),
+        formatter.format(vidFee),
+        formatter.format(finalProccessingFee.toFixed(2)),
+        formatter.format(ajustmentFees.toFixed(2)),
+        formatter.format(blockItemFees),
+        formatter.format(hst),
+        formatter.format(totalWoHST + hst + vidFee + finalProccessingFee + ajustmentFees)
+    ]
+    if (probonoQty > 0 || superviseeProbono) { headers.splice(3, 0, { label: "Probono Qty", renderer: null, align: "center" }, { label: "Probono Rate", renderer: null, align: "center" }) }
+    if (probonoQty > 0 || superviseeProbono) { rows.splice(3, 0, probonoQty, formatter.format(probonoRate),) }
+
     return {
         title: "CFIR Associate Fees (Therapy Only)",
         subtitle: "From " + date.start + " To " + date.end,
-        headers: [
-            { label: "Worker", renderer: null, align: "center" },
-            { label: "Quantity", renderer: null, align: "center" },
-            { label: "Fee Base Rate", renderer: null, align: "center" },
-            { label: "Video Fee", renderer: null, align: "center" },
-            { label: "Other Fee", renderer: null, align: "center" },
-            { label: "Adjustment Fee", renderer: null, align: "center" },
-            { label: "Room Block Fee", renderer: null, align: "center" },
-            { label: "HST", renderer: null, align: "center" },
-            { label: "Total + HST", renderer: null, align: "center" }
-        ],
+        headers: headers,
         rows: [
-            [
-                worker,
-                count,
-                formatter.format(rate),
-                formatter.format(vidFee),
-                formatter.format(finalProccessingFee.toFixed(2)),
-                formatter.format(ajustmentFees.toFixed(2)),
-                formatter.format(blockItemFees),
-                formatter.format(hst),
-                formatter.format(totalWoHST + hst  + vidFee + finalProccessingFee + ajustmentFees)
-            ],
+            rows,
             ...superviseeFeeCalculation
         ],
     }
