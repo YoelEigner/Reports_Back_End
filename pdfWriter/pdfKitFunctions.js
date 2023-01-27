@@ -184,15 +184,16 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
             .fontSize(20)
             .text('CBT', { align: 'center' })
             .font('Helvetica-Bold')
+            
         showassociateFeesTable && this.generateLine(doc, doc.y)
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-
         showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCBT, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
             },
         });
+
         showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
         showassociateFeesTable && await doc.table(associateFeeAssessmentTableCBT, {

@@ -140,7 +140,9 @@ exports.getAssociateFeeBaseRate = async (workerId) => {
                                     [associateFeeBaseRateOverrideGreaterThenTwo_c],
                                     [associateFeeBaseRateOverrideGreaterThenTwo_f],
                                     [associateFeeBaseRateOverrideAsseements_c],
-                                    [associateFeeBaseRateOverrideAsseements_f] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
+                                    [associateFeeBaseRateOverrideAsseements_f],
+                                    [assessmentMoneyToSupervisorOne],
+                                    [assessmentMoneyToSupervisorTwo] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
         return resp.recordset;
     } catch (err) {
         console.log('getAssociateFeeBaseRate Function', err); return err
@@ -339,7 +341,24 @@ exports.getSupervisers = async (name) => {
     try {
         await sql.connect(config)
         let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where
-                                      (supervisor1='${name}' AND supervisorOneGetsMoney = 'true' OR supervisor2='${name}' AND supervisorTwoGetsMoney = 'true')`)
+                                      ((supervisor1='${name}' AND supervisorOneGetsMoney = 1)
+                                      OR (supervisor2='${name}' AND supervisorTwoGetsMoney = 1))`)
+        // let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where
+        //                             (associateType != 'L1 (Sup Prac)') AND (supervisor1='${name}' AND supervisorOneGetsMoney = 'true' OR supervisor2='${name}' AND supervisorTwoGetsMoney = 'true')`)
+
+        return resp.recordset
+    } catch (error) {
+        console.log(error)
+    }
+}
+exports.getSupervisersCFIR = async (name) => {
+    try {
+        await sql.connect(config)
+        let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney, 
+                                    assessmentMoneyToSupervisorOne, assessmentMoneyToSupervisorTwo 
+                                    FROM [CFIR].[dbo].[profiles] where
+                                    (supervisor1='${name}' AND (supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1) 
+                                    OR supervisor2='${name}' AND (supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo = 1))`)
         // let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where
         //                             (associateType != 'L1 (Sup Prac)') AND (supervisor1='${name}' AND supervisorOneGetsMoney = 'true' OR supervisor2='${name}' AND supervisorTwoGetsMoney = 'true')`)
 

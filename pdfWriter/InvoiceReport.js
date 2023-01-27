@@ -1,7 +1,7 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit-table");
 const { sendEmail } = require("../email/sendEmail");
-const { getReportedItems, getNonChargeables, getPaymentTypes, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker, getAdjustmentsFeesWorkerOnlyInvoice, getAdjustmentsFeesInvoice, getProfileDates, getInvoiceDataForWorker, getInvoiceData, getSupervisersAssessments, getNonRemittables } = require("../sql/sql");
+const { getReportedItems, getNonChargeables, getPaymentTypes, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker, getAdjustmentsFeesWorkerOnlyInvoice, getAdjustmentsFeesInvoice, getProfileDates, getInvoiceDataForWorker, getInvoiceData, getSupervisersAssessments, getNonRemittables, getSupervisersCFIR } = require("../sql/sql");
 const { adjustmentFeeTable } = require("../tables/adjustmentTable");
 const { associateFeesAssessments } = require("../tables/associateFeesAssessments");
 const { associateFeesTherapy, getRate } = require("../tables/associateFeesTherapy");
@@ -67,6 +67,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let proccessingFeeTypes = await getPaymentTypes()
                 let workerProfile = await getAssociateProfileById(workerId, profileDates)
                 let respSuperviser = await getSupervisers(worker, profileDates)
+                let respSupervisersCFIR = await getSupervisersCFIR(worker, profileDates)
                 let respSuperviserAssessments = await getSupervisersAssessments(worker, profileDates)
                 let wokrerLeval = workerProfile[0].associateType
                 let isSupervised = workerProfile[0].isSupervised
@@ -123,9 +124,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let showAdjustmentFeeTable = !adjustmentFeeTableData.datas.every(x => x.name === "-")
 
                 //***********calculate supervisee fee********************/
-                let superviseeFeeCalculationTemp = async (tableType) => {
+                let superviseeFeeCalculationTemp = async (tableType, supervisors) => {
                     if (respSuperviser.length >= 0 && reportType !== 'singlepdf') {
-                        return (await calculateSuperviseeFeeFunc(dateUnformatted, respSuperviser, non_chargeablesArr, nonChargeableItems,
+                        return (await calculateSuperviseeFeeFunc(dateUnformatted, supervisors, non_chargeablesArr, nonChargeableItems,
                             proccessingFeeTypes, videoFee, tableType, profileDates, worker, probonoItems.length))
                     }
                     else return ([])
@@ -143,11 +144,12 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 // let finalAdjustmentFee = adjustmentFees.map(x => JSON.parse(x.adjustmentFee)[0].value) ? adjustmentFees.map(x => JSON.parse(x.adjustmentFee)[0].value) : 0
 
                 let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
-                    Number(finalAdjustmentFee), await superviseeFeeCalculationTemp('CFIR'), chargeVideoFee, respSuperviser, removedNonChargablesArr.length, workerProfile[0].probono, probonoItems)
-                let associateFeeBaseRateTablesCBT = await associateFeesTherapyCBT(worker, invoiceQtyCBT, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
-                    0, await superviseeFeeCalculationTemp('CBT'), chargeVideoFee, respSuperviser, removedNonChargablesArr.length)
-                let associateFeeBaseRateTablesCPRI = await associateFeesTherapyCPRI(worker, invoiceQtyCPRI, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
-                    0, await superviseeFeeCalculationTemp('CPRI'), chargeVideoFee, respSuperviser, removedNonChargablesArr.length)
+                    Number(finalAdjustmentFee), await superviseeFeeCalculationTemp('CFIR', respSupervisersCFIR), chargeVideoFee, removedNonChargablesArr.length, workerProfile[0].probono, probonoItems)
+
+                    let associateFeeBaseRateTablesCBT = await associateFeesTherapyCBT(worker, invoiceQtyCBT, date, workerId,
+                    await superviseeFeeCalculationTemp('CBT', respSuperviser), removedNonChargablesArr.length)
+                let associateFeeBaseRateTablesCPRI = await associateFeesTherapyCPRI(worker, invoiceQtyCPRI, date, workerId,
+                    await superviseeFeeCalculationTemp('CPRI', respSuperviser), removedNonChargablesArr.length)
 
 
                 let associateFeeAssessmentTable = await associateFeesAssessments(worker, calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, true),

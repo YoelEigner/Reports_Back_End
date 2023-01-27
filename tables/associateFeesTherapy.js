@@ -13,8 +13,9 @@ const getRatesForL1 = (arr) => {
 }
 
 exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees,
-    superviseeFeeCalculation, chargeVideoFee, L1AssociateFee, removedNonChargablesArr, probonoRate, probonoItems) => {
-    let rate = await this.getRate(removedNonChargablesArr, workerId, false, L1AssociateFee)
+    superviseeFeeCalculation, chargeVideoFee, removedNonChargablesArr, probonoRate, probonoItems) => {
+    let rate = await this.getRate(removedNonChargablesArr, workerId, false)
+    console.log(rate)
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
     let probonoQty = probonoItems.length
     let totalWoHST = ((count - probonoQty) * rate) + (probonoQty * probonoRate) + blockItemFees
@@ -60,13 +61,13 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
 
 exports.getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
     const associateFees = await getAssociateFeeBaseRate(workerId)
-    // const isSUperviserOne = await isSuperviserOne(worker)
 
     if (associateFees[0] !== undefined) {
         if (getSubPrac) {
-            if (associateFees[0].associateType === 'L1 (Sup Prac)' && associateFees[0].supervisorOneGetsMoney) {
+            if (associateFees[0].associateType === 'L1 (Sup Prac)' && (associateFees[0].supervisorOneGetsMoney || associateFees[0].assessmentMoneyToSupervisorOne === true)) {
                 let amount = [associateFees[0].associateFeeBaseRate, associateFees[0].associateFeeBaseRateOverrideGreaterThen,
                 associateFees[0].associateFeeBaseRateOverrideLessThen]
+
                 return {
                     isSuperviser: false,
                     isZero: Number(associateFees[0].associateFeeBaseRateOverrideLessThen) == 0,
@@ -77,9 +78,10 @@ exports.getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
                     cfirRate: Number(associateFees[0].associateFeeBaseRateOverrideGreaterThen)
                 }
             }
-            else if (associateFees[0].associateType === 'L1 (Sup Prac)' && associateFees[0].supervisorTwoGetsMoney) {
+            if (associateFees[0].associateType === 'L1 (Sup Prac)' && (associateFees[0].supervisorTwoGetsMoney || associateFees[0].assessmentMoneyToSupervisorTwo === true)) {
                 let amount = [associateFees[0].associateFeeBaseRateTwo, associateFees[0].associateFeeBaseRateOverrideGreaterThenTwo,
                 associateFees[0].associateFeeBaseRateOverrideLessThenTwo]
+
                 return {
                     isSuperviser: false,
                     isZero: Number(associateFees[0].associateFeeBaseRateOverrideLessThenTwo) == 0,
@@ -104,11 +106,11 @@ exports.getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
             }
         }
         if (associateFees[0].associateType === 'L1 (Sup Prac)') {
-            if (associateFees[0].supervisorOneGetsMoney) { return Number(associateFees[0].associateFeeBaseRate) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThen) }
-            else if (associateFees[0].supervisorTwoGetsMoney) { return Number(associateFees[0].associateFeeBaseRateTwo) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThenTwo) }
+            if (associateFees[0].supervisorOneGetsMoney || associateFees[0].assessmentMoneyToSupervisorOne) { return Number(associateFees[0].associateFeeBaseRate) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThen) }
+            else if (associateFees[0].supervisorTwoGetsMoney || associateFees[0].assessmentMoneyToSupervisorTwo) { return Number(associateFees[0].associateFeeBaseRateTwo) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThenTwo) }
         }
         else {
-            if (associateFees[0].supervisorOneGetsMoney) {
+            if (associateFees[0].supervisorOneGetsMoney || associateFees[0].assessmentMoneyToSupervisorOne) {
                 if (count >= 34) {
                     return isNum(associateFees[0].associateFeeBaseRateOverrideGreaterThen)
                 }
@@ -119,7 +121,7 @@ exports.getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
                     return isNum(associateFees[0].associateFeeBaseRate)
                 }
             }
-            else if (associateFees[0].supervisorTwoGetsMoney) {
+            else if (associateFees[0].supervisorTwoGetsMoney || associateFees[0].assessmentMoneyToSupervisorTwo) {
                 if (count >= 34) {
                     return isNum(associateFees[0].associateFeeBaseRateOverrideGreaterThenTwo)
                 }
