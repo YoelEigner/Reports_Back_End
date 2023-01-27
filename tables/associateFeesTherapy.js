@@ -15,7 +15,7 @@ const getRatesForL1 = (arr) => {
 exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees,
     superviseeFeeCalculation, chargeVideoFee, removedNonChargablesArr, probonoRate, probonoItems) => {
     let rate = await this.getRate(removedNonChargablesArr, workerId, false)
-    console.log(rate)
+
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
     let probonoQty = probonoItems.length
     let totalWoHST = ((count - probonoQty) * rate) + (probonoQty * probonoRate) + blockItemFees
