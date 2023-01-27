@@ -24,7 +24,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let pdfData = Buffer.concat(buffers);
             try {
                 if (action === 'email') {
-                    let emailResp = await sendEmail(associateEmail, worker, pdfData, emailPassword, 'Payment', index)
+                    let emailResp = await sendEmail(associateEmail, worker, pdfData, emailPassword, 'Payment', index, dateUnformatted)
                     resolve(emailResp)
 
                 }

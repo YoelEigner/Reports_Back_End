@@ -3,7 +3,7 @@ const { getEmailPassword } = require('../sql/sql');
 
 
 
-exports.sendEmail = async (email, worker, pdfData, pass, type, idx) => {
+exports.sendEmail = async (email, worker, pdfData, pass, type, idx, date) => {
     let emailTemplate = await getEmailPassword()
     let transporter = nodemailer.createTransport({
         host: "smtp.office365.com",
@@ -16,12 +16,13 @@ exports.sendEmail = async (email, worker, pdfData, pass, type, idx) => {
     });
     return new Promise(async (resolve, reject) => {
         try {
+            console.log(date)
             setTimeout(async () => {
                 // send mail with defined transport object
                 let info = await transporter.sendMail({
                     from: 'accounting@cfir.ca', // sender address
                     to: email,
-                    subject: `CFIR ${type} Report`, // Subject line
+                    subject: `CFIR ${type} Report ${date.start} - ${date.end}`, // Subject line
                     html: emailTemplate[0].emailTemplate, // html body
                     attachments: [{
                         filename: worker + '.pdf',
@@ -34,7 +35,7 @@ exports.sendEmail = async (email, worker, pdfData, pass, type, idx) => {
                 }
                 else {
                     reject(500)
-                } 
+                }
             }, idx * 1000);
 
         } catch (error) {

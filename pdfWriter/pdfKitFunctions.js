@@ -452,10 +452,11 @@ exports.addDateToPages = (doc) => {
         let year = date.getFullYear()
         let month = date.getMonth() + 1
         let day = date.getDate()
+        let time = date.toLocaleTimeString()
         // doc.page.margins.top = 10
         doc
             .text(
-                `Date: ${month + '/' + day + "/" + year}`,
+                `Date: ${month}/${day}/${year} ${time}`,
                 0,
                 10, // Centered vertically in bottom margin
                 { align: 'right' }

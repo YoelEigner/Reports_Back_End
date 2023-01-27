@@ -30,7 +30,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let pdfData = Buffer.concat(buffers);
                 try {
                     if (action === 'email') {
-                        let emailResp = await sendEmail(associateEmail, worker, pdfData, emailPassword, 'Invoice', index)
+                        let emailResp = await sendEmail(associateEmail, worker, pdfData, emailPassword, 'Invoice', index, dateUnformatted)
                         resolve(emailResp)
                     }
                     else { resolve(pdfData) }
@@ -146,7 +146,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
                     Number(finalAdjustmentFee), await superviseeFeeCalculationTemp('CFIR', respSupervisersCFIR), chargeVideoFee, removedNonChargablesArr.length, workerProfile[0].probono, probonoItems)
 
-                    let associateFeeBaseRateTablesCBT = await associateFeesTherapyCBT(worker, invoiceQtyCBT, date, workerId,
+                let associateFeeBaseRateTablesCBT = await associateFeesTherapyCBT(worker, invoiceQtyCBT, date, workerId,
                     await superviseeFeeCalculationTemp('CBT', respSuperviser), removedNonChargablesArr.length)
                 let associateFeeBaseRateTablesCPRI = await associateFeesTherapyCPRI(worker, invoiceQtyCPRI, date, workerId,
                     await superviseeFeeCalculationTemp('CPRI', respSuperviser), removedNonChargablesArr.length)
