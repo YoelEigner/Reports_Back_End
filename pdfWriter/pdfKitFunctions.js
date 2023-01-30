@@ -686,13 +686,13 @@ exports.findSplitFees = (arr) => {
 exports.removeSplitFees = (arr) => {
     for (let i = 0; i < arr.length; i++) {
         for (let j = i + 1; j < arr.length; j++) {
-            if (arr[i].event_primary_worker_name === arr[j].event_primary_worker_name &&
-                arr[i].case_file_name === arr[j].case_file_name &&
-                arr[i].event_service_item_name === arr[j].event_service_item_name &&
-                arr[i].event_service_item_qty === arr[j].event_service_item_qty &&
-                arr[i].service_name === arr[j].service_name &&
-                arr[i].case_file_id === arr[j].case_file_id &&
-                arr[i].event_id === arr[j].event_id) {
+            if (arr[i]?.event_primary_worker_name === arr[j]?.event_primary_worker_name &&
+                arr[i]?.case_file_name === arr[j]?.case_file_name &&
+                arr[i]?.event_service_item_name === arr[j]?.event_service_item_name &&
+                arr[i]?.event_service_item_qty === arr[j]?.event_service_item_qty &&
+                arr[i]?.service_name === arr[j]?.service_name &&
+                arr[i]?.case_file_id === arr[j]?.case_file_id &&
+                arr[i]?.event_id === arr[j]?.event_id) {
                 arr.splice(j, 1);
                 arr.splice(i, 1);
                 i--;
