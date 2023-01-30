@@ -103,6 +103,8 @@ exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, supervi
 
     let totalWoHST = (count * rate)
     let hst = totalWoHST * (process.env.HST / 100)
+    let tableTotal = totalWoHST + hst + superviseeFeeCalculation.map(x => Number(x[4].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
+
 
     return {
         title: "CPRI Associate Fees (Therapy Only)",
@@ -126,5 +128,6 @@ exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, supervi
             ],
             ...superviseeFeeCalculation
         ],
+        tableTotal: tableTotal
     }
 }

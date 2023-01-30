@@ -100,19 +100,21 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let invoiceQty = 0
                 let invoiceQtyCBT = 0
                 let invoiceQtyCPRI = 0
-
+                // console.log(calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0))
                 if (reportType === 'singlepdf') {
                     invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                     invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                     invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                 }
                 else {
-                    let supervisoInvoicerData = removedNonChargablesArr.filter(x => x.event_primary_worker_name === worker)
+                    let supervisoInvoicerData = removedNonChargablesArr.filter(x => x.event_primary_worker_name.includes(worker))
                     let supervisoPaymenterData = paymentData.filter(x => x.worker === worker)
                     invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                     invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                     invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length
                 }
+                // console.log(removedNonChargablesArr, worker)
+
 
                 //***************probono cases ******************/
                 let probonoItems = data.filter(x => x.event_service_item_name === 'Counselling 030 + HST' || x.event_service_item_name === 'Counselling 033.90')
@@ -141,7 +143,6 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 //***************calculate associateship fees  */
                 let finalAdjustmentFee = adjustmentFees.filter(x => x.associateName === worker).map(x => JSON.parse(x.adjustmentFee))[0].map(x => Number(x.value)).reduce((a, b) => a + b, 0)
-                // let finalAdjustmentFee = adjustmentFees.map(x => JSON.parse(x.adjustmentFee)[0].value) ? adjustmentFees.map(x => JSON.parse(x.adjustmentFee)[0].value) : 0
 
                 let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
                     Number(finalAdjustmentFee), await superviseeFeeCalculationTemp('CFIR', respSupervisersCFIR), chargeVideoFee, removedNonChargablesArr.length, workerProfile[0].probono, probonoItems)

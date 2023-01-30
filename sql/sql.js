@@ -222,10 +222,13 @@ exports.getEmailPassword = async () => {
 
 exports.updateEmailPassword = async (password) => {
     const result = CryptoJS.AES.encrypt(password, process.env.KEY);
+    // console.log(CryptoJS.AES.decrypt('U2FsdGVkX1+1PEm5EO+UWbzeep3WWO8Alg0eD48U4Hh9B0mtBZRughcKf3yHcrs/', process.env.KEY).toString(CryptoJS.enc.Utf8))
+    // return 200;
     try {
         await sql.connect(config);
         let resp = await sql.query(`UPDATE [dbo].[email_password] SET [password] = '${result.toString()}' WHERE id = 1`)
-        return 200;
+        if (resp.rowsAffected[0] === 1) return 200
+        else return 500
     } catch (err) {
         console.log(err); return 500
     }
@@ -702,9 +705,9 @@ exports.getSuperviseeiesL1 = async (superviser) => {
     try {
         await sql.connect(config)
         let resp = await sql.query(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] WHERE
-                                    ((supervisor1 = '${superviser}' AND supervisorOneGetsMoney = 1)
+                                    ((supervisor1 = '${superviser}' AND supervisorOneGetsMoney = 1) AND associateType = 'L1 (Sup Prac)'
                                     OR (supervisor1 = '${superviser}' AND assessmentMoneyToSupervisorOne = 1) AND associateType = 'L1 (Sup Prac)')
-                                    OR ((supervisor2 = '${superviser}' AND supervisorTwoGetsMoney = 'true') 
+                                    OR ((supervisor2 = '${superviser}' AND supervisorTwoGetsMoney = 'true') AND associateType = 'L1 (Sup Prac)'
                                     OR (supervisor2 = '${superviser}' AND assessmentMoneyToSupervisorTwo = 1) AND associateType = 'L1 (Sup Prac)')`)
         return resp.recordset
     } catch (error) {

@@ -11,6 +11,9 @@ exports.associateFeesAssessments = async (worker, data, date, rate, tableType, s
     let totalOfAllItems = filteredData.map(x => x.totalOfAllItems = x.applied_amt ? x.applied_amt : Number(x.TOTAL.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
     let hst = fee * (process.env.HST / 100)
     
+    let tableTotal = fee + hst + superviseeAssessmentFees.map(x => Number(x[4].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
+
+
     return {
         title: `${tableType} Associate Fees (Assessments Only)`,
         subtitle: "From " + date.start + " To " + date.end,
@@ -33,5 +36,6 @@ exports.associateFeesAssessments = async (worker, data, date, rate, tableType, s
             ],
             ...superviseeAssessmentFees
         ],
+        tableTotal: tableTotal
     }
 }

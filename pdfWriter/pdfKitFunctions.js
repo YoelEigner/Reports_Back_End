@@ -178,49 +178,49 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
             },
         });
         //******************************CBT********************************/
-        showassociateFeesTable && doc.moveDown();
+        associateFeeAssessmentTableCBT.tableTotal !== 0 && associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-        showassociateFeesTable && doc
+        associateFeeAssessmentTableCBT.tableTotal !== 0 && associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && doc
             .fontSize(20)
             .text('CBT', { align: 'center' })
             .font('Helvetica-Bold')
-            
-        showassociateFeesTable && this.generateLine(doc, doc.y)
+
+        associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && this.generateLine(doc, doc.y)
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-        showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCBT, {
+        associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCBT, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
             },
         });
 
-        showassociateFeesTable && doc.moveDown();
+        associateFeeAssessmentTableCBT.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-        showassociateFeesTable && await doc.table(associateFeeAssessmentTableCBT, {
+        associateFeeAssessmentTableCBT.tableTotal !== 0 && showassociateFeesTable && await doc.table(associateFeeAssessmentTableCBT, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
             },
         });
         //******************************CPRI********************************/
-        showassociateFeesTable && doc.moveDown();
+        associateFeeAssessmentTableCPRI.tableTotal !== 0 && associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-        showassociateFeesTable && doc
+        associateFeeAssessmentTableCPRI.tableTotal !== 0 && associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && doc
             .fontSize(20)
             .text('CPRI', { align: 'center' })
             .font('Helvetica-Bold')
-        showassociateFeesTable && this.generateLine(doc, doc.y)
+        associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && this.generateLine(doc, doc.y)
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
 
-        showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCPRI, {
+        associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCPRI, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
             },
         });
-        showassociateFeesTable && doc.moveDown();
+        associateFeeAssessmentTableCPRI.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-        showassociateFeesTable && await doc.table(associateFeeAssessmentTableCPRI, {
+        associateFeeAssessmentTableCPRI.tableTotal !== 0 && showassociateFeesTable && await doc.table(associateFeeAssessmentTableCPRI, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
@@ -384,14 +384,14 @@ exports.removeNaN = (arr) => {
 
 exports.sortByDateAndName = (arr) => {
     return arr.sort(
-        firstBy(function (a, b) { return new Date(a.batch_date) - new Date(b.batch_date) })
-            .thenBy((a, b) => { return a.worker.localeCompare(b.worker); })
+        firstBy(function (a, b) { return a.worker.localeCompare(b.worker); })
+            .thenBy((a, b) => { return new Date(a.batch_date) - new Date(b.batch_date) }) 
     );
 }
 exports.sortByDateAndEvent_primary_worker_name = (arr) => {
     return arr.sort(
-        firstBy(function (a, b) { return new Date(a.batch_date) - new Date(b.batch_date) })
-            .thenBy((a, b) => { return a.event_primary_worker_name.localeCompare(b.event_primary_worker_name); })
+        firstBy(function (a, b) { return a.event_primary_worker_name.localeCompare(b.event_primary_worker_name); })
+            .thenBy((a, b) => { return new Date(a.batch_date) - new Date(b.batch_date) })
     );
 }
 exports.sortByName = (arr) => {
@@ -536,9 +536,9 @@ exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments
     }
     else {
         return assessments ?
-            data.filter(x => x.service_name.startsWith('A_') || x.service_name.startsWith('aa_'))
-            : data.filter(x => !x.service_name.startsWith('A_') || !x.service_name.startsWith('aa_')
-                && !(x.service_name.startsWith('A_c_') || !x.service_name.startsWith('T_c_')
+            data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
+            : data.filter(x => !x.service_name.startsWith('A__') || !x.service_name.startsWith('aa_')
+                && (!x.service_name.startsWith('A_c_') || !x.service_name.startsWith('T_c_')
                     || !x.service_name.startsWith('A_f_') || !x.service_name.startsWith('T_f_')))
     }
 }

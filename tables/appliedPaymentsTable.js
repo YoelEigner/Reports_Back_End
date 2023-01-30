@@ -16,6 +16,7 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
 
     let subPracTotal = 0
     let associateFee = rate.superviserRate + rate.cfirRate
+
     if (rate !== undefined && rate.isZero) {
         let associateRate = rate.associateRate
         paymentData.map(x => x.subPracAmount = Number(x.applied_amt) - associateRate <= 0 ? formatter.format(0) : formatter.format(Number(x.applied_amt) - associateRate)).reduce((a, b) => a + b, 0)

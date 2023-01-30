@@ -67,7 +67,6 @@ exports.getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
             if (associateFees[0].associateType === 'L1 (Sup Prac)' && (associateFees[0].supervisorOneGetsMoney || associateFees[0].assessmentMoneyToSupervisorOne === true)) {
                 let amount = [associateFees[0].associateFeeBaseRate, associateFees[0].associateFeeBaseRateOverrideGreaterThen,
                 associateFees[0].associateFeeBaseRateOverrideLessThen]
-
                 return {
                     isSuperviser: false,
                     isZero: Number(associateFees[0].associateFeeBaseRateOverrideLessThen) == 0,
@@ -108,6 +107,7 @@ exports.getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
         if (associateFees[0].associateType === 'L1 (Sup Prac)') {
             if (associateFees[0].supervisorOneGetsMoney || associateFees[0].assessmentMoneyToSupervisorOne) { return Number(associateFees[0].associateFeeBaseRate) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThen) }
             else if (associateFees[0].supervisorTwoGetsMoney || associateFees[0].assessmentMoneyToSupervisorTwo) { return Number(associateFees[0].associateFeeBaseRateTwo) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThenTwo) }
+            else { return Number(associateFees[0].associateFeeBaseRate) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThen) }
         }
         else {
             if (associateFees[0].supervisorOneGetsMoney || associateFees[0].assessmentMoneyToSupervisorOne) {
@@ -194,6 +194,8 @@ exports.getRate_CBT = async (count, workerId, getSubPrac, L1AssociateFee) => {
         if (associateFees[0].associateType === 'L1 (Sup Prac)') {
             if (associateFees[0].supervisorOneGetsMoney) { return Number(associateFees[0].associateFeeBaseRate_c) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThen_c) }
             else if (associateFees[0].supervisorTwoGetsMoney) { return Number(associateFees[0].associateFeeBaseRateTwo_c) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThenTwo_c) }
+            else { return Number(associateFees[0].associateFeeBaseRate_c) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThen_c) }
+
         }
         else {
             if (associateFees[0].supervisorOneGetsMoney) {
@@ -282,6 +284,8 @@ exports.getRate_CPRI = async (count, workerId, getSubPrac, L1AssociateFee) => {
         if (associateFees[0].associateType === 'L1 (Sup Prac)') {
             if (associateFees[0].supervisorOneGetsMoney) { return Number(associateFees[0].associateFeeBaseRate_f) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThen_f) }
             else if (associateFees[0].supervisorTwoGetsMoney) { return Number(associateFees[0].associateFeeBaseRateTwo_f) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThenTwo_f) }
+            else { return Number(associateFees[0].associateFeeBaseRate_f) + Number(associateFees[0].associateFeeBaseRateOverrideGreaterThen_f) }
+
         }
         else {
             if (associateFees[0].supervisorOneGetsMoney) {

@@ -15,9 +15,8 @@ exports.sendEmail = async (email, worker, pdfData, pass, type, idx, date) => {
         },
     });
     return new Promise(async (resolve, reject) => {
-        try {
-            console.log(date)
-            setTimeout(async () => {
+        setTimeout(async () => {
+            try {
                 // send mail with defined transport object
                 let info = await transporter.sendMail({
                     from: 'accounting@cfir.ca', // sender address
@@ -36,12 +35,13 @@ exports.sendEmail = async (email, worker, pdfData, pass, type, idx, date) => {
                 else {
                     reject(500)
                 }
-            }, idx * 1000);
 
-        } catch (error) {
-            console.log(error)
-            reject(error)
-        }
+            } catch (error) {
+                console.log(error.command, "Sending email error")
+                reject(error)
+            }
+        }, idx * 1000);
+
     })
 
 }
