@@ -5,7 +5,6 @@ exports.duplicateAndSplitFees = (array) => {
     const duplicateItemsArr = findDuplicates(array)
     const splitFeesArr = findSplitFees(array)
     let duplicateItemsAndSplitFees = [...duplicateItemsArr, ...splitFeesArr]
-
     return { duplicateItemsAndSplitFees }
 }
 

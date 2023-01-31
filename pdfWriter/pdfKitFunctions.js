@@ -669,6 +669,7 @@ exports.findSplitFees = (arr) => {
                 arr[i].event_service_item_qty === arr[j].event_service_item_qty &&
                 arr[i].service_name === arr[j].service_name &&
                 arr[i].case_file_id === arr[j].case_file_id &&
+                arr[i]?.invoice_id !== arr[j]?.invoice_id &&
                 arr[i].event_id === arr[j].event_id) {
                 if (!splitFees.includes(arr[i])) {
                     splitFees.push(arr[i]);
@@ -692,8 +693,9 @@ exports.removeSplitFees = (arr) => {
                 arr[i]?.event_service_item_qty === arr[j]?.event_service_item_qty &&
                 arr[i]?.service_name === arr[j]?.service_name &&
                 arr[i]?.case_file_id === arr[j]?.case_file_id &&
+                arr[i]?.invoice_id !== arr[j]?.invoice_id &&
                 arr[i]?.event_id === arr[j]?.event_id) {
-                arr.splice(j, 1);
+                // arr.splice(j, 1);
                 arr.splice(i, 1);
                 i--;
             }

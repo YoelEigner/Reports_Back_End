@@ -639,10 +639,10 @@ exports.insertWorkerProfile = async (arr) => {
 exports.getPaymentData = async (worker, date, profileDates) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`(SELECT fv.*, Cast(act_date as date) AS FULLDATE 
+        let resp = await sql.query(`(SELECT fv.*, DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) AS FULLDATE 
                                         FROM financial_view fv
                                         JOIN profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName)
-                                        WHERE Cast(act_date as date) BETWEEN '${date.start}' AND '${date.end}'
+                                        WHERE DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) BETWEEN '${date.start}' AND '${date.end}'
                                         AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                         AND (fv.superviser like '%${worker}%' OR worker like '%${worker}%')
                                         AND ((p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1)
@@ -650,8 +650,8 @@ exports.getPaymentData = async (worker, date, profileDates) => {
                                         AND description NOT IN (select name from non_remittable))
                                         UNION
                                         (
-                                            SELECT *, Cast(act_date as date) AS FULLDATE from financial_view
-                                            WHERE Cast(act_date as date) BETWEEN '${date.start}' AND '${date.end}'
+                                            SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
+                                            WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                             AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                             AND worker like '%${worker}%'
                                             AND description NOT IN (select name from non_remittable)
@@ -669,8 +669,8 @@ exports.getPaymentData = async (worker, date, profileDates) => {
 }
 exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
     try {
-        let resp = await sql.query(`SELECT *, Cast(act_date as date) AS FULLDATE from financial_view
-                                    WHERE Cast(act_date as date) BETWEEN '${date.start}' AND '${date.end}'
+        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
+                                    WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                    AND worker like '%${tempWorker}%'
                                    AND description NOT IN (select name from non_remittable)`)
@@ -681,8 +681,8 @@ exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
 }
 exports.getPaymentDataForWorkerBySupervisor = async (tempWorker, date, profileDates, supervisor) => {
     try {
-        let resp = await sql.query(`SELECT *, Cast(act_date as date) AS FULLDATE from financial_view
-                                    WHERE Cast(act_date as date) BETWEEN '${date.start}' AND '${date.end}'
+        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
+                                    WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                    AND worker like '%${tempWorker}%' AND superviser like '${supervisor}'
                                    AND description NOT IN (select name from non_remittable)`)
