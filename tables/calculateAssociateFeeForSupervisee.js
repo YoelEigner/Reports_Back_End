@@ -7,17 +7,19 @@ const formatterCurrency = new Intl.NumberFormat('en-US', {
 
 
 exports.calculateAssociateFeeForSupervisee = async (workerName, reportedItems, rate, videoFee, superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge,
-    superviseeAdjustmentFee, chargeVideoFee, tableType, probonoRate, probonoItems, supervisorsProbono) => {
+    superviseeAdjustmentFee, chargeVideoFee, tableType, probonoRate, probonoItems, supervisorsProbono, l1SupPrac) => {
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
     let adjustmentFee = superviseeAdjustmentFee.map(x => Number(x.value)).reduce((a, b) => a + b, 0)
 
     let probonoQty = probonoItems.length
-    
+
 
     let totalWoHST = ((reportedItems - probonoQty) * rate) + (probonoQty * probonoRate) + superviseeBlocksBiWeeklyCharge
 
     // let totalWoHST = (reportedItems * rate) + superviseeBlocksBiWeeklyCharge
     let hst = totalWoHST * (process.env.HST / 100)
+    if (l1SupPrac) { hst = 0 }
+
     let total = totalWoHST + hst
 
     let cfirArr = [

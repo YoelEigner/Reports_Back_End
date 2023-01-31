@@ -10,6 +10,7 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
             let superviseeWorkerProfile = await getAssociateProfileById(worker.id)
+
             let superviserGetsAssessmentMoney =
                 (
                     (worker.supervisor1 === superviseeWorkerProfile[0].supervisor1 && superviseeWorkerProfile[0].assessmentMoneyToSupervisorOne)
@@ -57,6 +58,7 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
                 let IsSupervisedByNonDirector = superviseeWorkerProfile[0].IsSupervisedByNonDirector
                 let associateType = superviseeWorkerProfile[0].associateType
                 let probonoRate = superviseeWorkerProfile[0].probono
+                let l1SupPrac = superviseeWorkerProfile[0].associateType === 'L1 (Sup Prac)'
 
 
 
@@ -80,7 +82,8 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
                 let superviseeAdjustmentFee = tableType === 'CFIR' ? JSON.parse(superviseeWorkerProfile.map(x => x.adjustmentFee)) : [{ name: 'rtest', value: '0' }]
                 // console.log(superviser, superviseeReportedItemsCount(), '--', superviseeReportedItemdData.length, '---', workerPaymentData.length)
                 arr.push(await calculateAssociateFeeForSupervisee(worker.associateName, superviseeReportedItemsCount(), parseFloat(await SuperviseeRate()), videoFee,
-                    superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge, superviseeAdjustmentFee, chargeVideoFee, tableType, probonoRate, probonoItems, supervisorsProbono))
+                    superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge, superviseeAdjustmentFee, chargeVideoFee, tableType, probonoRate, probonoItems,
+                    supervisorsProbono, l1SupPrac))
             }
             else if (superviserGetsAssessmentMoney) {
                 let row = [
