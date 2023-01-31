@@ -42,11 +42,12 @@ exports.deleteprofile = async (id) => {
 exports.getInvoiceDataForWorker = async (date, worker, profileDates) => {
     try {
         await sql.connect(config);
+        
         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                     >='${date.start}' and batch_date <='${date.end}'
                                     AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
-                                    AND [event_primary_worker_name]='${worker}' AND event_service_item_name NOT IN (SELECT name FROM non_remittable)`)
+                                    AND [event_primary_worker_name] like '%${worker}%' AND event_service_item_name NOT IN (SELECT name FROM non_remittable)`)
         return resp.recordset;
     } catch (err) {
         console.log('getDataDate Function', err);
@@ -61,7 +62,7 @@ exports.getSuperviseeDataBySuperviser = async (date, worker, profileDates, super
                                     FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                     >='${date.start}' and batch_date <='${date.end}'
                                     AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
-                                    AND [event_primary_worker_name]='${worker}' AND [event_invoice_details_worker_name]='${superviser}'
+                                    AND [event_primary_worker_name] like '%${worker}%' AND [event_invoice_details_worker_name] like '%${superviser}%'
                                     AND event_service_item_name NOT IN (SELECT name FROM non_remittable)`)
         return resp.recordset;
     } catch (err) {
@@ -77,9 +78,9 @@ exports.getInvoiceData = async (date, worker, profileDates) => {
                                         JOIN profiles p ON (i.event_primary_worker_name = p.associateName OR event_invoice_details_worker_name = p.associateName)
                                         WHERE i.batch_date >= '${date.start}' AND i.batch_date <= '${date.end}'
                                         AND i.batch_date >= '${profileDates.startDate}' AND i.batch_date <= '${profileDates.endDate}'
-                                        AND (i.event_primary_worker_name = '${worker}' OR i.event_invoice_details_worker_name='${worker}')
-                                        AND ((p.supervisor1 = '${worker}' AND p.supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1) 
-                                        OR (p.supervisor2 = '${worker}' AND p.supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo = 1))
+                                        AND (i.event_primary_worker_name like '%${worker}%' OR i.event_invoice_details_worker_name like '%${worker}%')
+                                        AND ((p.supervisor1 like '%${worker}%' AND p.supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1) 
+                                        OR (p.supervisor2 like '%${worker}%' AND p.supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo = 1))
                                         AND event_service_item_name NOT IN (SELECT name FROM non_remittable))
                                         UNION
                                         (
@@ -87,7 +88,7 @@ exports.getInvoiceData = async (date, worker, profileDates) => {
                                                                             FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                                                             >='${date.start}' and batch_date <='${date.end}'
                                                                             AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
-                                                                            AND [event_primary_worker_name]='${worker}'
+                                                                            AND [event_primary_worker_name] like '%${worker}%'
                                                                             AND event_service_item_name NOT IN (SELECT name FROM non_remittable))`
         )
         return resp.recordset;
