@@ -98,12 +98,14 @@ const getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
         }
     }
 }
-exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, superviseeFeeCalculation, removedNonChargablesArr) => {
+exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, superviseeFeeCalculation, removedNonChargablesArr, isl1SupPrac) => {
     let rate = await getRate_CPRI(removedNonChargablesArr, workerId, false)
 
     let totalWoHST = (count * rate)
     let hst = totalWoHST * (process.env.HST / 100)
     let tableTotal = totalWoHST + hst + superviseeFeeCalculation.map(x => Number(x[4].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
+    let hstRemoved = 0
+    if (isl1SupPrac) { hstRemoved = hst }
 
 
     return {
@@ -124,7 +126,7 @@ exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, supervi
                 // formatter.format(vidFee),
                 // formatter.format(ajustmentFees.toFixed(2)),
                 formatter.format(hst),
-                formatter.format(totalWoHST + hst)
+                formatter.format(totalWoHST + hst - hstRemoved)
             ],
             ...superviseeFeeCalculation
         ],

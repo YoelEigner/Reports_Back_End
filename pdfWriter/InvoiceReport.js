@@ -76,6 +76,8 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let associateFeeAssessmentRate = workerProfile[0].assessmentRate
                 let associateFeeAssessmentRateCBT = workerProfile[0].assessmentRate_c
                 let associateFeeAssessmentRateCPRI = workerProfile[0].assessmentRate_f
+                let isl1SupPrac = workerProfile[0].associateType === 'L1 (Sup Prac)'
+
 
                 //*********************Create supervisees Tables *******************
                 let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser, profileDates, worker)
@@ -119,7 +121,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                     invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
                     invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
                     invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
-                    
+
                     if (isNaN(invoiceQty) || isNaN(invoiceQtyCBT) || isNaN(invoiceQtyCPRI)) {
                         invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                         invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
@@ -159,12 +161,13 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let finalAdjustmentFee = adjustmentFees.filter(x => x.associateName === worker).map(x => JSON.parse(x.adjustmentFee))[0].map(x => Number(x.value)).reduce((a, b) => a + b, 0)
 
                 let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
-                    Number(finalAdjustmentFee), await superviseeFeeCalculationTemp('CFIR', respSupervisersCFIR), chargeVideoFee, removedNonChargablesArr.length, workerProfile[0].probono, probonoItems)
+                    Number(finalAdjustmentFee), await superviseeFeeCalculationTemp('CFIR', respSupervisersCFIR), chargeVideoFee, removedNonChargablesArr.length,
+                    workerProfile[0].probono, probonoItems, isl1SupPrac)
 
                 let associateFeeBaseRateTablesCBT = await associateFeesTherapyCBT(worker, invoiceQtyCBT, date, workerId,
-                    await superviseeFeeCalculationTemp('CBT', respSuperviser), removedNonChargablesArr.length)
+                    await superviseeFeeCalculationTemp('CBT', respSuperviser), removedNonChargablesArr.length, isl1SupPrac)
                 let associateFeeBaseRateTablesCPRI = await associateFeesTherapyCPRI(worker, invoiceQtyCPRI, date, workerId,
-                    await superviseeFeeCalculationTemp('CPRI', respSuperviser), removedNonChargablesArr.length)
+                    await superviseeFeeCalculationTemp('CPRI', respSuperviser), removedNonChargablesArr.length, isl1SupPrac)
 
 
                 let associateFeeAssessmentTable = await associateFeesAssessments(worker, calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, true),

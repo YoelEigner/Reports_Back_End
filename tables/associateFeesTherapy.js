@@ -13,13 +13,15 @@ const getRatesForL1 = (arr) => {
 }
 
 exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees,
-    superviseeFeeCalculation, chargeVideoFee, removedNonChargablesArr, probonoRate, probonoItems) => {
+    superviseeFeeCalculation, chargeVideoFee, removedNonChargablesArr, probonoRate, probonoItems, isl1SupPrac) => {
     let rate = await this.getRate(removedNonChargablesArr, workerId, false)
 
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
     let probonoQty = probonoItems.length
     let totalWoHST = ((count - probonoQty) * rate) + (probonoQty * probonoRate) + blockItemFees
     let hst = totalWoHST * (process.env.HST / 100)
+    let hstRemoved = 0
+    if (isl1SupPrac) { hstRemoved = hst }
 
     let superviseeProbono = superviseeFeeCalculation.map(x => x.length).includes(11)
 
@@ -43,7 +45,7 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
         formatter.format(ajustmentFees.toFixed(2)),
         formatter.format(blockItemFees),
         formatter.format(hst),
-        formatter.format(totalWoHST + hst + vidFee + finalProccessingFee + ajustmentFees)
+        formatter.format(totalWoHST + hst + vidFee + finalProccessingFee + ajustmentFees - hstRemoved)
     ]
     if (probonoQty > 0 || superviseeProbono) { headers.splice(3, 0, { label: "Probono Qty", renderer: null, align: "center" }, { label: "Probono Rate", renderer: null, align: "center" }) }
     if (probonoQty > 0 || superviseeProbono) { rows.splice(3, 0, probonoQty, formatter.format(probonoRate),) }

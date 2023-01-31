@@ -3,12 +3,14 @@ const { getAssociateFeeBaseRate, getProcessingFee, getPaymentTypes } = require("
 const { getRate_CBT } = require("./associateFeesTherapy")
 
 
-exports.associateFeesTherapyCBT = async (worker, count, date, workerId, superviseeFeeCalculation, removedNonChargablesArr) => {
+exports.associateFeesTherapyCBT = async (worker, count, date, workerId, superviseeFeeCalculation, removedNonChargablesArr, isl1SupPrac) => {
     let rate = await getRate_CBT(removedNonChargablesArr, workerId, false)
 
     let totalWoHST = (count * rate)
     let hst = totalWoHST * (process.env.HST / 100)
     let tableTotal = totalWoHST + hst + superviseeFeeCalculation.map(x => Number(x[4].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
+    let hstRemoved = 0
+    if (isl1SupPrac) { hstRemoved = hst }
 
     return {
         title: "CBT Associate Fees (Therapy Only)",
@@ -26,7 +28,7 @@ exports.associateFeesTherapyCBT = async (worker, count, date, workerId, supervis
                 count,
                 formatter.format(rate),
                 formatter.format(hst),
-                formatter.format(totalWoHST + hst)
+                formatter.format(totalWoHST + hst - hstRemoved)
             ],
             ...superviseeFeeCalculation
         ],
