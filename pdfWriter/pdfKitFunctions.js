@@ -625,8 +625,8 @@ exports.calculateWorkerFeeByLevalCPRI = (wokrerLeval, data, paymentData, assessm
 
 exports.getProfileDateFormatted = async (workerId) => {
     let profileDates = await getProfileDates(workerId)
-    profileDates.startDate = moment(profileDates.startDate).format('YYYY-MM-DD')
-    profileDates.endDate = moment(profileDates.endDate).format('YYYY-MM-DD')
+    profileDates.startDate = moment.utc(profileDates.startDate).format('YYYY-MM-DD')
+    profileDates.endDate = moment.utc(profileDates.endDate).format('YYYY-MM-DD')
     return profileDates
 }
 exports.findDuplicates = (arr) => {
@@ -719,7 +719,7 @@ exports.removeDuplicates = (arr) => {
 
 exports.getSummarizedData = (data) => {
     const summarizedData = data.reduce((acc, item) => {
-        const key = `${item.reason_type}-${item.applied_amt}`;
+        const key = `${item.reason_type}-${item.applied_amt}-${item.worker}`;
         if (!acc[key]) {
             acc[key] = {
                 superviser: item.superviser,
@@ -742,6 +742,7 @@ exports.getSummarizedSuperviseeData = (arr) => {
         let group = acc.find(g => g.description === curr.description && g.applied_amt === curr.applied_amt);
         if (!group) {
             group = {
+                superviser: curr.superviser,
                 worker: curr.worker,
                 description: curr.description,
                 applied_amt: curr.applied_amt,
@@ -766,6 +767,7 @@ exports.calculateProcessingFeeTemp = (reasonTypeArray, costArray) => {
             let amount = parseFloat(matchingFee.ammount.replace(/[^0-9.-]+/g, ""));
             arr.push(
                 {
+                    supervisor: costObj.superviser,
                     worker: costObj.worker,
                     reason_type: costObj.reason_type,
                     sum: costObj.sum,

@@ -41,8 +41,8 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
             });
             try {
                 let profileDates = await getProfileDates(workerId)
-                profileDates.startDate = moment(profileDates.startDate).format('YYYY-MM-DD')
-                profileDates.endDate = moment(profileDates.endDate).format('YYYY-MM-DD')
+                profileDates.startDate = moment.utc(profileDates.startDate).format('YYYY-MM-DD')
+                profileDates.endDate = moment.utc(profileDates.endDate).format('YYYY-MM-DD')
 
                 let data = reportType === 'singlepdf' ?
                     removeNullStr(await getInvoiceDataForWorker(dateUnformatted, worker, profileDates), '-')
@@ -83,7 +83,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let supervisies = await getSupervisiesFunc(dateUnformatted, non_chargeablesArr, respSuperviser, profileDates, worker)
 
                 //*********************format date *******************/
-                date = { start: moment(dateUnformatted.start).format('YYYY-MM-DD'), end: moment(dateUnformatted.end).format('YYYY-MM-DD') }
+                date = { start: moment.utc(dateUnformatted.start).format('YYYY-MM-DD'), end: moment.utc(dateUnformatted.end).format('YYYY-MM-DD') }
 
                 //******************** REMOVING NON CHARGABLES *********************
                 //check if i need to remove the non charables in the total

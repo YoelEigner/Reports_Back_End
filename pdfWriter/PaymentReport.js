@@ -47,14 +47,11 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let proccessingFeeTypes = await getPaymentTypes()
             let non_remittableArr = await getNonRemittables()
             let nonRemittableItems = non_remittableArr.map(x => x.name)
-            let assessmentMoneyNotToSupervisor = await getSuperviseeiesL1Assessments(worker)
-            // let assessmentMoneyNotToSupervisorWorkers = assessmentMoneyNotToSupervisor.map(x => x.associateName)
-
             let tablesToShow = await getTablesToShow(workerId)
             let adjustmentFees = reportType === 'singlepdf' ? await getAdjustmentsFeesWorkerOnly(worker) : await getAdjustmentsFees(worker)
 
             //*********************format date *******************/
-            date = { start: moment(dateUnformatted.start).format('YYYY-MM-DD'), end: moment(dateUnformatted.end).format('YYYY-MM-DD') }
+            date = { start: moment.utc(dateUnformatted.start).format('YYYY-MM-DD'), end: moment.utc(dateUnformatted.end).format('YYYY-MM-DD') }
 
 
             //***********************Applied Payments Table ******************/
@@ -111,9 +108,9 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             //*********transaction calculation****************/
             let tmp = paymentData.filter(x => !nonRemittableItems.includes(x.description))
             let summarizedTransactions = Object.values(getSummarizedData(tmp)).sort()
-            // console.log(summarizedTransactions)
+            // console.log(Object.values(getSummarizedData(tmp)).sort())
 
-            let filtered = getSummarizedSuperviseeData(paymentData)
+            let filtered = getSummarizedSuperviseeData(tmp)
 
             //****************adjustment fee table *************/
             let adjustmentFeeTableData = adjustmentFeeTable(date, adjustmentFees)
@@ -157,8 +154,4 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
         }
     })
 
-}
-
-function compareNames(name1, name2) {
-    return name1.includes(name2) || name2.includes(name1);
 }

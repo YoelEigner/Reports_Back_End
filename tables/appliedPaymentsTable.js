@@ -6,7 +6,7 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
 
     paymentData.map(x => {
         x.superviser = x.superviser.split(',')[1] + " " + x.superviser.split(',')[0]
-        x.batch_date = moment(x.FULLDATE).format('YYYY-MM-DD')
+        x.batch_date = moment.utc(x.FULLDATE).format('YYYY-MM-DD')
     })
     let totalAppliedAmt = paymentData.map(x => Number(x.applied_amt)).reduce((a, b) => a + b, 0)
     let totalDuration_hrs = paymentData.map(x => Number(x.duration_hrs)).reduce((a, b) => a + b, 0)

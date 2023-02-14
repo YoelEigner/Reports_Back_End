@@ -486,8 +486,8 @@ exports.UpdateWorkerPreofile = async (arr, id) => {
 }
 
 exports.insertWorkerProfile = async (arr) => {
-    let date = moment(arr.startDate).format('YYYY-MM-DD')
-    let endDate = moment(arr.endDate).format('YYYY-MM-DD')
+    let date = moment.utc(arr.startDate).format('YYYY-MM-DD')
+    let endDate = moment.utc(arr.endDate).format('YYYY-MM-DD')
     try {
         await sql.connect(config)
         let checkForOverlap = await sql.query(`SELECT * FROM profiles WHERE '${arr.startDate}' <= endDate AND '${arr.endDate}' >= startDate AND associateName='${arr.associateName}' AND associateType = '${arr.associateType}'`);
