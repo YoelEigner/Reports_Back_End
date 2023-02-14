@@ -39,7 +39,7 @@ exports.calcSuperviseeAssessmentFeeFunc = (date, respSuperviser, tableType, prof
             }
             let assessmentPaymentData = workerPaymentData.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
             let summarizedTransactions = Object.values(getSummarizedData(assessmentPaymentData)).sort()
-            
+
             let assessmentProccessingFee = tableType === 'CFIR' ? calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.worker === superviseeWorkerProfile[0].associateName).map(x => x.proccessingFee).reduce((a, b) => a + b, 0) : 0
 
             let totalAssessment = superviseeReportedItemsCount().map(x => x.totalOfAllItems = x.applied_amt ? x.applied_amt : Number(x.TOTAL.replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)

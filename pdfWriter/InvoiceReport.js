@@ -102,7 +102,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let invoiceQty = 0
                 let invoiceQtyCBT = 0
                 let invoiceQtyCPRI = 0
-                // console.log(calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0))
+
                 if (reportType === 'singlepdf') {
                     invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
                     invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
@@ -171,11 +171,11 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
 
                 let associateFeeAssessmentTable = await associateFeesAssessments(worker, calculateWorkerFeeByLeval(wokrerLeval, data, paymentData, true),
-                    date, associateFeeAssessmentRate, 'CFIR', await superviseeAssessmentFeeCalculation('CFIR'))
+                    date, associateFeeAssessmentRate, 'CFIR', await superviseeAssessmentFeeCalculation('CFIR'), workerProfile, reportType)
                 let associateFeeAssessmentTableCBT = await associateFeesAssessments(worker, calculateWorkerFeeByLevalCBT(wokrerLeval, data, paymentData, true),
-                    date, associateFeeAssessmentRateCBT, 'CBT', await superviseeAssessmentFeeCalculation('CBT'))
+                    date, associateFeeAssessmentRateCBT, 'CBT', await superviseeAssessmentFeeCalculation('CBT'), workerProfile, reportType)
                 let associateFeeAssessmentTableCPRI = await associateFeesAssessments(worker, calculateWorkerFeeByLevalCPRI(wokrerLeval, data, paymentData, true),
-                    date, associateFeeAssessmentRateCPRI, 'CPRI', await superviseeAssessmentFeeCalculation('CPRI'))
+                    date, associateFeeAssessmentRateCPRI, 'CPRI', await superviseeAssessmentFeeCalculation('CPRI'), workerProfile, reportType)
 
                 let finalTotalRemittence = associateFeeBaseRateTables.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
                     + associateFeeBaseRateTablesCBT.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
