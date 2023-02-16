@@ -385,7 +385,7 @@ exports.removeNaN = (arr) => {
 exports.sortByDateAndName = (arr) => {
     return arr.sort(
         firstBy(function (a, b) { return a.worker.localeCompare(b.worker); })
-            .thenBy((a, b) => { return new Date(a.batch_date) - new Date(b.batch_date) }) 
+            .thenBy((a, b) => { return new Date(a.batch_date) - new Date(b.batch_date) })
     );
 }
 exports.sortByDateAndEvent_primary_worker_name = (arr) => {
@@ -504,9 +504,9 @@ exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments
     if ((wokrerLeval === 'L1' || wokrerLeval === 'L2') && !isSupervised && !isSuperviser) {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
-            : data.filter(x => !x.service_name.startsWith('A__') || !x.service_name.startsWith('aa_')
-                && (!x.service_name.startsWith('A_c_') || !x.service_name.startsWith('T_c_')
-                    || !x.service_name.startsWith('A_f_') || !x.service_name.startsWith('T_f_')))
+            : data.filter(x => !x.service_name.startsWith('A__') && !x.service_name.startsWith('aa_')
+                && !(x.service_name.startsWith('A_c_') || x.service_name.startsWith('T_c_')
+                    || x.service_name.startsWith('A_f_') || x.service_name.startsWith('T_f_')))
     }
     else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && IsSupervisedByNonDirector) {
         return assessments ?
@@ -537,9 +537,9 @@ exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments
     else {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
-            : data.filter(x => !x.service_name.startsWith('A__') || !x.service_name.startsWith('aa_')
-                && (!x.service_name.startsWith('A_c_') || !x.service_name.startsWith('T_c_')
-                    || !x.service_name.startsWith('A_f_') || !x.service_name.startsWith('T_f_')))
+            : data.filter(x => !x.service_name.startsWith('A__') && !x.service_name.startsWith('aa_')
+                && !(x.service_name.startsWith('A_c_') || x.service_name.startsWith('T_c_')
+                    || x.service_name.startsWith('A_f_') || x.service_name.startsWith('T_f_')))
     }
 }
 
@@ -592,6 +592,7 @@ exports.removeOrCPRI = (paymentData, assessments) => {
 }
 exports.calculateWorkerFeeByLevalCPRI = (wokrerLeval, data, paymentData, assessments, isSuperviser, isSupervised, IsSupervisedByNonDirector) => {
     if ((wokrerLeval === 'L1' || wokrerLeval === 'L2') && !isSupervised && !isSuperviser) {
+        
         return assessments ?
             data.filter(x => x.service_name.startsWith('A_f_'))
             : data.filter(x => x.service_name.startsWith('T_f_'))
