@@ -42,7 +42,7 @@ exports.deleteprofile = async (id) => {
 exports.getInvoiceDataForWorker = async (date, worker, profileDates) => {
     try {
         await sql.connect(config);
-        
+
         let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                     >='${date.start}' and batch_date <='${date.end}'
@@ -691,17 +691,6 @@ exports.getPaymentDataForWorkerBySupervisor = async (tempWorker, date, profileDa
         // console.log(error)
     }
 }
-
-// exports.getSuperviseeies = async (superviser) => {
-//     try {
-//         await sql.connect(config)
-//         let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE (supervisor1 = '${superviser}' AND supervisorOneGetsMoney = 'true' AND associateType != 'L1 (Sup Prac)')
-//                                     or (supervisor2 = '${superviser}' AND supervisorTwoGetsMoney = 'true' AND associateType != 'L1 (Sup Prac)')`)
-//         return resp.recordset
-//     } catch (error) {
-//         console.log(error)
-//     }
-// }
 exports.getSuperviseeiesL1 = async (superviser) => {
     try {
         await sql.connect(config)

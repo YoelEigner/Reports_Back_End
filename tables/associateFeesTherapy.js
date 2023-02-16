@@ -13,7 +13,13 @@ const getRatesForL1 = (arr) => {
 }
 
 exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, finalProccessingFee, blockItemFees, ajustmentFees,
-    superviseeFeeCalculation, chargeVideoFee, removedNonChargablesArr, probonoRate, probonoItems, isl1SupPrac) => {
+    superviseeFeeCalculation, chargeVideoFee, removedNonChargablesArr, probonoRate, probonoItems, isl1SupPrac, workerProfile, reportType) => {
+
+    let superviserGetsTherapyMoney =
+        (workerProfile[0].supervisorOneGetsMoney === true)
+        ||
+        (workerProfile[0].supervisorTwoGetsMoney === true)
+
     let rate = await this.getRate(removedNonChargablesArr, workerId, false)
 
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
@@ -25,31 +31,59 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
 
     let superviseeProbono = superviseeFeeCalculation.map(x => x.length).includes(11)
 
-    let headers = [
-        { label: "Worker", renderer: null, align: "center" },
-        { label: "Quantity", renderer: null, align: "center" },
-        { label: "Fee Base Rate", renderer: null, align: "center" },
-        { label: "Video Fee", renderer: null, align: "center" },
-        { label: "Other Fee", renderer: null, align: "center" },
-        { label: "Adjustment Fee", renderer: null, align: "center" },
-        { label: "Room Block Fee", renderer: null, align: "center" },
-        { label: "HST", renderer: null, align: "center" },
-        { label: "Total + HST", renderer: null, align: "center" }
-    ]
-    let rows = [
-        worker,
-        (count - probonoQty),
-        formatter.format(rate),
-        formatter.format(vidFee),
-        formatter.format(finalProccessingFee.toFixed(2)),
-        formatter.format(ajustmentFees.toFixed(2)),
-        formatter.format(blockItemFees),
-        formatter.format(hst),
-        formatter.format(totalWoHST + hst + vidFee + finalProccessingFee + ajustmentFees - hstRemoved)
-    ]
-    if (probonoQty > 0 || superviseeProbono) { headers.splice(3, 0, { label: "Probono Qty", renderer: null, align: "center" }, { label: "Probono Rate", renderer: null, align: "center" }) }
-    if (probonoQty > 0 || superviseeProbono) { rows.splice(3, 0, probonoQty, formatter.format(probonoRate),) }
+    let headers = []
+    let rows = []
+    if (!superviserGetsTherapyMoney && reportType === 'singlepdf') {
+        headers = [
+            { label: "Worker", renderer: null, align: "center" },
+            { label: "Quantity", renderer: null, align: "center" },
+            { label: "Fee Base Rate", renderer: null, align: "center" },
+            { label: "Video Fee", renderer: null, align: "center" },
+            { label: "Other Fee", renderer: null, align: "center" },
+            { label: "Adjustment Fee", renderer: null, align: "center" },
+            { label: "Room Block Fee", renderer: null, align: "center" },
+            { label: "HST", renderer: null, align: "center" },
+            { label: "Total + HST", renderer: null, align: "center" }
+        ]
+        rows = [
+            worker,
+            (0),
+            formatter.format(0),
+            formatter.format(0),
+            formatter.format(0),
+            formatter.format(0),
+            formatter.format(0),
+            formatter.format(0),
+            formatter.format(0)
+        ]
+    }
+    else {
+        headers = [
+            { label: "Worker", renderer: null, align: "center" },
+            { label: "Quantity", renderer: null, align: "center" },
+            { label: "Fee Base Rate", renderer: null, align: "center" },
+            { label: "Video Fee", renderer: null, align: "center" },
+            { label: "Other Fee", renderer: null, align: "center" },
+            { label: "Adjustment Fee", renderer: null, align: "center" },
+            { label: "Room Block Fee", renderer: null, align: "center" },
+            { label: "HST", renderer: null, align: "center" },
+            { label: "Total + HST", renderer: null, align: "center" }
+        ]
+        rows = [
+            worker,
+            (count - probonoQty),
+            formatter.format(rate),
+            formatter.format(vidFee),
+            formatter.format(finalProccessingFee.toFixed(2)),
+            formatter.format(ajustmentFees.toFixed(2)),
+            formatter.format(blockItemFees),
+            formatter.format(hst),
+            formatter.format(totalWoHST + hst + vidFee + finalProccessingFee + ajustmentFees - hstRemoved)
+        ]
+        if (probonoQty > 0 || superviseeProbono) { headers.splice(3, 0, { label: "Probono Qty", renderer: null, align: "center" }, { label: "Probono Rate", renderer: null, align: "center" }) }
+        if (probonoQty > 0 || superviseeProbono) { rows.splice(3, 0, probonoQty, formatter.format(probonoRate),) }
 
+    }
     return {
         title: "CFIR Associate Fees (Therapy Only)",
         subtitle: "From " + date.start + " To " + date.end,

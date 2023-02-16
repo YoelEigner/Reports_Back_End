@@ -162,7 +162,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
                     Number(finalAdjustmentFee), await superviseeFeeCalculationTemp('CFIR', respSupervisersCFIR), chargeVideoFee, removedNonChargablesArr.length,
-                    workerProfile[0].probono, probonoItems, isl1SupPrac)
+                    workerProfile[0].probono, probonoItems, isl1SupPrac, workerProfile, reportType)
 
                 let associateFeeBaseRateTablesCBT = await associateFeesTherapyCBT(worker, invoiceQtyCBT, date, workerId,
                     await superviseeFeeCalculationTemp('CBT', respSuperviser), removedNonChargablesArr.length, isl1SupPrac)

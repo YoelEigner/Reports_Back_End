@@ -8,8 +8,9 @@ exports.associateFeesAssessments = async (worker, data, date, rate, tableType, s
         ||
         (workerProfile[0].assessmentMoneyToSupervisorTwo === true)
 
-    if (reportType === 'singlepdf' && superviserGetsAssessmentMoney) {
+    if (!superviserGetsAssessmentMoney && reportType === 'singlepdf') {
         data = []
+        let tableTotal = superviseeAssessmentFees.map(x => Number(x[4].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
         return {
             title: `${tableType} Associate Fees (Assessments Only)`,
             subtitle: "From " + date.start + " To " + date.end,
@@ -31,7 +32,8 @@ exports.associateFeesAssessments = async (worker, data, date, rate, tableType, s
                     formatter.format(0)
                 ],
             ],
-            tableTotal: 0
+            ...superviseeAssessmentFees,
+            tableTotal: tableTotal
         }
     }
 
