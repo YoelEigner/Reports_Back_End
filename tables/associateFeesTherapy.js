@@ -37,7 +37,7 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
     if (superviserGetsTherapyMoney && workerProfile[0].isSuperviser === false) {
         headers = [
             { label: "Worker", renderer: null, align: "center" },
-            { label: "Quantity", renderer: null, align: "center" },
+            { label: "Quantity hrs", renderer: null, align: "center" },
             { label: "Fee Base Rate", renderer: null, align: "center" },
             { label: "Video Fee", renderer: null, align: "center" },
             { label: "Other Fee", renderer: null, align: "center" },
@@ -61,7 +61,7 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
     else {
         headers = [
             { label: "Worker", renderer: null, align: "center" },
-            { label: "Quantity", renderer: null, align: "center" },
+            { label: "Quantity hrs", renderer: null, align: "center" },
             { label: "Fee Base Rate", renderer: null, align: "center" },
             { label: "Video Fee", renderer: null, align: "center" },
             { label: "Other Fee", renderer: null, align: "center" },

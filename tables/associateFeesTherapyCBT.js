@@ -17,7 +17,7 @@ exports.associateFeesTherapyCBT = async (worker, count, date, workerId, supervis
         subtitle: "From " + date.start + " To " + date.end,
         headers: [
             { label: "Worker", renderer: null, align: "center" },
-            { label: "Quantity", renderer: null, align: "center" },
+            { label: "Quantity hrs", renderer: null, align: "center" },
             { label: "Fee Base Rate", renderer: null, align: "center" },
             { label: "HST", renderer: null, align: "center" },
             { label: "Total + HST", renderer: null, align: "center" }

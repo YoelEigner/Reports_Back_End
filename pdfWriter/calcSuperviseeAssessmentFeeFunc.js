@@ -46,10 +46,12 @@ exports.calcSuperviseeAssessmentFeeFunc = (date, respSuperviser, tableType, prof
             let fee = superviseeReportedItemsCount().map(x => x.assessmentAssociateFee = x.applied_amt ? (x.applied_amt / 100) * SuperviseeRate() : (Number(x.TOTAL.replace(/[^0-9.-]+/g, "")) / 100) * SuperviseeRate()).reduce((a, b) => a + b, 0)
 
             let hst = fee * (process.env.HST / 100)
+            let invoice_fee_qty = superviseeReportedItemsCount().map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
 
             let superviseeRow = [
                 superviseeWorkerProfile[0].associateName,
                 superviseeReportedItemsCount().length,
+                invoice_fee_qty,
                 formatter.format(totalAssessment),
                 `${SuperviseeRate()}%`,
                 formatter.format(hst),
