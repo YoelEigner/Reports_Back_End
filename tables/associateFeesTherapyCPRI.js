@@ -106,7 +106,6 @@ exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, supervi
     let tableTotal = totalWoHST + hst + superviseeFeeCalculation.map(x => Number(x[4].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
     let hstRemoved = 0
     if (isl1SupPrac) { hstRemoved = hst }
-    console.log(rate)
 
 
     return {
