@@ -8,7 +8,7 @@ exports.associateFeesAssessments = async (worker, data, date, rate, tableType, s
         ||
         (workerProfile[0].assessmentMoneyToSupervisorTwo === true)
 
-    if (superviserGetsAssessmentMoney && reportType === 'singlepdf') {
+    if (superviserGetsAssessmentMoney && workerProfile[0].isSuperviser === false) {
         data = []
         let tableTotal = superviseeAssessmentFees.map(x => Number(x[4].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
         return {

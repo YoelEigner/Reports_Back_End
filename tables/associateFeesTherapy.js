@@ -33,7 +33,8 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
 
     let headers = []
     let rows = []
-    if (superviserGetsTherapyMoney && reportType === 'singlepdf') {
+
+    if (superviserGetsTherapyMoney && workerProfile[0].isSuperviser === false) {
         headers = [
             { label: "Worker", renderer: null, align: "center" },
             { label: "Quantity", renderer: null, align: "center" },
