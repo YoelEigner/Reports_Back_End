@@ -48,7 +48,7 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
         rows = [
             worker,
             (0),
-            formatter.format(0),
+            formatter.format(rate),
             formatter.format(0),
             formatter.format(0),
             formatter.format(0),

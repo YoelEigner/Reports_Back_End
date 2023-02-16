@@ -113,7 +113,6 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                         invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                         invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                     }
-
                 }
                 else {
                     let supervisoInvoicerData = removedNonChargablesArr.filter(x => x.event_primary_worker_name.includes(worker))
