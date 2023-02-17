@@ -88,30 +88,30 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 //******************** REMOVING NON CHARGABLES *********************
                 //check if i need to remove the non charables in the total
                 let nonChargeableItems = reportedItemData.filter(x => non_chargeablesArr.find(n => n === x.event_service_item_name) && x.COUNT)
-                let nonRemittableItemsNames = nonChargeableItems.map(x => x.event_service_item_name)
-                let subtotal = data.map(x => !nonRemittableItemsNames.includes(x.event_service_item_name) && x.event_service_item_total).reduce((a, b) => a + b, 0)
+                let nonChargableItemsNames = nonChargeableItems.map(x => x.event_service_item_name)
+                let subtotal = data.map(x => !nonChargableItemsNames.includes(x.event_service_item_name) && x.event_service_item_total).reduce((a, b) => a + b, 0)
 
                 //******************** REMOVING DUPLICATE & SPLIT FEES (event_id && case_file_name) *********************
                 let { duplicateItemsAndSplitFees } = duplicateAndSplitFees(data)
                 let { duplicateItemsAndSplitFeesRemoved } = duplicateAndSplitFeesRemoved(data)
 
                 //*******************calculate worker fee by leval *****************
-                let removedNonChargablesArr = duplicateItemsAndSplitFeesRemoved.filter(x => !nonRemittableItemsNames.includes(x.event_service_item_name))
-
+                let removedNonChargablesArr = duplicateItemsAndSplitFeesRemoved.filter(x => !nonChargableItemsNames.includes(x.event_service_item_name))
+                let removedNonChargablesArrPayment = paymentData.filter(x => !non_chargeablesArr.includes(x.description))
 
                 let invoiceQty = 0
                 let invoiceQtyCBT = 0
                 let invoiceQtyCPRI = 0
 
                 if (reportType === 'singlepdf') {
-                    invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
-                    invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
-                    invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
+                    invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, removedNonChargablesArrPayment, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
+                    invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, removedNonChargablesArr, removedNonChargablesArrPayment, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
+                    invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, removedNonChargablesArr, removedNonChargablesArrPayment, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
 
                     if (isNaN(invoiceQty) || isNaN(invoiceQtyCBT) || isNaN(invoiceQtyCPRI)) {
-                        invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
-                        invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
-                        invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+                        invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, removedNonChargablesArrPayment, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+                        invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, removedNonChargablesArr, removedNonChargablesArrPayment, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+                        invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, removedNonChargablesArr, removedNonChargablesArrPayment, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                     }
                 }
                 else {
