@@ -639,14 +639,20 @@ exports.insertWorkerProfile = async (arr) => {
 exports.getPaymentData = async (worker, date, profileDates) => {
     try {
         await sql.connect(config)
+
         let resp = await sql.query(`(SELECT fv.*, DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) AS FULLDATE 
                                         FROM financial_view fv
                                         JOIN profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName)
                                         WHERE DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) BETWEEN '${date.start}' AND '${date.end}'
                                         AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                         AND (fv.superviser like '%${worker}%' OR worker like '%${worker}%')
-                                        AND ((p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1)
-                                        OR (p.supervisor2 = fv.superviser AND p.supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo= 1))
+                                        AND (
+                                            (p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
+                                            (p.supervisor2 = fv.superviser AND p.supervisorTwoGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
+                                            (p.assessmentMoneyToSupervisorOne = 1 AND p.supervisor1 = fv.superviser AND LEFT(fv.case_program, 1) = 'A') OR
+                                            (p.assessmentMoneyToSupervisorTwo = 1 AND p.supervisor2 = fv.superviser AND LEFT(fv.case_program, 1) = 'A') 
+                                        )
+                                        
                                         AND description NOT IN (select name from non_remittable))
                                         UNION
                                         (

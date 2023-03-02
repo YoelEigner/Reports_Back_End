@@ -720,7 +720,7 @@ exports.removeDuplicates = (arr) => {
 
 exports.getSummarizedData = (data) => {
     const summarizedData = data.reduce((acc, item) => {
-        const key = `${item.reason_type}-${item.applied_amt}-${item.worker}`;
+        const key = `${item.reason_type}-${item.applied_amt}-${item.worker}-${item.worker}`;
         if (!acc[key]) {
             acc[key] = {
                 superviser: item.superviser,

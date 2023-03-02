@@ -30,7 +30,7 @@ exports.L1SupPracTable = async (date, paymentData, workerId, name, superviser) =
     let superviserHours = 0
 
     if (superviserGetsAssessmentMoneyVar[0] && !superviserGetsTherapyMoneyVar[0]) {
-        superviserRate = rate.superviserRate * assessmentItemCount
+        superviserRate = assessmentItemsArr.map(x => x.applied_amt).reduce((a, b) => a + b, 0)
         superviserHours = assessmentItemCount
     }
     else if (!superviserGetsAssessmentMoneyVar[0] && superviserGetsTherapyMoneyVar[0]) {
