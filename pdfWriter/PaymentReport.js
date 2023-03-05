@@ -43,6 +43,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 :
                 await getPaymentData(worker, dateUnformatted, profileDates)
 
+
             let workerProfile = await getAssociateProfileById(workerId)
             let proccessingFeeTypes = await getPaymentTypes()
             let non_remittableArr = await getNonRemittables()
@@ -58,11 +59,11 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let appliedPaymentsTableTemp = await appliedPaymentsTable(date, paymentData, workerId, nonRemittableItems)
 
             //*************Applied Payments totalRemittance table ****************/
-            const getClientPayments = () => { return (paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
-            const getClientHours = () => { return (paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
+            const getClientPayments = (data) => { return (data.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
+            const getClientHours = (data) => { return (data.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
 
-            const getSuperviseeiesClientsPayments = () => { return (paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
-            const getSuperviseeiesClientsHours = () => { return (paymentData.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
+            const getSuperviseeiesClientsPayments = (data) => { return (data.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
+            const getSuperviseeiesClientsHours = (data) => { return (data.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
 
             let clientPayments = 0
             let clientHours = 0
@@ -70,33 +71,87 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let superviseeClientsHours = 0
 
             if (workerProfile[0].associateType === 'L1 (Sup Prac)') {
-                clientPayments = getClientPayments()
-                clientHours = getClientHours()
-                superviseeClientsPayment = getSuperviseeiesClientsPayments()
-                superviseeClientsHours = getSuperviseeiesClientsHours()
-            }
-
-            else if (workerProfile[0].isSuperviser) {
-
-                clientPayments = getClientPayments()
-                clientHours = getClientHours()
-                superviseeClientsPayment = getSuperviseeiesClientsPayments()
-                superviseeClientsHours = getSuperviseeiesClientsHours()
-
-            }
-            else {
-                if (workerProfile[0].supervisorOneGetsMoney === true || workerProfile[0].supervisorTwoGetsMoney === true) {
+                if ((workerProfile[0].supervisorOneGetsMoney || workerProfile[0].supervisorTwoGetsMoney)
+                    && (workerProfile[0].assessmentMoneyToSupervisorOne || workerProfile[0].assessmentMoneyToSupervisorTwo)) {
                     clientPayments = 0
                     clientHours = 0
                     superviseeClientsPayment = 0
                     superviseeClientsHours = 0
                 }
-                else {
-                    clientPayments = getClientPayments()
-                    clientHours = getClientHours()
-                    superviseeClientsPayment = getSuperviseeiesClientsPayments()
-                    superviseeClientsHours = getSuperviseeiesClientsHours()
+                else if (workerProfile[0].supervisorOneGetsMoney || workerProfile[0].supervisorTwoGetsMoney) {
+                    let tempData = paymentData.filter(x => !x.service_name.startsWith('T'))
+                    clientPayments = getClientPayments(tempData)
+                    clientHours = getClientHours(tempData)
+                    superviseeClientsPayment = getSuperviseeiesClientsPayments(tempData)
+                    superviseeClientsHours = getSuperviseeiesClientsHours(tempData)
                 }
+                else if (workerProfile[0].assessmentMoneyToSupervisorOne || workerProfile[0].assessmentMoneyToSupervisorTwo) {
+                    let tempData = paymentData.filter(x => !x.service_name.startsWith('A'))
+                    clientPayments = getClientPayments(tempData)
+                    clientHours = getClientHours(tempData)
+                    superviseeClientsPayment = getSuperviseeiesClientsPayments(tempData)
+                    superviseeClientsHours = getSuperviseeiesClientsHours(tempData)
+
+                }
+                else {
+                    clientPayments = appliedPaymentsTableTemp?.L1AssociateGoHomeTotal
+                    clientHours = getClientHours(paymentData)
+                    superviseeClientsPayment = getSuperviseeiesClientsPayments(paymentData)
+                    superviseeClientsHours = getSuperviseeiesClientsHours(paymentData)
+                }
+
+            }
+
+            else if (workerProfile[0].isSuperviser) {
+
+                clientPayments = getClientPayments(paymentData)
+                clientHours = getClientHours(paymentData)
+                superviseeClientsPayment = getSuperviseeiesClientsPayments(paymentData)
+                superviseeClientsHours = getSuperviseeiesClientsHours(paymentData)
+
+            }
+            else {
+                if ((workerProfile[0].supervisorOneGetsMoney || workerProfile[0].supervisorTwoGetsMoney)
+                    && (workerProfile[0].assessmentMoneyToSupervisorOne || workerProfile[0].assessmentMoneyToSupervisorTwo)) {
+                    clientPayments = 0
+                    clientHours = 0
+                    superviseeClientsPayment = 0
+                    superviseeClientsHours = 0
+                }
+                else if (workerProfile[0].supervisorOneGetsMoney || workerProfile[0].supervisorTwoGetsMoney) {
+                    let tempData = paymentData.filter(x => !x.service_name.startsWith('T'))
+                    clientPayments = getClientPayments(tempData)
+                    clientHours = getClientHours(tempData)
+                    superviseeClientsPayment = getSuperviseeiesClientsPayments(tempData)
+                    superviseeClientsHours = getSuperviseeiesClientsHours(tempData)
+                }
+                else if (workerProfile[0].assessmentMoneyToSupervisorOne || workerProfile[0].assessmentMoneyToSupervisorTwo) {
+                    let tempData = paymentData.filter(x => !x.service_name.startsWith('A'))
+                    clientPayments = getClientPayments(tempData)
+                    clientHours = getClientHours(tempData)
+                    superviseeClientsPayment = getSuperviseeiesClientsPayments(tempData)
+                    superviseeClientsHours = getSuperviseeiesClientsHours(tempData)
+
+                }
+                else {
+                    clientPayments = getClientPayments(paymentData)
+                    clientHours = getClientHours(paymentData)
+                    superviseeClientsPayment = getSuperviseeiesClientsPayments(paymentData)
+                    superviseeClientsHours = getSuperviseeiesClientsHours(paymentData)
+                }
+
+                // if (workerProfile[0].supervisorOneGetsMoney === true || workerProfile[0].supervisorTwoGetsMoney === true) {
+                //     clientPayments = 0
+                //     clientHours = 0
+                //     superviseeClientsPayment = 0
+                //     superviseeClientsHours = 0
+                // }
+                // else {
+                //     clientPayments = getClientPayments(paymentData)
+                //     clientHours = getClientHours(paymentData)
+                //     superviseeClientsPayment = getSuperviseeiesClientsPayments(paymentData)
+                //     superviseeClientsHours = getSuperviseeiesClientsHours(paymentData)
+                // }
             }
             //**********L1 Sup PRac Table****************/
             // let superviseeWorkers = await getSuperviseeiesL1Assessments(worker)
@@ -126,6 +181,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 let totalSupPracAmount = l1SupPrac.map(x => x.amountForSuperviser).reduce((a, b) => a + b, 0)
                 let totalAppliedHrs = l1SupPrac.map(x => x.rows.map(r => r[5])).map(x => x[0]).reduce((a, b) => a + b, 0)
                 let totalSupPraHours = l1SupPrac.map(x => x.hoursForSuperviser).reduce((a, b) => a + b, 0)
+
 
                 await createPaymentTableFunc(doc, worker, non_remittableArr,
                     /*Applied PAyments Table*/appliedPaymentsTableTemp,

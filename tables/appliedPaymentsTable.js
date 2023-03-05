@@ -55,6 +55,8 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
         headers: headers,
         datas: [...paymentData],
         rows: [rows],
-        L1AssociateFee: associateFee
+        L1AssociateFee: associateFee,
+        L1AssociateGoHomeTotal: subPracTotal,
+        
     }
 }

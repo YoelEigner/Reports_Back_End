@@ -164,9 +164,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                     workerProfile[0].probono, probonoItems, isl1SupPrac, workerProfile, reportType)
 
                 let associateFeeBaseRateTablesCBT = await associateFeesTherapyCBT(worker, invoiceQtyCBT, date, workerId,
-                    await superviseeFeeCalculationTemp('CBT', respSuperviser), removedNonChargablesArr.length, isl1SupPrac)
+                    await superviseeFeeCalculationTemp('CBT', respSuperviser), removedNonChargablesArr.length, isl1SupPrac, workerProfile)
                 let associateFeeBaseRateTablesCPRI = await associateFeesTherapyCPRI(worker, invoiceQtyCPRI, date, workerId,
-                    await superviseeFeeCalculationTemp('CPRI', respSuperviser), removedNonChargablesArr.length, isl1SupPrac)
+                    await superviseeFeeCalculationTemp('CPRI', respSuperviser), removedNonChargablesArr.length, isl1SupPrac, workerProfile)
 
                 // console.log(data)
 

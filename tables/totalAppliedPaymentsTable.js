@@ -1,13 +1,11 @@
 const { formatter } = require("../pdfWriter/pdfKitFunctions")
 
-exports.totalAppliedPaymentsTable = (date, clientPayments, clientHours, superviseeClientsPayment, superviseeClientsHours, ajustmentFeesTotal, totalAppliedAmount, totalSupPracAmount, totalSupPraHours, totalAppliedHrs) => {
-    // let superviseePaymentAmt = (superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount
+exports.totalAppliedPaymentsTable = (date, clientPayments, clientHours, superviseeClientsPayment, superviseeClientsHours, ajustmentFeesTotal,
+    totalAppliedAmount, totalSupPracAmount, totalSupPraHours, totalAppliedHrs) => {
+
     let superviseeHrs = (superviseeClientsHours - totalAppliedHrs) + totalSupPraHours
-    // let total = clientPayments + superviseePaymentAmt + ajustmentFeesTotal
-    // let total = clientPayments - superviseeClientsPayment - totalAppliedAmount - totalSupPracAmount + ajustmentFeesTotal
-
-    let total = clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) + ajustmentFeesTotal 
-
+    let total = clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) + ajustmentFeesTotal
+    
     return {
         title: "Applied Payments Total",
         subtitle: "From " + date.start + " To " + date.end,
@@ -32,7 +30,7 @@ exports.totalAppliedPaymentsTable = (date, clientPayments, clientHours, supervis
 
 // exports.totalAppliedPaymentsTable = (date, clientPayments, clientHours, superviseeClientsPayment, superviseeClientsHours, ajustmentFeesTotal, totalAppliedAmount, totalSupPracAmount) => {
 //     let total = clientPayments - superviseeClientsPayment - totalAppliedAmount - totalSupPracAmount + ajustmentFeesTotal
-//     // let total = clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) + -190 
+//     // let total = clientPayments + ((superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount) + -190
 //     return {
 //         title: "Applied Payments Total",
 //         subtitle: "From " + date.start + " To " + date.end,

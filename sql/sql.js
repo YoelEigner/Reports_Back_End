@@ -43,7 +43,7 @@ exports.getInvoiceDataForWorker = async (date, worker, profileDates) => {
     try {
         await sql.connect(config);
 
-        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
+        let resp = await sql.query(`select DISTINCT *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                     >='${date.start}' and batch_date <='${date.end}'
                                     AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
@@ -73,7 +73,7 @@ exports.getSuperviseeDataBySuperviser = async (date, worker, profileDates, super
 exports.getInvoiceData = async (date, worker, profileDates) => {
     try {
         await sql.connect(config);
-        let resp = await sql.query(`(SELECT i.*, FORMAT(i.[event_service_item_total], 'C') as TOTAL, i.batch_date AS FULLDATE
+        let resp = await sql.query(`(SELECT DISTINCT i.*, FORMAT(i.[event_service_item_total], 'C') as TOTAL, i.batch_date AS FULLDATE
                                         FROM [CFIR].[dbo].[invoice_data] i
                                         JOIN profiles p ON (i.event_primary_worker_name = p.associateName OR event_invoice_details_worker_name = p.associateName)
                                         WHERE i.batch_date >= '${date.start}' AND i.batch_date <= '${date.end}'
@@ -639,7 +639,6 @@ exports.insertWorkerProfile = async (arr) => {
 exports.getPaymentData = async (worker, date, profileDates) => {
     try {
         await sql.connect(config)
-
         let resp = await sql.query(`(SELECT fv.*, DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) AS FULLDATE 
                                         FROM financial_view fv
                                         JOIN profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName)
@@ -675,7 +674,7 @@ exports.getPaymentData = async (worker, date, profileDates) => {
 }
 exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
     try {
-        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
+        let resp = await sql.query(`SELECT DISTINCT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                    AND worker like '%${tempWorker}%'
@@ -687,7 +686,7 @@ exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
 }
 exports.getPaymentDataForWorkerBySupervisor = async (tempWorker, date, profileDates, supervisor) => {
     try {
-        let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
+        let resp = await sql.query(`SELECT DISTINCT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
                                     WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
                                     AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                    AND worker like '%${tempWorker}%' AND superviser like '${supervisor}'

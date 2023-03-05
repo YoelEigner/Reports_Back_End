@@ -3,7 +3,12 @@ const { getAssociateFeeBaseRate, getProcessingFee, getPaymentTypes } = require("
 const { getRate_CBT } = require("./associateFeesTherapy")
 
 
-exports.associateFeesTherapyCBT = async (worker, count, date, workerId, superviseeFeeCalculation, removedNonChargablesArr, isl1SupPrac) => {
+exports.associateFeesTherapyCBT = async (worker, count, date, workerId, superviseeFeeCalculation, removedNonChargablesArr, isl1SupPrac, workerProfile) => {
+    let superviserGetsTherapyMoney =
+        (workerProfile[0].supervisorOneGetsMoney === true)
+        ||
+        (workerProfile[0].supervisorTwoGetsMoney === true)
+
     let rate = await getRate_CBT(removedNonChargablesArr, workerId, false)
 
     let totalWoHST = (count * rate)
@@ -12,24 +17,46 @@ exports.associateFeesTherapyCBT = async (worker, count, date, workerId, supervis
     let hstRemoved = 0
     if (isl1SupPrac) { hstRemoved = hst }
 
-    return {
-        title: "CBT Associate Fees (Therapy Only)",
-        subtitle: "From " + date.start + " To " + date.end,
-        headers: [
+    let headers = []
+    let rows = []
+    if (superviserGetsTherapyMoney && workerProfile[0].isSuperviser === false) {
+        headers = [
             { label: "Worker", renderer: null, align: "center" },
             { label: "Quantity hrs", renderer: null, align: "center" },
             { label: "Fee Base Rate", renderer: null, align: "center" },
             { label: "HST", renderer: null, align: "center" },
             { label: "Total + HST", renderer: null, align: "center" }
-        ],
+        ]
+        rows = [
+            worker,
+            0,
+            formatter.format(rate),
+            formatter.format(0),
+            formatter.format(0)
+        ]
+    }
+    else {
+        headers = [
+            { label: "Worker", renderer: null, align: "center" },
+            { label: "Quantity hrs", renderer: null, align: "center" },
+            { label: "Fee Base Rate", renderer: null, align: "center" },
+            { label: "HST", renderer: null, align: "center" },
+            { label: "Total + HST", renderer: null, align: "center" }
+        ]
+        rows = [
+            worker,
+            count,
+            formatter.format(rate),
+            formatter.format(hst),
+            formatter.format(totalWoHST + hst - hstRemoved)
+        ]
+    }
+    return {
+        title: "CBT Associate Fees (Therapy Only)",
+        subtitle: "From " + date.start + " To " + date.end,
+        headers: headers,
         rows: [
-            [
-                worker,
-                count,
-                formatter.format(rate),
-                formatter.format(hst),
-                formatter.format(totalWoHST + hst - hstRemoved)
-            ],
+            rows,
             ...superviseeFeeCalculation
         ],
         tableTotal: tableTotal
