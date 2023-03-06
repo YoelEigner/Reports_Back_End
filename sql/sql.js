@@ -211,6 +211,15 @@ exports.getphysicians = async () => {
         console.log(err); return err
     }
 }
+exports.getnewphysicians = async () => {
+    try {
+        await sql.connect(config);
+        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[rpt_worker]`)
+        return resp.recordset;
+    } catch (err) {
+        console.log(err); return err
+    }
+}
 exports.getEmailPassword = async () => {
     try {
         await sql.connect(config);

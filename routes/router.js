@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { authToken } = require("../MidWear/MidWear");
-const { getphysicians, getProvinces, getWorkerProfile, insertWorkerProfile, getVideoTech, getServiceTypes, UpdateServiceTypes, UpdateWorkerPreofile, getPaymentTypes, getAssociateTypes, getAssociateLeval, updateEmailPassword, resetAdjustmentFees, deleteprofile } = require("../sql/sql");
+const { getphysicians, getProvinces, getWorkerProfile, insertWorkerProfile, getVideoTech, getServiceTypes, UpdateServiceTypes, UpdateWorkerPreofile, getPaymentTypes, getAssociateTypes, getAssociateLeval, updateEmailPassword, resetAdjustmentFees, deleteprofile, getnewphysicians } = require("../sql/sql");
 const { getSupervisiesFunc } = require("../pdfWriter/pdfKitFunctions");
 const { GeneratePDF } = require("../pdfWriter/generatePDF");
 
@@ -12,6 +12,11 @@ router.use(authToken)
 
 router.route("/physicians", authToken).get(async (req, res) => {
     let resp = await getphysicians()
+    res.send(resp)
+});
+
+router.route("/newphysicians", authToken).get(async (req, res) => {
+    let resp = await getnewphysicians()
     res.send(resp)
 });
 
