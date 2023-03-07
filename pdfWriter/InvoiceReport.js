@@ -87,7 +87,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 //******************** REMOVING NON CHARGABLES *********************
                 //check if i need to remove the non charables in the total
-                let nonChargeableItems = reportedItemData.filter(x => non_chargeablesArr.find(n => n === x.event_service_item_name) && x.COUNT)
+                let nonChargeableItems = data.filter(x => non_chargeablesArr.find(n => n === x.event_service_item_name))
                 let nonChargableItemsNames = nonChargeableItems.map(x => x.event_service_item_name)
                 let subtotal = data.map(x => !nonChargableItemsNames.includes(x.event_service_item_name) && x.event_service_item_total).reduce((a, b) => a + b, 0)
 
