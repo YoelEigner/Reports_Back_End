@@ -592,7 +592,7 @@ exports.removeOrCPRI = (paymentData, assessments) => {
 }
 exports.calculateWorkerFeeByLevalCPRI = (wokrerLeval, data, paymentData, assessments, isSuperviser, isSupervised, IsSupervisedByNonDirector) => {
     if ((wokrerLeval === 'L1' || wokrerLeval === 'L2') && !isSupervised && !isSuperviser) {
-        
+
         return assessments ?
             data.filter(x => x.service_name.startsWith('A_f_'))
             : data.filter(x => x.service_name.startsWith('T_f_'))
@@ -740,7 +740,7 @@ exports.getSummarizedData = (data) => {
 }
 exports.getSummarizedSuperviseeData = (arr) => {
     return arr.reduce((acc, curr) => {
-        let group = acc.find(g => g.description === curr.description && g.applied_amt === curr.applied_amt);
+        let group = acc.find(g => g.description === curr.description && g.applied_amt === curr.applied_amt );
         if (!group) {
             group = {
                 superviser: curr.superviser,
@@ -756,7 +756,6 @@ exports.getSummarizedSuperviseeData = (arr) => {
         group.total += curr.applied_amt;
         return acc;
     }, []);
-
 }
 
 exports.calculateProcessingFeeTemp = (reasonTypeArray, costArray) => {

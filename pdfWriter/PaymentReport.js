@@ -165,6 +165,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let tmp = paymentData.filter(x => !nonRemittableItems.includes(x.description))
             let summarizedTransactions = Object.values(getSummarizedData(tmp)).sort()
             // console.log(Object.values(getSummarizedData(tmp)).sort())
+            // console.log(tmp)
 
             let filtered = getSummarizedSuperviseeData(tmp)
 
@@ -182,12 +183,23 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 let totalAppliedHrs = l1SupPrac.map(x => x.rows.map(r => r[5])).map(x => x[0]).reduce((a, b) => a + b, 0)
                 let totalSupPraHours = l1SupPrac.map(x => x.hoursForSuperviser).reduce((a, b) => a + b, 0)
 
+                //**********calculations for invoice report ************/
+                let tempQty = paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
 
+                netAppliedTotal = reportType === 'singlepdf' ? (clientPayments + ajustmentFeesTotal)
+                    : clientPayments + (superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount + ajustmentFeesTotal
+                duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+                qty = tempQty.length
+                //******* Qty of items that are being charged a processing fee *********/
+                proccessingFeeQty = calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.percentage !== 0).map(x => x.qty).reduce((a, b) => a + b, 0)
+                proccessingFee = calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.worker.includes(worker)).map(x => x.proccessingFee).reduce((a, b) => a + b, 0)
+
+                //*************Create table **************/
                 await createPaymentTableFunc(doc, worker, non_remittableArr,
                     /*Applied PAyments Table*/appliedPaymentsTableTemp,
                     /*Total applied payments table */ totalAppliedPaymentsTable(date, clientPayments, clientHours, superviseeClientsPayment, superviseeClientsHours, ajustmentFeesTotal, totalAppliedAmount, totalSupPracAmount, totalSupPraHours, totalAppliedHrs),
                     /*nonRemittable Tables*/nonRemittablesTable(date, non_remittableItems),
-                    /*Transactions table */transactionsTable(date, summarizedTransactions),
+                    /*Transactions table */transactionsTable(date, summarizedTransactions, proccessingFee, proccessingFeeQty),
                     /*supervisees clients payments table */ superviseeTbale,
                     /*adjustment fee table */ adjustmentFeeTableData,
                     /*show Adjustment Fee Table or not*/showAdjustmentFeeTable,
@@ -196,14 +208,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     /*tables to show from front end */tablesToShow
                 )
 
-                //**********calculations for invoice report ************/
-                let tempQty = paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
 
-                netAppliedTotal = reportType === 'singlepdf' ? (clientPayments + ajustmentFeesTotal)
-                    : clientPayments + (superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount + ajustmentFeesTotal
-                duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
-                qty = tempQty.length
-                proccessingFee = calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.worker.includes(worker)).map(x => x.proccessingFee).reduce((a, b) => a + b, 0)
             })
         } catch (error) {
             console.log(error)
