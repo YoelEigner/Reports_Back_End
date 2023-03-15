@@ -187,7 +187,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 await createInvoiceTableFunc(doc,
                 /*Main Table*/  mainTable(data, date),
                 /*probono table */probonoTable(probonoItems, date),
-                /*Reported Items Table*/await reportedItemsTable(reportedItemDataFiltered, date, subtotal, workerId, data),
+                /*Reported Items Table*/await reportedItemsTable(reportedItemDataFiltered, date),
                 /*Duplicate Items Table*/duplicateTable(duplicateItemsAndSplitFees, date),
                 /*Non Chargables Table*/nonChargeables(nonChargeableItems, date),
                 /*Adjustment fee table*/adjustmentFeeTableData,

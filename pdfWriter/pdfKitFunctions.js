@@ -102,6 +102,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
         reportedItemsTable.datas.map(x => {
             x.event_service_item_total = this.formatter.format(x.event_service_item_total)
+            x.tempItemTotal = this.formatter.format(x.tempItemTotal)
             x.totalAmt = this.formatter.format(x.totalAmt)
         }
         )
