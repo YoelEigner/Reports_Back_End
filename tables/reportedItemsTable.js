@@ -5,7 +5,6 @@ const { getRate } = require("./associateFeesTherapy");
 exports.reportedItemsTable = async (data, date) => {
     let reportedItemsCount = data.map(x => x.qty).reduce((a, b) => a + b, 0)
 
-
     data.map(x => {
         if (x.event_service_item_qty === 1) { x.tempItemTotal = x.event_service_item_total }
         else { x.tempItemTotal = x.event_service_item_total / x.event_service_item_qty }
