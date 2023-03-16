@@ -3,7 +3,6 @@ const { sortByDateAndEvent_primary_worker_name } = require('../pdfWriter/pdfKitF
 
 exports.mainTable = (data, date) => {
     sortByDateAndEvent_primary_worker_name(data)
-
     return {
         title: "Invoice",
         subtitle: "From " + date.start + " To " + date.end,
