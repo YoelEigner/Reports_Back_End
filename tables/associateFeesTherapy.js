@@ -59,6 +59,7 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
         ]
     }
     else {
+
         headers = [
             { label: "Worker", renderer: null, align: "center" },
             { label: "Quantity hrs", renderer: null, align: "center" },

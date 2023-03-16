@@ -179,9 +179,9 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
             },
         });
         //******************************CBT********************************/
-        associateFeeAssessmentTableCBT.tableTotal !== 0 && associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
+        associateFeeAssessmentTableCBT.tableTotal !== 0 || associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-        associateFeeAssessmentTableCBT.tableTotal !== 0 && associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && doc
+        associateFeeAssessmentTableCBT.tableTotal !== 0 || associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && doc
             .fontSize(20)
             .text('CBT', { align: 'center' })
             .font('Helvetica-Bold')
@@ -197,23 +197,23 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
 
         associateFeeAssessmentTableCBT.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-        associateFeeAssessmentTableCBT.tableTotal !== 0 && showassociateFeesTable && await doc.table(associateFeeAssessmentTableCBT, {
+        associateFeeAssessmentTableCBT.tableTotal !== 0 || associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && await doc.table(associateFeeAssessmentTableCBT, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
             },
         });
         //******************************CPRI********************************/
-        associateFeeAssessmentTableCPRI.tableTotal !== 0 && associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
+        associateFeeAssessmentTableCPRI.tableTotal !== 0 || associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-        associateFeeAssessmentTableCPRI.tableTotal !== 0 && associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && doc
+        associateFeeAssessmentTableCPRI.tableTotal !== 0 || associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && doc
             .fontSize(20)
             .text('CPRI', { align: 'center' })
             .font('Helvetica-Bold')
         associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && this.generateLine(doc, doc.y)
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
 
-        associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCPRI, {
+        associateFeeAssessmentTableCBT.tableTotal !== 0 || associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCPRI, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
@@ -512,9 +512,9 @@ exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments
     else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && IsSupervisedByNonDirector) {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
-            : data.filter(x => !x.service_name.startsWith('A__') || !x.service_name.startsWith('aa_')
-                && !(x.service_name.startsWith('A_c_') || !x.service_name.startsWith('T_c_')
-                    || !x.service_name.startsWith('A_f_') || !x.service_name.startsWith('T_f_')))
+            : data.filter(x => !(x.service_name.startsWith('A__') || x.service_name.startsWith('aa_')
+                || x.service_name.startsWith('A_c_') || x.service_name.startsWith('T_c_')
+                || x.service_name.startsWith('A_f_') || x.service_name.startsWith('T_f_')))
         // paymentData.filter(x => x.case_program.startsWith('A__'))
         // : paymentData.filter(x => x.case_program.startsWith('T__'))
     }
@@ -741,7 +741,7 @@ exports.getSummarizedData = (data) => {
 }
 exports.getSummarizedSuperviseeData = (arr) => {
     return arr.reduce((acc, curr) => {
-        let group = acc.find(g => g.description === curr.description && g.applied_amt === curr.applied_amt );
+        let group = acc.find(g => g.description === curr.description && g.applied_amt === curr.applied_amt);
         if (!group) {
             group = {
                 superviser: curr.superviser,
