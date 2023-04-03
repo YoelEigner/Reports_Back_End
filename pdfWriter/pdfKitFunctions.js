@@ -213,7 +213,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
         associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && this.generateLine(doc, doc.y)
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
 
-        associateFeeAssessmentTableCBT.tableTotal !== 0 && showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCPRI, {
+        associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && await doc.table(associateFeeBaseRateTablesCPRI, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);

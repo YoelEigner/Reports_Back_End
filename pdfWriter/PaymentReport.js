@@ -139,22 +139,8 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     superviseeClientsPayment = getSuperviseeiesClientsPayments(paymentData)
                     superviseeClientsHours = getSuperviseeiesClientsHours(paymentData)
                 }
-
-                // if (workerProfile[0].supervisorOneGetsMoney === true || workerProfile[0].supervisorTwoGetsMoney === true) {
-                //     clientPayments = 0
-                //     clientHours = 0
-                //     superviseeClientsPayment = 0
-                //     superviseeClientsHours = 0
-                // }
-                // else {
-                //     clientPayments = getClientPayments(paymentData)
-                //     clientHours = getClientHours(paymentData)
-                //     superviseeClientsPayment = getSuperviseeiesClientsPayments(paymentData)
-                //     superviseeClientsHours = getSuperviseeiesClientsHours(paymentData)
-                // }
             }
             //**********L1 Sup PRac Table****************/
-            // let superviseeWorkers = await getSuperviseeiesL1Assessments(worker)
             let superviseeWorkers = await getSuperviseeiesL1(worker)
             let L1Tables = superviseeWorkers.map(async (x) => await L1SupPracTable(date, paymentData, x.id, x.associateName, worker))
 
@@ -164,9 +150,6 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             //*********transaction calculation****************/
             let tmp = paymentData.filter(x => !nonRemittableItems.includes(x.description))
             let summarizedTransactions = Object.values(getSummarizedData(tmp)).sort()
-            // console.log(Object.values(getSummarizedData(tmp)).sort())
-            // console.log(tmp)
-
             let filtered = getSummarizedSuperviseeData(tmp)
 
             //****************adjustment fee table *************/
@@ -190,8 +173,9 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     : clientPayments + (superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount + ajustmentFeesTotal
                 duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 qty = tempQty.length
+
                 //******* Qty of items that are being charged a processing fee *********/
-                proccessingFeeQty = calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.percentage !== 0).map(x => x.qty).reduce((a, b) => a + b, 0)
+                let proccessingFeeQty = calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.percentage !== 0).map(x => x.qty).reduce((a, b) => a + b, 0)
                 proccessingFee = calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.worker.includes(worker)).map(x => x.proccessingFee).reduce((a, b) => a + b, 0)
 
                 //*************Create table **************/
