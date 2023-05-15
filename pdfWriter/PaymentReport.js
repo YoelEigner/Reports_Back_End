@@ -61,7 +61,6 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             //*************Applied Payments totalRemittance table ****************/
             const getClientPayments = (data) => { return (data.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
             const getClientHours = (data) => { return (data.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
-
             const getSuperviseeiesClientsPayments = (data) => { return (data.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
             const getSuperviseeiesClientsHours = (data) => { return (data.filter(x => x.worker.trim() !== worker && !nonRemittableItems.includes(x.description)).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)) }
 
@@ -140,6 +139,8 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     superviseeClientsHours = getSuperviseeiesClientsHours(paymentData)
                 }
             }
+
+            
             //**********L1 Sup PRac Table****************/
             let superviseeWorkers = await getSuperviseeiesL1(worker)
             let L1Tables = superviseeWorkers.map(async (x) => await L1SupPracTable(date, paymentData, x.id, x.associateName, worker))

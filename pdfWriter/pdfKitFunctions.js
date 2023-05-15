@@ -539,7 +539,11 @@ exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments
     else if (wokrerLeval === 'L1 (Sup Prac)') {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
-            : paymentData.filter(x => x.case_program.startsWith('T__'))
+            : data.filter(x => !x.service_name.startsWith('A__') && !x.service_name.startsWith('aa_')
+                && !(x.service_name.startsWith('A_c_') || x.service_name.startsWith('T_c_')
+                    || x.service_name.startsWith('A_f_') || x.service_name.startsWith('T_f_')))
+        // data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
+        // : paymentData.filter(x => x.case_program.startsWith('T__'))
     }
     else {
         return assessments ?
