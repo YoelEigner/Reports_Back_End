@@ -75,7 +75,7 @@ exports.getInvoiceData = async (date, worker, profileDates) => {
         await sql.connect(config);
         let resp = await sql.query(`(SELECT DISTINCT i.*, FORMAT(i.[event_service_item_total], 'C') as TOTAL, i.batch_date AS FULLDATE
                                         FROM [CFIR].[dbo].[invoice_data] i
-                                        JOIN profiles p ON (i.event_primary_worker_name = p.associateName OR event_invoice_details_worker_name = p.associateName)
+                                        JOIN profiles p ON (i.event_primary_worker_name = p.associateName OR event_invoice_details_worker_name = p.associateName) AND p.status = 1
                                         WHERE i.batch_date >= '${date.start}' AND i.batch_date <= '${date.end}'
                                         AND i.batch_date >= '${profileDates.startDate}' AND i.batch_date <= '${profileDates.endDate}'
                                         AND (i.event_primary_worker_name like '%${worker}%' OR i.event_invoice_details_worker_name like '%${worker}%')
@@ -354,8 +354,8 @@ exports.getSupervisers = async (name) => {
     try {
         await sql.connect(config)
         let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where
-                                      ((supervisor1='${name}' AND supervisorOneGetsMoney = 1)
-                                      OR (supervisor2='${name}' AND supervisorTwoGetsMoney = 1))`)
+                                      ((supervisor1='${name}' AND supervisorOneGetsMoney = 1 AND status =1)
+                                      OR (supervisor2='${name}' AND supervisorTwoGetsMoney = 1 AND status =1))`)
         // let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where
         //                             (associateType != 'L1 (Sup Prac)') AND (supervisor1='${name}' AND supervisorOneGetsMoney = 'true' OR supervisor2='${name}' AND supervisorTwoGetsMoney = 'true')`)
 
@@ -370,8 +370,8 @@ exports.getSupervisersCFIR = async (name) => {
         let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney, 
                                     assessmentMoneyToSupervisorOne, assessmentMoneyToSupervisorTwo 
                                     FROM [CFIR].[dbo].[profiles] where
-                                    (supervisor1='${name}' AND (supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1) 
-                                    OR supervisor2='${name}' AND (supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo = 1))`)
+                                    (supervisor1='${name}' AND (supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1 ) AND status =1 
+                                    OR supervisor2='${name}' AND (supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo = 1 )AND status =1)`)
         // let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where
         //                             (associateType != 'L1 (Sup Prac)') AND (supervisor1='${name}' AND supervisorOneGetsMoney = 'true' OR supervisor2='${name}' AND supervisorTwoGetsMoney = 'true')`)
 
@@ -650,7 +650,7 @@ exports.getPaymentData = async (worker, date, profileDates) => {
         await sql.connect(config)
         let resp = await sql.query(`(SELECT fv.*, DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) AS FULLDATE 
                                         FROM financial_view fv
-                                        JOIN profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName)
+                                        JOIN profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName) AND p.status = 1
                                         WHERE DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) BETWEEN '${date.start}' AND '${date.end}'
                                         AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                         AND (fv.superviser like '%${worker}%' OR worker like '%${worker}%')

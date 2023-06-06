@@ -10,7 +10,6 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
             let superviseeWorkerProfile = await getAssociateProfileById(worker.id)
-
             let superviserGetsAssessmentMoney =
                 (
                     (worker.supervisor1 === superviseeWorkerProfile[0].supervisor1 && superviseeWorkerProfile[0].assessmentMoneyToSupervisorOne)
