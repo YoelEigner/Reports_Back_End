@@ -349,6 +349,15 @@ exports.getNonChargeables = async () => {
         console.log(error)
     }
 }
+exports.getProbonoCases = async () => {
+    try {
+        await sql.connect(config)
+        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[probono]`)
+        return resp.recordset
+    } catch (error) {
+        console.log(error)
+    }
+}
 
 exports.getSupervisers = async (name) => {
     try {

@@ -1,7 +1,7 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit-table");
 const { sendEmail } = require("../email/sendEmail");
-const { getReportedItems, getNonChargeables, getPaymentTypes, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker, getAdjustmentsFeesWorkerOnlyInvoice, getAdjustmentsFeesInvoice, getProfileDates, getInvoiceDataForWorker, getInvoiceData, getSupervisersAssessments, getNonRemittables, getSupervisersCFIR } = require("../sql/sql");
+const { getReportedItems, getNonChargeables, getPaymentTypes, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker, getAdjustmentsFeesWorkerOnlyInvoice, getAdjustmentsFeesInvoice, getProfileDates, getInvoiceDataForWorker, getInvoiceData, getSupervisersAssessments, getNonRemittables, getSupervisersCFIR, getProbonoCases } = require("../sql/sql");
 const { adjustmentFeeTable } = require("../tables/adjustmentTable");
 const { associateFeesAssessments } = require("../tables/associateFeesAssessments");
 const { associateFeesTherapy, getRate } = require("../tables/associateFeesTherapy");
@@ -62,6 +62,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 reportedItemDataFiltered.map(x => {
                     x.qty = data.filter(i => i.event_service_item_name === x.event_service_item_name).length
                 })
+                let probonoCases = await getProbonoCases()
                 let non_chargeables = await getNonChargeables()
                 let non_chargeablesArr = non_chargeables.map(x => x.name)
                 let proccessingFeeTypes = await getPaymentTypes()
@@ -124,7 +125,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                     invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
                     invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
                     invoiceQtyCPRI = calculateWorkerFeeByLevalCPRI(wokrerLeval, supervisoInvoicerData, supervisoPaymenterData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.invoice_fee_qty).reduce((a, b) => a + b, 0)
-                    
+
                     if (isNaN(invoiceQty) || isNaN(invoiceQtyCBT) || isNaN(invoiceQtyCPRI)) {
                         invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                         invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, removedNonChargablesArr, paymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
@@ -135,8 +136,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
 
                 //***************probono cases ******************/
-                let probonoItems = data.filter(x => x.event_service_item_name === 'Counselling 030 + HST' || x.event_service_item_name === 'Counselling 033.90')
-
+                let probono = probonoCases.map(x => x.service_name)
+                let probonoItems = data.filter(x => probono.includes(x.event_service_item_name))
+                // let probonoItems = data.filter(x => x.event_service_item_name === 'Counselling 030 + HST' || x.event_service_item_name === 'Counselling 033.90')
                 //***************adjustment fees *****************/
                 let adjustmentFeeTableData = adjustmentFeeTable(date, reportType === 'singlepdf' ? adjustmentFees : await getAdjustmentsFeesInvoice(worker, profileDates))
                 let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
