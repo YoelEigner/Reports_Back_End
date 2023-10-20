@@ -657,10 +657,10 @@ exports.insertWorkerProfile = async (arr) => {
 exports.getPaymentData = async (worker, date, profileDates) => {
     try {
         await sql.connect(config)
-        let resp = await sql.query(`(SELECT fv.*, DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) AS FULLDATE 
+        let resp = await sql.query(`(SELECT fv.*, DATEFROMPARTS(fv.Year, fv.Month, fv.Day) AS FULLDATE 
                                         FROM financial_view fv
                                         JOIN profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName) AND p.status = 1
-                                        WHERE DATEFROMPARTS(fv.Year1, fv.Month1 , fv.Day1) BETWEEN '${date.start}' AND '${date.end}'
+                                        WHERE DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN '${date.start}' AND '${date.end}'
                                         AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                         AND (fv.superviser like '%${worker}%' OR worker like '%${worker}%')
                                         AND (
@@ -679,11 +679,6 @@ exports.getPaymentData = async (worker, date, profileDates) => {
                                             AND worker like '%${worker}%'
                                             AND description NOT IN (select name from non_remittable)
                                         )`)
-        // let resp = await sql.query(`SELECT *, DATEFROMPARTS(Year1, Month1 , Day1) AS FULLDATE from financial_view
-        //                             WHERE DATEFROMPARTS(Year1, Month1 , Day1) BETWEEN '${date.start}' AND '${date.end}'
-        //                             AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
-        //                             AND (superviser like '%${worker}%' OR worker like '%${worker}%')
-        //                             AND [rec_type] != 'return'`)
         return resp.recordset
     } catch (error) {
         console.log('getPaymentData Function', error)

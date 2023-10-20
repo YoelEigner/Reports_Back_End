@@ -515,8 +515,6 @@ exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments
             : data.filter(x => !x.service_name.startsWith('A__') && !x.service_name.startsWith('aa_')
                 && !(x.service_name.startsWith('A_c_') || x.service_name.startsWith('T_c_')
                     || x.service_name.startsWith('A_f_') || x.service_name.startsWith('T_f_')))
-        // paymentData.filter(x => x.case_program.startsWith('A__'))
-        // : paymentData.filter(x => x.case_program.startsWith('T__'))
     }
     else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && !IsSupervisedByNonDirector) {
         return assessments ?
@@ -530,18 +528,13 @@ exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments
             : data.filter(x => !x.service_name.startsWith('A__') && !x.service_name.startsWith('aa_')
                 && !(x.service_name.startsWith('A_c_') || x.service_name.startsWith('T_c_')
                     || x.service_name.startsWith('A_f_') || x.service_name.startsWith('T_f_')))
-
-        //old filter
-        // : data.filter(x => !x.service_name.startsWith('A__') || !x.service_name.startsWith('aa_')
-        //     && !(x.service_name.startsWith('A_c_') || !x.service_name.startsWith('T_c_')
-        //         || !x.service_name.startsWith('A_f_') || !x.service_name.startsWith('T_f_')))
     }
     else if (wokrerLeval === 'L1 (Sup Prac)') {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
-            : data.filter(x => !x.service_name.startsWith('A__') && !x.service_name.startsWith('aa_')
-                && !(x.service_name.startsWith('A_c_') || x.service_name.startsWith('T_c_')
-                    || x.service_name.startsWith('A_f_') || x.service_name.startsWith('T_f_')))
+            : paymentData.filter(x => !x.case_program.startsWith('A__') && !x.case_program.startsWith('aa_')
+                && !(x.case_program.startsWith('A_c_') || x.case_program.startsWith('T_c_')
+                    || x.case_program.startsWith('A_f_') || x.case_program.startsWith('T_f_')))
         // data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
         // : paymentData.filter(x => x.case_program.startsWith('T__'))
     }
