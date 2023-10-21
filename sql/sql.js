@@ -257,7 +257,6 @@ exports.resetAdjustmentFees = async () => {
 exports.getReportedItems = async (date, worker, profileDates, supervisor) => {
     try {
         await sql.connect(config);
-        console.log
         let resp = await sql.query(`select  [receipt_reason],[invoice_id], [service_name], [event_service_item_name],event_primary_worker_name, FORMAT(sum([event_service_item_total]), 'c') as TOTAL, sum([event_service_item_total]) as event_service_item_total,
                                     FORMAT([event_service_item_total], 'c') as itemTotal, COUNT([event_service_item_name]) as COUNT
                                     FROM [CFIR].[dbo].[invoice_data] 

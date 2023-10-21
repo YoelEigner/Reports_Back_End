@@ -9,7 +9,9 @@ const { superviseeClientPaymentsTable } = require("../tables/superviseeClientPay
 const { adjustmentFeeTable } = require("../tables/adjustmentTable");
 const { sendEmail } = require("../email/sendEmail");
 const { L1SupPracTable } = require("../tables/L1SupPracTable");
-const moment = require('moment')
+const moment = require('moment');
+const { paymentDuplicateAndSplitFees, paymentDuplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees");
+const { paymentDuplicateTable } = require("../tables/duplicateTable");
 
 exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, associateEmail, emailPassword, action, reportType, index) => {
     return new Promise(async (resolve, reject) => {
@@ -54,9 +56,11 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             //*********************format date *******************/
             date = { start: moment.utc(dateUnformatted.start).format('YYYY-MM-DD'), end: moment.utc(dateUnformatted.end).format('YYYY-MM-DD') }
 
+            let { duplicateItemsAndSplitFees } = paymentDuplicateAndSplitFees(paymentData)
+            let { duplicateItemsAndSplitFeesRemoved } = paymentDuplicateAndSplitFeesRemoved(paymentData)
 
             //***********************Applied Payments Table ******************/
-            let appliedPaymentsTableTemp = await appliedPaymentsTable(date, paymentData, workerId, nonRemittableItems)
+            let appliedPaymentsTableTemp = await appliedPaymentsTable(date, duplicateItemsAndSplitFeesRemoved, workerId, nonRemittableItems)
 
             //*************Applied Payments totalRemittance table ****************/
             const getClientPayments = (data) => { return (data.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description)).map(x => x.applied_amt).reduce((a, b) => a + b, 0)) }
@@ -78,14 +82,14 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     superviseeClientsHours = 0
                 }
                 else if (workerProfile[0].supervisorOneGetsMoney || workerProfile[0].supervisorTwoGetsMoney) {
-                    let tempData = paymentData.filter(x => !x.service_name.startsWith('T'))
+                    let tempData = duplicateItemsAndSplitFeesRemoved.filter(x => !x.service_name.startsWith('T'))
                     clientPayments = getClientPayments(tempData)
                     clientHours = getClientHours(tempData)
                     superviseeClientsPayment = getSuperviseeiesClientsPayments(tempData)
                     superviseeClientsHours = getSuperviseeiesClientsHours(tempData)
                 }
                 else if (workerProfile[0].assessmentMoneyToSupervisorOne || workerProfile[0].assessmentMoneyToSupervisorTwo) {
-                    let tempData = paymentData.filter(x => !x.service_name.startsWith('A'))
+                    let tempData = duplicateItemsAndSplitFeesRemoved.filter(x => !x.service_name.startsWith('A'))
                     clientPayments = getClientPayments(tempData)
                     clientHours = getClientHours(tempData)
                     superviseeClientsPayment = getSuperviseeiesClientsPayments(tempData)
@@ -94,19 +98,19 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 }
                 else {
                     clientPayments = appliedPaymentsTableTemp?.L1AssociateGoHomeTotal
-                    clientHours = getClientHours(paymentData)
-                    superviseeClientsPayment = getSuperviseeiesClientsPayments(paymentData)
-                    superviseeClientsHours = getSuperviseeiesClientsHours(paymentData)
+                    clientHours = getClientHours(duplicateItemsAndSplitFeesRemoved)
+                    superviseeClientsPayment = getSuperviseeiesClientsPayments(duplicateItemsAndSplitFeesRemoved)
+                    superviseeClientsHours = getSuperviseeiesClientsHours(duplicateItemsAndSplitFeesRemoved)
                 }
 
             }
 
             else if (workerProfile[0].isSuperviser) {
 
-                clientPayments = getClientPayments(paymentData)
-                clientHours = getClientHours(paymentData)
-                superviseeClientsPayment = getSuperviseeiesClientsPayments(paymentData)
-                superviseeClientsHours = getSuperviseeiesClientsHours(paymentData)
+                clientPayments = getClientPayments(duplicateItemsAndSplitFeesRemoved)
+                clientHours = getClientHours(duplicateItemsAndSplitFeesRemoved)
+                superviseeClientsPayment = getSuperviseeiesClientsPayments(duplicateItemsAndSplitFeesRemoved)
+                superviseeClientsHours = getSuperviseeiesClientsHours(duplicateItemsAndSplitFeesRemoved)
 
             }
             else {
@@ -118,14 +122,14 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     superviseeClientsHours = 0
                 }
                 else if (workerProfile[0].supervisorOneGetsMoney || workerProfile[0].supervisorTwoGetsMoney) {
-                    let tempData = paymentData.filter(x => !x.service_name.startsWith('T'))
+                    let tempData = duplicateItemsAndSplitFeesRemoved.filter(x => !x.service_name.startsWith('T'))
                     clientPayments = getClientPayments(tempData)
                     clientHours = getClientHours(tempData)
                     superviseeClientsPayment = getSuperviseeiesClientsPayments(tempData)
                     superviseeClientsHours = getSuperviseeiesClientsHours(tempData)
                 }
                 else if (workerProfile[0].assessmentMoneyToSupervisorOne || workerProfile[0].assessmentMoneyToSupervisorTwo) {
-                    let tempData = paymentData.filter(x => !x.service_name.startsWith('A'))
+                    let tempData = duplicateItemsAndSplitFeesRemoved.filter(x => !x.service_name.startsWith('A'))
                     clientPayments = getClientPayments(tempData)
                     clientHours = getClientHours(tempData)
                     superviseeClientsPayment = getSuperviseeiesClientsPayments(tempData)
@@ -133,23 +137,23 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
                 }
                 else {
-                    clientPayments = getClientPayments(paymentData)
-                    clientHours = getClientHours(paymentData)
-                    superviseeClientsPayment = getSuperviseeiesClientsPayments(paymentData)
-                    superviseeClientsHours = getSuperviseeiesClientsHours(paymentData)
+                    clientPayments = getClientPayments(duplicateItemsAndSplitFeesRemoved)
+                    clientHours = getClientHours(duplicateItemsAndSplitFeesRemoved)
+                    superviseeClientsPayment = getSuperviseeiesClientsPayments(duplicateItemsAndSplitFeesRemoved)
+                    superviseeClientsHours = getSuperviseeiesClientsHours(duplicateItemsAndSplitFeesRemoved)
                 }
             }
 
-            
+
             //**********L1 Sup PRac Table****************/
             let superviseeWorkers = await getSuperviseeiesL1(worker)
-            let L1Tables = superviseeWorkers.map(async (x) => await L1SupPracTable(date, paymentData, x.id, x.associateName, worker))
+            let L1Tables = superviseeWorkers.map(async (x) => await L1SupPracTable(date, duplicateItemsAndSplitFeesRemoved, x.id, x.associateName, worker))
 
             //**********Non remittable calculation**************/
-            let non_remittableItems = paymentData.filter(x => non_remittableArr.find(n => n.name === x.description))
+            let non_remittableItems = duplicateItemsAndSplitFeesRemoved.filter(x => non_remittableArr.find(n => n.name === x.description))
 
             //*********transaction calculation****************/
-            let tmp = paymentData.filter(x => !nonRemittableItems.includes(x.description))
+            let tmp = duplicateItemsAndSplitFeesRemoved.filter(x => !nonRemittableItems.includes(x.description))
             let summarizedTransactions = Object.values(getSummarizedData(tmp)).sort()
             let filtered = getSummarizedSuperviseeData(tmp)
 
@@ -168,11 +172,11 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 let totalSupPraHours = l1SupPrac.map(x => x.hoursForSuperviser).reduce((a, b) => a + b, 0)
 
                 //**********calculations for invoice report ************/
-                let tempQty = paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
+                let tempQty = duplicateItemsAndSplitFeesRemoved.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
 
                 netAppliedTotal = reportType === 'singlepdf' ? (clientPayments + ajustmentFeesTotal)
                     : clientPayments + (superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount + ajustmentFeesTotal
-                duration_hrs = paymentData.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
+                duration_hrs = duplicateItemsAndSplitFeesRemoved.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
                 qty = tempQty.length
 
                 //******* Qty of items that are being charged a processing fee *********/
@@ -190,7 +194,8 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     /*show Adjustment Fee Table or not*/showAdjustmentFeeTable,
                     /*L1 Sup PRac tables*/l1SupPrac,
                     /*type of report*/reportType,
-                    /*tables to show from front end */tablesToShow
+                    /*tables to show from front end */tablesToShow,
+                    /*duplicates and split fees tbale */ paymentDuplicateTable(duplicateItemsAndSplitFees, date),
                 )
 
 

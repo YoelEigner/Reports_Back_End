@@ -266,7 +266,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
 }
 
 exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, appliedPaymentTable, totalAppliedPaymentsTable, nonRemittablesTable, transactionsTable, superviseeClientPaymentsTable,
-    adjustmentFeeTable, showAdjustmentFeeTable, l1SupPrac, reportType, tablesToShow) => {
+    adjustmentFeeTable, showAdjustmentFeeTable, l1SupPrac, reportType, tablesToShow, duplicateTable) => {
     let nonRemittables = non_remittableItems.map(x => x.name)
     try {
         this.generatePaymentHeader(doc, worker)
@@ -282,6 +282,18 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
                 nonRemittables.includes(row.case_program) && appliedPaymentTable.datas.length !== 0 && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
+
+        let showduplicateTable = tablesToShow.map(x => x.duplicateTable)[0]
+        showduplicateTable && doc.moveDown();
+        if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
+        showduplicateTable && await doc.table(duplicateTable, {
+            prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+                virticalLines(doc, rectCell, indexColumn)
+                doc.font("Helvetica").fontSize(8);
+                row && duplicateTable.datas.length !== 0 && doc.addBackground(rectRow, 'pink', 0.15);
+            },
+        });
+
         let showNonRemittablesTable = tablesToShow.map(x => x.nonRemittablesTable)[0]
         showNonRemittablesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
@@ -400,9 +412,13 @@ exports.sortByName = (arr) => {
         function (a, b) { return a.worker.localeCompare(b.worker); }
     );
 }
-exports.sortByIndividualName = (arr) => {
+exports.sortByIndividualName = (arr, reportType) => {
     return arr.sort(
-        function (a, b) { return a.individual_name.localeCompare(b.individual_name); }
+        function (a, b) {
+            return reportType === 'payment'
+                ? a.service_file_presenting_individual_name.localeCompare(b.service_file_presenting_individual_name)
+                : a.individual_name.localeCompare(b.individual_name);
+        }
     );
 }
 
@@ -634,6 +650,17 @@ exports.getProfileDateFormatted = async (workerId) => {
     profileDates.endDate = moment.utc(profileDates.endDate).format('YYYY-MM-DD')
     return profileDates
 }
+
+//******************* split fee criteria *******************
+//event_primary_worker_name
+//case_file_name
+//event_service_item_name
+//event_service_item_qty
+//event_service_item_id
+//service_name
+//case_file_id
+//event_id
+
 exports.findDuplicates = (arr) => {
     let duplicates = [];
     let unique = arr.filter(function (item) {
@@ -653,16 +680,6 @@ exports.findDuplicates = (arr) => {
     });
     return duplicates;
 }
-
-//******************* split fee criteria *******************
-//event_primary_worker_name
-//case_file_name
-//event_service_item_name
-//event_service_item_qty
-//event_service_item_id
-//service_name
-//case_file_id
-//event_id
 
 exports.findSplitFees = (arr) => {
     let splitFees = [];
@@ -686,7 +703,79 @@ exports.findSplitFees = (arr) => {
         }
     }
     return splitFees;
+}
 
+exports.findPaymentDuplicates = (arr) => {
+    let duplicates = [];
+    let unique = arr.filter(function (item) {
+        let duplicate = arr.filter(function (item2) {
+            return item.service_file_presenting_individual_name === item2.service_file_presenting_individual_name &&
+                item.act_date === item2.act_date &&
+                item.event_id === item2.event_id &&
+                item.inv_no === item2.inv_no &&
+                item.description === item2.description;
+        });
+        if (duplicate.length > 1) {
+            duplicates.push(item);
+            return false;
+        }
+        return true;
+    });
+    return duplicates;
+}
+
+exports.findPaymentSplitFees = (arr) => {
+    let splitFees = [];
+    for (let i = 0; i < arr.length; i++) {
+        for (let j = i + 1; j < arr.length; j++) {
+            if (arr[i].worker === arr[j].worker &&
+                arr[i].description === arr[j].description &&
+                arr[i].duration_hrs === arr[j].duration_hrs &&
+                arr[i].service_name === arr[j].service_name &&
+                arr[i].event_id === arr[j].event_id &&
+                arr[i]?.inv_no !== arr[j]?.inv_no &&
+                arr[i].event_id === arr[j].event_id) {
+                if (!splitFees.includes(arr[i])) {
+                    splitFees.push(arr[i]);
+                }
+                if (!splitFees.includes(arr[j])) {
+                    splitFees.push(arr[j]);
+                }
+            }
+        }
+    }
+    return splitFees;
+}
+
+exports.removePaymentDuplicates = (arr) => {
+    let seen = new Set();
+    let unique = arr.filter(function (item) {
+        let key = item.service_file_presenting_individual_name + item.act_date + item.event_id + item.inv_no + item.description;
+        if (!seen.has(key)) {
+            seen.add(key);
+            return true;
+        }
+        return false;
+    });
+    return unique;
+}
+
+exports.removePaymentSplitFees = (arr) => {
+    for (let i = 0; i < arr.length; i++) {
+        for (let j = i + 1; j < arr.length; j++) {
+            if (arr[i]?.worker === arr[j]?.worker &&
+                arr[i]?.description === arr[j]?.description &&
+                arr[i]?.duration_hrs === arr[j]?.duration_hrs &&
+                arr[i]?.case_file_id === arr[j]?.case_file_id &&
+                arr[i]?.inv_no !== arr[j]?.inv_no &&
+                arr[i]?.event_id === arr[j]?.event_id) {
+                // arr.splice(j, 1);
+                arr.splice(i, 1);
+                i--;
+            }
+        }
+    }
+    return arr;
 }
 
 exports.removeSplitFees = (arr) => {
