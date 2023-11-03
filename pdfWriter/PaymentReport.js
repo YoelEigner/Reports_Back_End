@@ -196,6 +196,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     /*type of report*/reportType,
                     /*tables to show from front end */tablesToShow,
                     /*duplicates and split fees tbale */ paymentDuplicateTable(duplicateItemsAndSplitFees, date),
+                    /*show/hide paymentDuplicateTable */ workerProfile[0].associateType === 'L1 (Sup Prac)' ? false : true,
                 )
 
 

@@ -266,7 +266,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
 }
 
 exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, appliedPaymentTable, totalAppliedPaymentsTable, nonRemittablesTable, transactionsTable, superviseeClientPaymentsTable,
-    adjustmentFeeTable, showAdjustmentFeeTable, l1SupPrac, reportType, tablesToShow, duplicateTable) => {
+    adjustmentFeeTable, showAdjustmentFeeTable, l1SupPrac, reportType, tablesToShow, duplicateTable, hideDuplicateTable) => {
     let nonRemittables = non_remittableItems.map(x => x.name)
     try {
         this.generatePaymentHeader(doc, worker)
@@ -283,7 +283,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
             },
         });
 
-        let showduplicateTable = tablesToShow.map(x => x.duplicateTable)[0]
+        let showduplicateTable = tablesToShow.map(x => x.duplicateTable)[0] && !hideDuplicateTable
         showduplicateTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
         showduplicateTable && await doc.table(duplicateTable, {
