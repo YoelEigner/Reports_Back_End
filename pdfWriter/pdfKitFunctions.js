@@ -551,8 +551,6 @@ exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments
             : paymentData.filter(x => !x.case_program.startsWith('A__') && !x.case_program.startsWith('aa_')
                 && !(x.case_program.startsWith('A_c_') || x.case_program.startsWith('T_c_')
                     || x.case_program.startsWith('A_f_') || x.case_program.startsWith('T_f_')))
-        // data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
-        // : paymentData.filter(x => x.case_program.startsWith('T__'))
     }
     else {
         return assessments ?
@@ -663,8 +661,8 @@ exports.getProfileDateFormatted = async (workerId) => {
 
 exports.findDuplicates = (arr) => {
     let duplicates = [];
-    let unique = arr.filter(function (item) {
-        let duplicate = arr.filter(function (item2) {
+    let unique = arr?.filter(function (item) {
+        let duplicate = arr?.filter(function (item2) {
             return item.individual_name === item2.individual_name &&
                 item.case_file_name === item2.case_file_name &&
                 item.batch_date === item2.batch_date &&
@@ -707,8 +705,8 @@ exports.findSplitFees = (arr) => {
 
 exports.findPaymentDuplicates = (arr) => {
     let duplicates = [];
-    let unique = arr.filter(function (item) {
-        let duplicate = arr.filter(function (item2) {
+    let unique = arr?.filter(function (item) {
+        let duplicate = arr?.filter(function (item2) {
             return item.service_file_presenting_individual_name === item2.service_file_presenting_individual_name &&
                 item.act_date === item2.act_date &&
                 item.event_id === item2.event_id &&
@@ -749,7 +747,7 @@ exports.findPaymentSplitFees = (arr) => {
 
 exports.removePaymentDuplicates = (arr) => {
     let seen = new Set();
-    let unique = arr.filter(function (item) {
+    let unique = arr?.filter(function (item) {
         let key = item.service_file_presenting_individual_name + item.act_date + item.event_id + item.inv_no + item.description;
         if (!seen.has(key)) {
             seen.add(key);
@@ -800,7 +798,7 @@ exports.removeSplitFees = (arr) => {
 
 exports.removeDuplicates = (arr) => {
     let seen = new Set();
-    let unique = arr.filter(function (item) {
+    let unique = arr?.filter(function (item) {
         let key = item.individual_name + item.case_file_name + item.batch_date + item.event_id + item.invoice_id + item.event_service_item_name;
         if (!seen.has(key)) {
             seen.add(key);

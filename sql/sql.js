@@ -11,7 +11,8 @@ const config = {
     port: 1433,
     options: {
         trustedConnection: false,
-        trustServerCertificate: true
+        trustServerCertificate: true,
+        requestTimeout: 300000
     }
 };
 

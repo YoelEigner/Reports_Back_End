@@ -103,7 +103,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let invoiceQty = 0
                 let invoiceQtyCBT = 0
                 let invoiceQtyCPRI = 0
-
+                
                 if (reportType === 'singlepdf') {
                     invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, removedNonChargablesArrPayment, false, isSuperviser, isSupervised, IsSupervisedByNonDirector)
                         .map(x => x.invoice_fee_qty || x.duration_hrs).reduce((a, b) => a + b, 0)
@@ -146,6 +146,9 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 }
 
+                if (workerProfile[0].associateType === 'L1 (Sup Prac)') {
+                    invoiceQty = invoiceQty - duplicateItemsAndSplitFees.length
+                }
 
                 //***************probono cases ******************/
                 let probono = probonoCases.map(x => x.service_name)
@@ -178,7 +181,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
                     Number(finalAdjustmentFee), await superviseeFeeCalculationTemp('CFIR', respSupervisersCFIR), chargeVideoFee, removedNonChargablesArr.length,
-                    workerProfile[0].probono, probonoItems, isl1SupPrac, workerProfile, reportType)
+                    workerProfile[0].probono, probonoItems, isl1SupPrac, workerProfile, reportType, duplicateItemsAndSplitFees)
 
                 let associateFeeBaseRateTablesCBT = await associateFeesTherapyCBT(worker, invoiceQtyCBT, date, workerId,
                     await superviseeFeeCalculationTemp('CBT', respSuperviser), removedNonChargablesArr.length, isl1SupPrac, workerProfile)
@@ -232,6 +235,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
         } catch (err) {
             console.log(err)
             reject(err)
+            throw err
         }
     });
 }
