@@ -7,7 +7,7 @@ const { generateCacheKey, isTimeoutError, delay } = require("./cacheHandler");
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
-const CACHE_TTL_SECONDS = 120;
+const CACHE_TTL_SECONDS = 60;
 
 const config = {
     user: "Node",
