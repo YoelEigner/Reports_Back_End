@@ -1,5 +1,4 @@
 var firstBy = require('thenby');
-const { getSuperviseeies, getProfileDates } = require("../sql/sql");
 const moment = require('moment')
 
 
@@ -642,10 +641,10 @@ exports.calculateWorkerFeeByLevalCPRI = (wokrerLeval, data, paymentData, assessm
     }
 }
 
-exports.getProfileDateFormatted = async (workerId) => {
-    let profileDates = await getProfileDates(workerId)
-    profileDates.startDate = moment.utc(profileDates.startDate).format('YYYY-MM-DD')
-    profileDates.endDate = moment.utc(profileDates.endDate).format('YYYY-MM-DD')
+exports.getProfileDateFormatted = (startDate, endDate) => {
+    let profileDates = {}
+    profileDates.startDate = moment.utc(startDate).format('YYYY-MM-DD')
+    profileDates.endDate = moment.utc(endDate).format('YYYY-MM-DD')
     return profileDates
 }
 

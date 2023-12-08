@@ -1,11 +1,10 @@
 var CryptoJS = require("crypto-js");
 const fs = require('fs');
-const { createZip } = require('../zipFiles/createZip');
 const { createInvoiceTable } = require('./InvoiceReport');
 const archiver = require("archiver");
 const { getEmailPassword } = require("../sql/sql");
 const { createPaymentReportTable } = require("./PaymentReport");
-const { InvoicePromise, InvoicePromiseGenerator } = require("./invoiceReportGenerator");
+const { InvoicePromiseGenerator } = require("./invoiceReportGenerator");
 const { paymentReportGenerator } = require("./paymentReportGenerator");
 
 

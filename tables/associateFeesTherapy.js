@@ -1,6 +1,5 @@
-const { map } = require("mssql")
-const { formatter, isSuperviserOne, removeNaN } = require("../pdfWriter/pdfKitFunctions")
-const { getAssociateFeeBaseRate, getProcessingFee, getPaymentTypes } = require("../sql/sql")
+const { formatter } = require("../pdfWriter/pdfKitFunctions")
+const { getAssociateFeeBaseRate } = require("../sql/sql")
 
 const isNum = (num) => {
     if (isNaN(num)) { return 0 }

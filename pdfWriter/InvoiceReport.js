@@ -1,7 +1,7 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit-table");
 const { sendEmail } = require("../email/sendEmail");
-const { getReportedItems, getNonChargeables, getPaymentTypes, getTablesToShow, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker, getAdjustmentsFeesWorkerOnlyInvoice, getAdjustmentsFeesInvoice, getProfileDates, getInvoiceDataForWorker, getInvoiceData, getSupervisersAssessments, getNonRemittables, getSupervisersCFIR, getProbonoCases } = require("../sql/sql");
+const { getReportedItems, getNonChargeables, getPaymentTypes, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker, getAdjustmentsFeesWorkerOnlyInvoice, getAdjustmentsFeesInvoice, getProfileDates, getInvoiceDataForWorker, getInvoiceData, getSupervisersAssessments, getNonRemittables, getSupervisersCFIR, getProbonoCases } = require("../sql/sql");
 const { adjustmentFeeTable } = require("../tables/adjustmentTable");
 const { associateFeesAssessments } = require("../tables/associateFeesAssessments");
 const { associateFeesTherapy, getRate } = require("../tables/associateFeesTherapy");
@@ -14,7 +14,7 @@ const { reportedItemsTable } = require("../tables/reportedItemsTable");
 const { getSupervisiesFunc } = require("../tables/supervisiesTable");
 const { totalRemittance } = require("../tables/totalRemittance");
 const { calculateSuperviseeFeeFunc } = require("./calculateSuperviseeFee");
-const { createInvoiceTableFunc, sortByDate, removeNullStr, getUniqueItemsMultiKey, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI } = require("./pdfKitFunctions");
+const { createInvoiceTableFunc, sortByDate, removeNullStr, getUniqueItemsMultiKey, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI, getProfileDateFormatted } = require("./pdfKitFunctions");
 const { duplicateAndSplitFees, duplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees");
 const moment = require('moment');
 const { calcSuperviseeAssessmentFeeFunc } = require("./calcSuperviseeAssessmentFeeFunc");
@@ -40,10 +40,8 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 }
             });
             try {
-                let profileDates = await getProfileDates(workerId)
-                profileDates.startDate = moment.utc(profileDates.startDate).format('YYYY-MM-DD')
-                profileDates.endDate = moment.utc(profileDates.endDate).format('YYYY-MM-DD')
-
+                let workerProfile = await getAssociateProfileById(workerId)
+                let profileDates = getProfileDateFormatted(workerProfile[0].startDate, workerProfile[0].endDate)
                 let data = reportType === 'singlepdf' ?
                     removeNullStr(await getInvoiceDataForWorker(dateUnformatted, worker, profileDates), '-')
                     :
@@ -56,7 +54,6 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 sortByDate(data)
                 let adjustmentFees = await getAdjustmentsFeesWorkerOnlyInvoice(workerId, profileDates)
-                let reportedItemData = removeNullStr(await getReportedItems(dateUnformatted, worker, profileDates), '-')
 
                 let reportedItemDataFiltered = getUniqueItemsMultiKey(data, ['event_service_item_name'])
                 reportedItemDataFiltered.map(x => {
@@ -66,7 +63,6 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let non_chargeables = await getNonChargeables()
                 let non_chargeablesArr = non_chargeables.map(x => x.name)
                 let proccessingFeeTypes = await getPaymentTypes()
-                let workerProfile = await getAssociateProfileById(workerId, profileDates)
                 let respSuperviser = await getSupervisers(worker, profileDates)
                 let respSupervisersCFIR = await getSupervisersCFIR(worker, profileDates)
                 let respSuperviserAssessments = await getSupervisersAssessments(worker, profileDates)
@@ -103,7 +99,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let invoiceQty = 0
                 let invoiceQtyCBT = 0
                 let invoiceQtyCPRI = 0
-                
+
                 if (reportType === 'singlepdf') {
                     invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, removedNonChargablesArrPayment, false, isSuperviser, isSupervised, IsSupervisedByNonDirector)
                         .map(x => x.invoice_fee_qty || x.duration_hrs).reduce((a, b) => a + b, 0)
@@ -157,7 +153,18 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 //***************adjustment fees *****************/
                 let adjustmentFeeTableData = adjustmentFeeTable(date, reportType === 'singlepdf' ? adjustmentFees : await getAdjustmentsFeesInvoice(worker, profileDates))
                 let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
-                let tablesToShow = await getTablesToShow(workerId)
+                let tablesToShow = workerProfile.map((x) => {
+                    return {
+                        duplicateTable: x.duplicateTable,
+                        nonChargeablesTable: x.nonChargeablesTable,
+                        associateFeesTable: x.associateFeesTable,
+                        totalRemittenceTable: x.totalRemittenceTable,
+                        nonRemittablesTable: x.nonRemittablesTable,
+                        transactionsTable: x.transactionsTable,
+                        superviseeTotalTabel: x.superviseeTotalTabel,
+                        appliedPaymentsTotalTable: x.appliedPaymentsTotalTable,
+                    }
+                })
                 let showAdjustmentFeeTable = !adjustmentFeeTableData.datas.every(x => x.name === "-")
 
                 //***********calculate supervisee fee********************/
@@ -235,7 +242,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
         } catch (err) {
             console.log(err)
             reject(err)
-            throw err
+            throw new Error(err);
         }
     });
 }

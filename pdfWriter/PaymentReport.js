@@ -1,7 +1,7 @@
 const { createPaymentTableFunc, getProfileDateFormatted, getSummarizedData, calculateProcessingFeeTemp, getSummarizedSuperviseeData } = require("./pdfKitFunctions")
 const PDFDocument = require("pdfkit-table");
 const { nonRemittablesTable } = require("../tables/nonRemittablesTable");
-const { getPaymentData, getNonRemittables, getAssociateProfileById, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes, getAdjustmentsFees, getAdjustmentsFeesWorkerOnly, getTablesToShow, getSuperviseeiesL1Assessments } = require("../sql/sql");
+const { getPaymentData, getNonRemittables, getAssociateProfileById, getSuperviseeiesL1, getPaymentDataForWorker, getPaymentTypes, getAdjustmentsFees, getAdjustmentsFeesWorkerOnly } = require("../sql/sql");
 const { totalAppliedPaymentsTable } = require("../tables/totalAppliedPaymentsTable");
 const { appliedPaymentsTable } = require("../tables/appliedPaymentsTable");
 const { transactionsTable } = require("../tables/transactionsTable");
@@ -39,19 +39,29 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
 
 
         try {
-            let profileDates = await getProfileDateFormatted(workerId)
+            let workerProfile = await getAssociateProfileById(workerId)
+            let profileDates = getProfileDateFormatted(workerProfile[0].startDate, workerProfile[0].endDate)
             let paymentData = reportType === 'singlepdf' ?
                 await getPaymentDataForWorker(worker, dateUnformatted, profileDates)
                 :
                 await getPaymentData(worker, dateUnformatted, profileDates)
 
-
-            let workerProfile = await getAssociateProfileById(workerId)
             let proccessingFeeTypes = await getPaymentTypes()
             let non_remittableArr = await getNonRemittables()
             let nonRemittableItems = non_remittableArr.map(x => x.name)
-            let tablesToShow = await getTablesToShow(workerId)
             let adjustmentFees = reportType === 'singlepdf' ? await getAdjustmentsFeesWorkerOnly(worker) : await getAdjustmentsFees(worker)
+            let tablesToShow = workerProfile.map((x) => {
+                return {
+                    duplicateTable: x.duplicateTable,
+                    nonChargeablesTable: x.nonChargeablesTable,
+                    associateFeesTable: x.associateFeesTable,
+                    totalRemittenceTable: x.totalRemittenceTable,
+                    nonRemittablesTable: x.nonRemittablesTable,
+                    transactionsTable: x.transactionsTable,
+                    superviseeTotalTabel: x.superviseeTotalTabel,
+                    appliedPaymentsTotalTable: x.appliedPaymentsTotalTable,
+                }
+            })
 
             //*********************format date *******************/
             date = { start: moment.utc(dateUnformatted.start).format('YYYY-MM-DD'), end: moment.utc(dateUnformatted.end).format('YYYY-MM-DD') }
@@ -234,7 +244,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             })
         } catch (error) {
             console.log(error)
-            throw error
+            throw new Error(error);
         }
     })
 

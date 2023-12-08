@@ -47,7 +47,7 @@ exports.createZip = (res, arr) => {
         }
     });
     archive.on('error', function (err) {
-        throw err;
+        throw new Error(err);
     });
 
 }
@@ -57,11 +57,11 @@ const emptyFolder = async () => {
         const directory = path.join(__dirname, '../temp')
 
         fs.readdir(directory, (err, files) => {
-            if (err) throw err;
+            if (err) throw new Error(err);
 
             for (const file of files) {
                 fs.unlink(path.join(directory, file), err => {
-                    if (err){
+                    if (err) {
                         console.log(err)
                     };
                 });

@@ -1,5 +1,4 @@
-const { formatter, isSuperviserOne, removeNaN } = require("../pdfWriter/pdfKitFunctions")
-const { getAssociateFeeBaseRate, getProcessingFee, getPaymentTypes } = require("../sql/sql")
+const { formatter } = require("../pdfWriter/pdfKitFunctions")
 const { getRate_CBT } = require("./associateFeesTherapy")
 
 
