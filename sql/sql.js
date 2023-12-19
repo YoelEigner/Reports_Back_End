@@ -106,16 +106,27 @@ exports.getInvoiceData = async (date, worker, profileDates, retryCount = 0) => {
         return cachedData;
     }
     try {
-        const result = await sql.query`
-        EXEC GetInvoiceData
-        @startDate = ${date.start},
-        @endDate = ${date.end},
-        @profileStartDate = ${profileDates.startDate},
-        @profileEndDate = ${profileDates.endDate},
-        @workerName = ${worker}
-        `;
-        sqlCache.set(cacheKey, result.recordset, CACHE_TTL_SECONDS);
-        return result.recordset;
+        await sql.connect(config);
+        let resp = await sql.query(`(SELECT DISTINCT i.*, FORMAT(i.[event_service_item_total], 'C') as TOTAL, i.batch_date AS FULLDATE
+                                        FROM [CFIR].[dbo].[invoice_data] i
+                                        JOIN profiles p ON (i.event_primary_worker_name = p.associateName OR event_invoice_details_worker_name = p.associateName) AND p.status = 1
+                                        WHERE i.batch_date >= '${date.start}' AND i.batch_date <= '${date.end}'
+                                        AND i.batch_date >= '${profileDates.startDate}' AND i.batch_date <= '${profileDates.endDate}'
+                                        AND (i.event_primary_worker_name like '%${worker}%' OR i.event_invoice_details_worker_name like '%${worker}%')
+                                        AND ((p.supervisor1 like '%${worker}%' AND p.supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1) 
+                                        OR (p.supervisor2 like '%${worker}%' AND p.supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo = 1))
+                                        AND event_service_item_name NOT IN (SELECT name FROM non_remittable))
+                                        UNION
+                                        (
+                                        select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
+                                                                            FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
+                                                                            >='${date.start}' and batch_date <='${date.end}'
+                                                                            AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
+                                                                            AND [event_primary_worker_name] like '%${worker}%'
+                                                                            AND event_service_item_name NOT IN (SELECT name FROM non_remittable))`
+        )
+        sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
+        return resp.recordset;
     } catch (err) {
         if (retryCount < MAX_RETRIES && isTimeoutError(error)) {
             await delay(RETRY_DELAY);
@@ -791,15 +802,31 @@ exports.getPaymentData = async (worker, date, profileDates, retryCount = 0) => {
     }
 
     try {
-        const result = await sql.query`EXEC GetFinancialData 
-        @StartDate = ${date.start}, 
-        @EndDate = ${date.end}, 
-        @ProfileStartDate = ${profileDates.startDate}, 
-        @ProfileEndDate = ${profileDates.endDate}, 
-        @WorkerName = ${worker}`;
-
-        sqlCache.set(cacheKey, result.recordset, CACHE_TTL_SECONDS);
-        return result.recordset;
+        await sql.connect(config)
+        let resp = await sql.query(`(SELECT fv.*, DATEFROMPARTS(fv.Year, fv.Month, fv.Day) AS FULLDATE 
+                                        FROM financial_view fv
+                                        JOIN profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName) AND p.status = 1
+                                        WHERE DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN '${date.start}' AND '${date.end}'
+                                        AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                                        AND (fv.superviser like '%${worker}%' OR worker like '%${worker}%')
+                                        AND (
+                                            (p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
+                                            (p.supervisor2 = fv.superviser AND p.supervisorTwoGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
+                                            (p.assessmentMoneyToSupervisorOne = 1 AND p.supervisor1 = fv.superviser AND LEFT(fv.case_program, 1) = 'A') OR
+                                            (p.assessmentMoneyToSupervisorTwo = 1 AND p.supervisor2 = fv.superviser AND LEFT(fv.case_program, 1) = 'A') 
+                                        )
+                                        
+                                        AND description NOT IN (select name from non_remittable))
+                                        UNION
+                                        (
+                                            SELECT *, DATEFROMPARTS(Year, Month , Day) AS FULLDATE from financial_view
+                                            WHERE DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'
+                                            AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                                            AND worker like '%${worker}%'
+                                            AND description NOT IN (select name from non_remittable)
+                                        )`)
+        sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
+        return resp.recordset;
     } catch (error) {
         if (retryCount < MAX_RETRIES && isTimeoutError(error)) {
             await delay(RETRY_DELAY);
@@ -817,16 +844,13 @@ exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
     }
 
     try {
-        await sql.connect(config);
-
-        const result = await sql.query`EXEC GetDistinctFinancialData 
-            @StartDate = ${date.start}, 
-            @EndDate = ${date.end}, 
-            @ProfileStartDate = ${profileDates.startDate}, 
-            @ProfileEndDate = ${profileDates.endDate}, 
-            @WorkerName = ${tempWorker}`;
-        sqlCache.set(cacheKey, result.recordset, CACHE_TTL_SECONDS);
-        return result.recordset;
+        let resp = await sql.query(`SELECT DISTINCT *, DATEFROMPARTS(Year, Month , Day) AS FULLDATE from financial_view
+                                    WHERE DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'
+                                    AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                                   AND worker like '%${tempWorker}%'
+                                   AND description NOT IN (select name from non_remittable)`)
+        sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
+        return resp.recordset;
     } catch (error) {
         // console.log(error)
     }
@@ -838,17 +862,13 @@ exports.getPaymentDataForWorkerBySupervisor = async (tempWorker, date, profileDa
         return cachedData;
     }
     try {
-        await sql.connect(config);
-
-        const result = await sql.query`EXEC GetDistinctFinancialDataWithSupervisor 
-            @StartDate = ${date.start}, 
-            @EndDate = ${date.end}, 
-            @ProfileStartDate = ${profileDates.startDate}, 
-            @ProfileEndDate = ${profileDates.endDate}, 
-            @WorkerName = ${tempWorker},
-            @SupervisorName = ${supervisor}`;
-        sqlCache.set(cacheKey, result.recordset, CACHE_TTL_SECONDS);
-        return result.recordset;
+        let resp = await sql.query(`SELECT DISTINCT *, DATEFROMPARTS(Year, Month , Day) AS FULLDATE from financial_view
+                                    WHERE DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'
+                                    AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                                   AND worker like '%${tempWorker}%' AND superviser like '${supervisor}'
+                                   AND description NOT IN (select name from non_remittable)`)
+        sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
+        return resp.recordset;
     } catch (error) {
         // console.log(error)
     }
