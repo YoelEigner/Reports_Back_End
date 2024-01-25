@@ -4,9 +4,12 @@ const { authToken } = require("../MidWear/MidWear");
 const { getphysicians, getProvinces, getWorkerProfile, insertWorkerProfile, getVideoTech, getServiceTypes, UpdateServiceTypes, UpdateWorkerPreofile, getPaymentTypes, getAssociateTypes, getAssociateLeval, updateEmailPassword, resetAdjustmentFees, deleteprofile, getnewphysicians } = require("../sql/sql");
 const { getSupervisiesFunc } = require("../pdfWriter/pdfKitFunctions");
 const { GeneratePDF } = require("../pdfWriter/generatePDF");
+const { invalidateCache } = require("../MidWear/InvalidateCache");
 
 //middlewaer
 router.use(authToken)
+
+router.use(invalidateCache)
 
 //****************GET******************
 

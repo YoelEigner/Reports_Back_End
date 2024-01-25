@@ -1,6 +1,7 @@
+const NodeCache = require('node-cache');
+module.exports.globalCache = new NodeCache();
+
 module.exports.generateCacheKey = (worker, functionName) => {
-    // Customize this function based on your specific requirements
-    // You need to generate a unique key based on input parameters
     return `${worker}_${functionName}`;
 }
 

@@ -1,9 +1,10 @@
 const moment = require("moment");
 const sql = require("mssql");
 var CryptoJS = require("crypto-js");
-const NodeCache = require('node-cache');
-const sqlCache = new NodeCache();
 const { generateCacheKey, isTimeoutError, delay } = require("./cacheHandler");
+const sqlCache = require('./cacheHandler').globalCache
+
+
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
@@ -373,6 +374,7 @@ exports.getWorkerProfile = async (id) => {
     const cacheKey = generateCacheKey(id, 'getWorkerProfile');
     const cachedData = sqlCache.get(cacheKey);
     if (cachedData) {
+        console.log("🚀 ~ file: sql.js:376 ~ USED CACHE:")
         return cachedData;
     }
     try {

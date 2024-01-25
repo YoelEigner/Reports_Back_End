@@ -4,6 +4,10 @@ var bodyParser = require('body-parser');
 require('dotenv').config()
 const router = require("./routes/router");
 let app = express();
+const NodeCache = require('node-cache');
+const globalCache = new NodeCache();
+
+module.exports = globalCache;
 // const https = require('https');
 // const fs = require('fs');
 
