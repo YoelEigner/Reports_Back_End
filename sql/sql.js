@@ -374,7 +374,6 @@ exports.getWorkerProfile = async (id) => {
     const cacheKey = generateCacheKey(id, 'getWorkerProfile');
     const cachedData = sqlCache.get(cacheKey);
     if (cachedData) {
-        console.log("🚀 ~ file: sql.js:376 ~ USED CACHE:")
         return cachedData;
     }
     try {
