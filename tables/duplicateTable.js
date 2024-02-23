@@ -1,8 +1,9 @@
 const { sortByIndividualName, formatter } = require("../pdfWriter/pdfKitFunctions")
+const { ACTIONTYPE  }= require('../pdfWriter/commonEnums.js');
 
 exports.duplicateTable = (data, date) => {
     // const total = data.map(x => x.event_service_item_total).reduce((a, b) => a + b, 0).toFixed(2)
-    sortByIndividualName(data, 'invoice')
+    sortByIndividualName(data, ACTIONTYPE.INVOICE)
     return {
         title: "Duplicate & split fees",
         subtitle: "From " + date.start + " To " + date.end,
@@ -28,7 +29,7 @@ exports.paymentDuplicateTable = (data, date) => {
         };
         // return x;
     });
-    sortByIndividualName(data, 'payment')
+    sortByIndividualName(data, ACTIONTYPE.PAYMENT)
     return {
         title: "Duplicate & split fees",
         subtitle: "From " + date.start + " To " + date.end,
