@@ -1,6 +1,6 @@
 var firstBy = require('thenby');
 const moment = require('moment')
-
+const { PDFTYPE, ACTIONTYPE }= require('../pdfWriter/commonEnums.js');
 
 exports.generateHeader = (doc, worker) => {
     doc
@@ -241,8 +241,8 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
             },
         });
 
-        reportType !== 'singlepdf' && doc.moveDown();
-        reportType !== 'singlepdf' && await supervisies.forEach(async (t) => {
+        reportType !== PDFTYPE.SINGLEPDF && doc.moveDown();
+        reportType !== PDFTYPE.SINGLEPDF && await supervisies.forEach(async (t) => {
             if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
             t.rows.map(x => x[5] = this.formatter.format(x[5]))
             await doc.table(t, {
@@ -342,7 +342,7 @@ exports.createPaymentTableFunc = async (doc, worker, non_remittableItems, applie
         });
         doc.moveDown()
 
-        reportType !== 'singlepdf' && l1SupPrac[0]?.datas?.length && await l1SupPrac.map(async (t) => {
+        reportType !== PDFTYPE.SINGLEPDF && l1SupPrac[0]?.datas?.length && await l1SupPrac.map(async (t) => {
             if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
             await doc.table(t, {
                 prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
@@ -414,7 +414,7 @@ exports.sortByName = (arr) => {
 exports.sortByIndividualName = (arr, reportType) => {
     return arr.sort(
         function (a, b) {
-            return reportType === 'payment'
+            return reportType === ACTIONTYPE.PAYMENT
                 ? a.service_file_presenting_individual_name.localeCompare(b.service_file_presenting_individual_name)
                 : a.individual_name.localeCompare(b.individual_name);
         }

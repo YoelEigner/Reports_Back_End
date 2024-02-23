@@ -6,7 +6,7 @@ const { getEmailPassword } = require("../sql/sql");
 const { createPaymentReportTable } = require("./PaymentReport");
 const { InvoicePromiseGenerator } = require("./invoiceReportGenerator");
 const { paymentReportGenerator } = require("./paymentReportGenerator");
-
+const { PDFTYPE, ACTIONTYPE} = require('../pdfWriter/commonEnums.js');
 
 const getDecryptedPass = async () => {
     try {
@@ -44,17 +44,20 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
         }
     });
 
-    if (actionType === 'payment' && reportType === 'singlepdf') {
+    if (actionType === ACTIONTYPE.PAYMENT && reportType === PDFTYPE.SINGLEPDF) {
         paymentReportGenerator(res, date, users, emailPassword, action, reportType)
     }
-    if (actionType === 'invoice' && reportType === 'singlepdf') {
+    if (actionType === ACTIONTYPE.INVOICE && reportType === PDFTYPE.SINGLEPDF) {
         let invoice = await getNetTotal(res, date, users[0], action, reportType)
         InvoicePromiseGenerator(res, date, users, invoice.netAppliedTotal, reportType, invoice.duration_hrs, videoFee, invoice.qty, invoice.proccessingFee)
     }
-    if (reportType === 'multipdf') {
+    if (reportType === PDFTYPE.MULTIPDF) {
         let promise = users.map(async (worker, index) => {
-            if (actionType === 'payment') {
+            if (actionType === ACTIONTYPE.PAYMENT) {
                 return createPaymentReportTable(res, date, worker.associateName, worker.id, worker.associateEmail, emailPassword, action, reportType, index).then(async (resp) => {
+                    if (resp === 404) {
+                        return null;
+                    }
                     if (resp !== 200) {
                         archive.append(resp.pdfData, { name: worker.associateName + '_Payment.pdf' })
                     }
@@ -66,9 +69,12 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
                     return err
                 })
             }
-            else if (actionType === 'invoice') {
+            else if (actionType === ACTIONTYPE.INVOICE) {
                 let invoice = await getNetTotal(res, date, worker, videoFee, action)
                 return createInvoiceTable(res, date, worker.associateName, worker.id, invoice.netAppliedTotal, invoice.duration_hrs, videoFee, invoice.qty, invoice.proccessingFee, action, worker.associateEmail, emailPassword, reportType, index).then(async (invoicePDF) => {
+                    if (invoicePDF === 404) {
+                        return null;
+                    }
                     if (invoicePDF !== 200) {
                         archive.append(invoicePDF, { name: worker.associateName + '_Invoice.pdf' })
                     }

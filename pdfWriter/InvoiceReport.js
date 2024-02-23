@@ -19,7 +19,7 @@ const { duplicateAndSplitFees, duplicateAndSplitFeesRemoved } = require("./remov
 const moment = require('moment');
 const { calcSuperviseeAssessmentFeeFunc } = require("./calcSuperviseeAssessmentFeeFunc");
 const { probonoTable } = require("../tables/probonoTable");
-
+const { PDFTYPE, ACTIONTYPE }= require('../pdfWriter/commonEnums.js');
 exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netAppliedTotal, duration_hrs, videoFee, paymentQty, proccessingFee, action, associateEmail, emailPassword, reportType, index) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -30,7 +30,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let pdfData = Buffer.concat(buffers);
                 try {
                     if (action === 'email') {
-                        let emailResp = await sendEmail(associateEmail, worker, pdfData, emailPassword, 'Invoice', index, dateUnformatted)
+                        let emailResp = await sendEmail(associateEmail, worker, pdfData, emailPassword, ACTIONTYPE.INVOICE, index, dateUnformatted)
                         resolve(emailResp)
                     }
                     else { resolve(pdfData) }
@@ -42,12 +42,14 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
             try {
                 let workerProfile = await getAssociateProfileById(workerId)
                 let profileDates = getProfileDateFormatted(workerProfile[0].startDate, workerProfile[0].endDate)
-                let data = reportType === 'singlepdf' ?
+                let data = reportType === PDFTYPE.SINGLEPDF ?
                     removeNullStr(await getInvoiceDataForWorker(dateUnformatted, worker, profileDates), '-')
                     :
                     removeNullStr(await getInvoiceData(dateUnformatted, worker, profileDates), '-')
-
-                let paymentData = reportType === 'singlepdf' ?
+                if (!data.length) {
+                    resolve(404)
+                }
+                let paymentData = reportType === PDFTYPE.SINGLEPDF ?
                     removeNullStr(await getPaymentDataForWorker(worker, dateUnformatted, profileDates), '-')
                     :
                     removeNullStr(await getPaymentData(worker, dateUnformatted, profileDates), '-')
@@ -100,7 +102,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let invoiceQtyCBT = 0
                 let invoiceQtyCPRI = 0
 
-                if (reportType === 'singlepdf') {
+                if (reportType === PDFTYPE.SINGLEPDF) {
                     invoiceQty = calculateWorkerFeeByLeval(wokrerLeval, removedNonChargablesArr, removedNonChargablesArrPayment, false, isSuperviser, isSupervised, IsSupervisedByNonDirector)
                         .map(x => x.invoice_fee_qty || x.duration_hrs).reduce((a, b) => a + b, 0)
                     invoiceQtyCBT = calculateWorkerFeeByLevalCBT(wokrerLeval, removedNonChargablesArr, removedNonChargablesArrPayment, false, isSuperviser, isSupervised, IsSupervisedByNonDirector)
@@ -151,7 +153,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let probonoItems = data.filter(x => probono.includes(x.event_service_item_name))
                 // let probonoItems = data.filter(x => x.event_service_item_name === 'Counselling 030 + HST' || x.event_service_item_name === 'Counselling 033.90')
                 //***************adjustment fees *****************/
-                let adjustmentFeeTableData = adjustmentFeeTable(date, reportType === 'singlepdf' ? adjustmentFees : await getAdjustmentsFeesInvoice(worker, profileDates))
+                let adjustmentFeeTableData = adjustmentFeeTable(date, reportType === PDFTYPE.SINGLEPDF ? adjustmentFees : await getAdjustmentsFeesInvoice(worker, profileDates))
                 let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
                 let tablesToShow = workerProfile.map((x) => {
                     return {
@@ -169,7 +171,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 //***********calculate supervisee fee********************/
                 let superviseeFeeCalculationTemp = async (tableType, supervisors) => {
-                    if (respSuperviser.length >= 0 && reportType !== 'singlepdf') {
+                    if (respSuperviser.length >= 0 && reportType !== PDFTYPE.SINGLEPDF) {
                         return (await calculateSuperviseeFeeFunc(dateUnformatted, supervisors, non_chargeablesArr, nonChargeableItems,
                             proccessingFeeTypes, videoFee, tableType, profileDates, worker, probonoItems.length))
                     }
@@ -177,7 +179,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 }
 
                 let superviseeAssessmentFeeCalculation = async (tableType) => {
-                    if (respSuperviser.length >= 0 && reportType !== 'singlepdf') {
+                    if (respSuperviser.length >= 0 && reportType !== PDFTYPE.SINGLEPDF) {
                         return (await calcSuperviseeAssessmentFeeFunc(dateUnformatted, respSuperviserAssessments, tableType, profileDates, worker, proccessingFeeTypes))
                     }
                     else return ([])

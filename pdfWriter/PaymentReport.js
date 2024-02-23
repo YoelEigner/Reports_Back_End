@@ -12,7 +12,7 @@ const { L1SupPracTable } = require("../tables/L1SupPracTable");
 const moment = require('moment');
 const { paymentDuplicateAndSplitFees, paymentDuplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees");
 const { paymentDuplicateTable } = require("../tables/duplicateTable");
-
+const { PDFTYPE, ACTIONTYPE } = require('../pdfWriter/commonEnums.js');
 exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, associateEmail, emailPassword, action, reportType, index) => {
     return new Promise(async (resolve, reject) => {
         let buffers = [];
@@ -26,7 +26,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
             let pdfData = Buffer.concat(buffers);
             try {
                 if (action === 'email') {
-                    let emailResp = await sendEmail(associateEmail, worker, pdfData, emailPassword, 'Payment', index, dateUnformatted)
+                    let emailResp = await sendEmail(associateEmail, worker, pdfData, emailPassword, ACTIONTYPE.PAYMENT, index, dateUnformatted)
                     resolve(emailResp)
 
                 }
@@ -41,15 +41,19 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
         try {
             let workerProfile = await getAssociateProfileById(workerId)
             let profileDates = getProfileDateFormatted(workerProfile[0].startDate, workerProfile[0].endDate)
-            let paymentData = reportType === 'singlepdf' ?
+            let paymentData = reportType === PDFTYPE.SINGLEPDF ?
                 await getPaymentDataForWorker(worker, dateUnformatted, profileDates)
                 :
                 await getPaymentData(worker, dateUnformatted, profileDates)
 
+            if (!paymentData.length) {
+                resolve(404)
+            }
+
             let proccessingFeeTypes = await getPaymentTypes()
             let non_remittableArr = await getNonRemittables()
             let nonRemittableItems = non_remittableArr.map(x => x.name)
-            let adjustmentFees = reportType === 'singlepdf' ? await getAdjustmentsFeesWorkerOnly(worker) : await getAdjustmentsFees(worker)
+            let adjustmentFees = reportType === PDFTYPE.SINGLEPDF ? await getAdjustmentsFeesWorkerOnly(worker) : await getAdjustmentsFees(worker)
             let tablesToShow = workerProfile.map((x) => {
                 return {
                     duplicateTable: x.duplicateTable,
@@ -210,7 +214,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     tempQty = paymentData.filter(x => x.worker.trim() === worker && !nonRemittableItems.includes(x.description))
                 }
 
-                netAppliedTotal = reportType === 'singlepdf' ? (clientPayments + ajustmentFeesTotal)
+                netAppliedTotal = reportType === PDFTYPE.SINGLEPDF ? (clientPayments + ajustmentFeesTotal)
                     : clientPayments + (superviseeClientsPayment - totalAppliedAmount) + totalSupPracAmount + ajustmentFeesTotal
                 if (workerProfile[0].associateType === 'L1 (Sup Prac)') {
                     duration_hrs = duplicateItemsAndSplitFeesRemoved.map(x => x.duration_hrs).reduce((a, b) => a + b, 0)
@@ -239,11 +243,10 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                     /*duplicates and split fees tbale */ paymentDuplicateTable(duplicateItemsAndSplitFees, date),
                     /*show/hide paymentDuplicateTable */ workerProfile[0].associateType === 'L1 (Sup Prac)' ? false : true,
                 )
-
-
             })
         } catch (error) {
             console.log(error)
+            reject(error)
             throw new Error(error);
         }
     })
