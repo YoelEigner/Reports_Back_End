@@ -7,9 +7,8 @@ const { GeneratePDF } = require("../pdfWriter/generatePDF");
 const { invalidateCache } = require("../MidWear/InvalidateCache");
 
 //middlewaer
-router.use(authToken)
-
 router.use(invalidateCache)
+router.use(authToken)
 
 //****************GET******************
 
