@@ -48,10 +48,11 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
         paymentReportGenerator(res, date, users, emailPassword, action, reportType)
     }
     if (actionType === ACTIONTYPE.INVOICE && reportType === PDFTYPE.SINGLEPDF) {
-        let invoice = await getNetTotal(res, date, users[0], action, reportType)
-        InvoicePromiseGenerator(res, date, users, invoice.netAppliedTotal, reportType, invoice.duration_hrs, videoFee, invoice.qty, invoice.proccessingFee)
+        let paymentData = await getNetTotal(res, date, users[0], action, reportType)
+        InvoicePromiseGenerator(res, date, users, paymentData.netAppliedTotal, reportType, paymentData.duration_hrs, videoFee, paymentData.qty, paymentData.proccessingFee)
     }
     if (reportType === PDFTYPE.MULTIPDF) {
+        let filesAppended = 0;
         let promise = users.map(async (worker, index) => {
             if (actionType === ACTIONTYPE.PAYMENT) {
                 return createPaymentReportTable(res, date, worker.associateName, worker.id, worker.associateEmail, emailPassword, action, reportType, index).then(async (resp) => {
@@ -60,6 +61,7 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
                     }
                     if (resp !== 200) {
                         archive.append(resp.pdfData, { name: worker.associateName + '_Payment.pdf' })
+                        filesAppended = filesAppended + 1;
                     }
                     else {
                         // return 500
@@ -70,27 +72,37 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
                 })
             }
             else if (actionType === ACTIONTYPE.INVOICE) {
-                let invoice = await getNetTotal(res, date, worker, videoFee, action)
-                return createInvoiceTable(res, date, worker.associateName, worker.id, invoice.netAppliedTotal, invoice.duration_hrs, videoFee, invoice.qty, invoice.proccessingFee, action, worker.associateEmail, emailPassword, reportType, index).then(async (invoicePDF) => {
-                    if (invoicePDF === 404) {
-                        return null;
-                    }
-                    if (invoicePDF !== 200) {
-                        archive.append(invoicePDF, { name: worker.associateName + '_Invoice.pdf' })
-                    }
-                    else {
-                        // return 500
-                        // console.log('invoicePDF', invoicePDF)
-                    }
-                }).catch(err => {
-                    console.log(err, 'Multi Invoice report error')
-                    return err
-                })
+                let paymentData = await getNetTotal(res, date, worker, videoFee, action)
+                if (paymentData === 404) {
+                    return null
+                }
+                return createInvoiceTable(res, date, worker.associateName, worker.id, paymentData.netAppliedTotal, paymentData.duration_hrs, videoFee,
+                    paymentData.qty, paymentData.proccessingFee, action, worker.associateEmail, emailPassword, reportType, index).then(async (invoicePDF) => {
+                        if (invoicePDF === 404) {
+                            return null;
+                        }
+                        if (invoicePDF !== 200) {
+                            archive.append(invoicePDF, { name: worker.associateName + '_Invoice.pdf' })
+                            filesAppended = filesAppended + 1;
+                        }
+                        else {
+                            // return 500
+                            // console.log('invoicePDF', invoicePDF)
+                        }
+                    }).catch(err => {
+                        console.log(err, 'Multi Invoice report error')
+                        return err
+                    })
 
             }
         })
         Promise.all(promise).then(() => {
-            archive.pipe(output)
+            if (filesAppended === 0) {
+                res.writeHead(404)
+                res.send()
+                return;
+            }
+            archive.pipe(output);
             archive.finalize();
         });
     }
