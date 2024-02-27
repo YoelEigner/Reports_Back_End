@@ -1,6 +1,6 @@
 var firstBy = require('thenby');
 const moment = require('moment')
-const { PDFTYPE, ACTIONTYPE }= require('../pdfWriter/commonEnums.js');
+const { PDFTYPE, ACTIONTYPE } = require('../pdfWriter/commonEnums.js');
 
 exports.generateHeader = (doc, worker) => {
     doc
@@ -113,7 +113,7 @@ exports.createInvoiceTableFunc = async (doc, mainTable, othersTable, reportedIte
         });
 
         othersTable.datas.length > 0 && doc.moveDown()
-        othersTable.datas.map(x => {
+        othersTable.datas.length > 0 && othersTable.datas.map(x => {
             x.TOTAL = this.formatter.format(x.TOTAL)
             x.fee = this.formatter.format(x.fee)
             x.otherItemTotal = this.formatter.format(x.otherItemTotal)
@@ -139,6 +139,12 @@ exports.createInvoiceTableFunc = async (doc, mainTable, othersTable, reportedIte
         let showNonChargeablesTable = tablesToShow.map(x => x.nonChargeablesTable)[0]
         showNonChargeablesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
+        showNonChargeablesTable && nonChargeables.datas.map(x => {
+            if (typeof x.event_service_item_total === 'number') {
+                x.event_service_item_total = this.formatter.format(x.event_service_item_total)
+            }
+        }
+        )
         showNonChargeablesTable && await doc.table(nonChargeables, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -182,9 +188,9 @@ exports.createInvoiceTableFunc = async (doc, mainTable, othersTable, reportedIte
             },
         });
         //******************************CBT********************************/
-        associateFeeAssessmentTableCBT.tableTotal !== 0 || associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
+        (associateFeeAssessmentTableCBT.tableTotal !== 0 || associateFeeBaseRateTablesCBT.tableTotal !== 0) && showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-        associateFeeAssessmentTableCBT.tableTotal !== 0 || associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && doc
+        (associateFeeAssessmentTableCBT.tableTotal !== 0 || associateFeeBaseRateTablesCBT.tableTotal !== 0) && showassociateFeesTable && doc
             .fontSize(20)
             .text('CBT', { align: 'center' })
             .font('Helvetica-Bold')
@@ -207,12 +213,13 @@ exports.createInvoiceTableFunc = async (doc, mainTable, othersTable, reportedIte
             },
         });
         //******************************CPRI********************************/
-        associateFeeAssessmentTableCPRI.tableTotal !== 0 || associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
+        (associateFeeAssessmentTableCPRI.tableTotal !== 0 || associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable) && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-        associateFeeAssessmentTableCPRI.tableTotal !== 0 || associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && doc
-            .fontSize(20)
-            .text('CPRI', { align: 'center' })
-            .font('Helvetica-Bold')
+        (associateFeeAssessmentTableCPRI.tableTotal !== 0 || associateFeeBaseRateTablesCPRI.tableTotal !== 0) && showassociateFeesTable &&
+            doc
+                .fontSize(20)
+                .text('CPRI', { align: 'center' })
+                .font('Helvetica-Bold')
         associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && this.generateLine(doc, doc.y)
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
 
