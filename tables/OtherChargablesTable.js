@@ -13,7 +13,7 @@ exports.OtherChargablesTable = (data, date, otherItems, workerProfile) => {
                 ? otherItem.therapy_rate
                 : Number(item.TOTAL.replace(/[^0-9.-]+/g, "")) * Number(workerProfile.assessmentRate) / 100
 
-        item.otherItemFee = fee;
+        item.fee = fee;
         item.otherItemTotal = fee * item.invoice_fee_qty;
     });
 
