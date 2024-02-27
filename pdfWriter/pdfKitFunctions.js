@@ -82,7 +82,7 @@ const virticalLines = (doc, rectCell, indexColumn) => {
     doc.fontSize(10).fillColor('#292929');
 }
 
-exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedItemsTable, duplicateTable, nonChargeables, adjustmentFeeTable, totalRemittance, non_chargeablesArr,
+exports.createInvoiceTableFunc = async (doc, mainTable, othersTable, reportedItemsTable, duplicateTable, nonChargeables, adjustmentFeeTable, totalRemittance, non_chargeablesArr,
     worker, associateFees, supervisies, duplicateItems, tablesToShow, showAdjustmentFeeTable, associateFeeAssessmentTable, reportType,
     associateFeeBaseRateTablesCBT, associateFeeAssessmentTableCBT, associateFeeBaseRateTablesCPRI, associateFeeAssessmentTableCPRI) => {
     try {
@@ -109,13 +109,17 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
-                // non_chargeablesArr.find(x => x === row.service_name) && doc.addBackground(rectRow, 'pink', 0.15);
-                // duplicateItems.find(x => x.service_name === row.service_name) && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
 
-        probonoTable.datas.length > 0 && doc.moveDown()
-        probonoTable.datas.length > 0 && await doc.table(probonoTable, {
+        othersTable.datas.length > 0 && doc.moveDown()
+        othersTable.datas.map(x => {
+            x.TOTAL = this.formatter.format(x.TOTAL)
+            x.fee = this.formatter.format(x.fee)
+            x.otherItemTotal = this.formatter.format(x.otherItemTotal)
+        }
+        )
+        othersTable.datas.length > 0 && await doc.table(othersTable, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
@@ -480,13 +484,6 @@ exports.addDateToPages = (doc) => {
         doc.page.margins.top = oldBottomMargin; // ReProtect bottom margin
     }
 }
-
-// exports.removeSupPrac = async (arr, worker) => {
-//     let superviseies = await getSuperviseeies(worker)
-//     let mapedSupervisees = (superviseies.map(x => x.associateName = String(x.associateName.split(",")[1] + " " + x.associateName.split(",")[0]).trim()))
-//     let removedArr = arr.filter(x => mapedSupervisees.includes(x.worker))
-//     return removedArr
-// }
 
 exports.getUniqueItemsMultiKey = (arr, keyProps) => {
     const kvArray = arr.map(entry => {

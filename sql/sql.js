@@ -474,7 +474,7 @@ exports.getNonChargeables = async () => {
         console.log(error)
     }
 }
-exports.getProbonoCases = async () => {
+exports.getOtherItems = async () => {
     const cacheKey = generateCacheKey('feeName', 'getProbonoCases');
     const cachedData = sqlCache.get(cacheKey);
     if (cachedData) {
@@ -482,7 +482,7 @@ exports.getProbonoCases = async () => {
     }
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[probono]`)
+        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[other_chargeables]`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
