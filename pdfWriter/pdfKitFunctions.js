@@ -1,6 +1,6 @@
 var firstBy = require('thenby');
 const moment = require('moment')
-const { PDFTYPE, ACTIONTYPE }= require('../pdfWriter/commonEnums.js');
+const { PDFTYPE, ACTIONTYPE } = require('../pdfWriter/commonEnums.js');
 
 exports.generateHeader = (doc, worker) => {
     doc
@@ -82,7 +82,7 @@ const virticalLines = (doc, rectCell, indexColumn) => {
     doc.fontSize(10).fillColor('#292929');
 }
 
-exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedItemsTable, duplicateTable, nonChargeables, adjustmentFeeTable, totalRemittance, non_chargeablesArr,
+exports.createInvoiceTableFunc = async (doc, mainTable, othersTable, reportedItemsTable, duplicateTable, nonChargeables, adjustmentFeeTable, totalRemittance, non_chargeablesArr,
     worker, associateFees, supervisies, duplicateItems, tablesToShow, showAdjustmentFeeTable, associateFeeAssessmentTable, reportType,
     associateFeeBaseRateTablesCBT, associateFeeAssessmentTableCBT, associateFeeBaseRateTablesCPRI, associateFeeAssessmentTableCPRI) => {
     try {
@@ -109,13 +109,17 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
-                // non_chargeablesArr.find(x => x === row.service_name) && doc.addBackground(rectRow, 'pink', 0.15);
-                // duplicateItems.find(x => x.service_name === row.service_name) && doc.addBackground(rectRow, 'pink', 0.15);
             },
         });
 
-        probonoTable.datas.length > 0 && doc.moveDown()
-        probonoTable.datas.length > 0 && await doc.table(probonoTable, {
+        othersTable.datas.length > 0 && doc.moveDown()
+        othersTable.datas.length > 0 && othersTable.datas.map(x => {
+            x.TOTAL = this.formatter.format(x.TOTAL)
+            x.fee = this.formatter.format(x.fee)
+            x.otherItemTotal = this.formatter.format(x.otherItemTotal)
+        }
+        )
+        othersTable.datas.length > 0 && await doc.table(othersTable, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
                 doc.font("Helvetica").fontSize(8);
@@ -135,6 +139,12 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
         let showNonChargeablesTable = tablesToShow.map(x => x.nonChargeablesTable)[0]
         showNonChargeablesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
+        showNonChargeablesTable && nonChargeables.datas.map(x => {
+            if (typeof x.event_service_item_total === 'number') {
+                x.event_service_item_total = this.formatter.format(x.event_service_item_total)
+            }
+        }
+        )
         showNonChargeablesTable && await doc.table(nonChargeables, {
             prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
                 virticalLines(doc, rectCell, indexColumn)
@@ -178,9 +188,9 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
             },
         });
         //******************************CBT********************************/
-        associateFeeAssessmentTableCBT.tableTotal !== 0 || associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
+        (associateFeeAssessmentTableCBT.tableTotal !== 0 || associateFeeBaseRateTablesCBT.tableTotal !== 0) && showassociateFeesTable && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-        associateFeeAssessmentTableCBT.tableTotal !== 0 || associateFeeBaseRateTablesCBT.tableTotal !== 0 && showassociateFeesTable && doc
+        (associateFeeAssessmentTableCBT.tableTotal !== 0 || associateFeeBaseRateTablesCBT.tableTotal !== 0) && showassociateFeesTable && doc
             .fontSize(20)
             .text('CBT', { align: 'center' })
             .font('Helvetica-Bold')
@@ -203,12 +213,13 @@ exports.createInvoiceTableFunc = async (doc, mainTable, probonoTable, reportedIt
             },
         });
         //******************************CPRI********************************/
-        associateFeeAssessmentTableCPRI.tableTotal !== 0 || associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && doc.moveDown();
+        (associateFeeAssessmentTableCPRI.tableTotal !== 0 || associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable) && doc.moveDown();
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
-        associateFeeAssessmentTableCPRI.tableTotal !== 0 || associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && doc
-            .fontSize(20)
-            .text('CPRI', { align: 'center' })
-            .font('Helvetica-Bold')
+        (associateFeeAssessmentTableCPRI.tableTotal !== 0 || associateFeeBaseRateTablesCPRI.tableTotal !== 0) && showassociateFeesTable &&
+            doc
+                .fontSize(20)
+                .text('CPRI', { align: 'center' })
+                .font('Helvetica-Bold')
         associateFeeBaseRateTablesCPRI.tableTotal !== 0 && showassociateFeesTable && this.generateLine(doc, doc.y)
         if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
 
@@ -480,13 +491,6 @@ exports.addDateToPages = (doc) => {
         doc.page.margins.top = oldBottomMargin; // ReProtect bottom margin
     }
 }
-
-// exports.removeSupPrac = async (arr, worker) => {
-//     let superviseies = await getSuperviseeies(worker)
-//     let mapedSupervisees = (superviseies.map(x => x.associateName = String(x.associateName.split(",")[1] + " " + x.associateName.split(",")[0]).trim()))
-//     let removedArr = arr.filter(x => mapedSupervisees.includes(x.worker))
-//     return removedArr
-// }
 
 exports.getUniqueItemsMultiKey = (arr, keyProps) => {
     const kvArray = arr.map(entry => {

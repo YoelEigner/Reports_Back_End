@@ -474,7 +474,7 @@ exports.getNonChargeables = async () => {
         console.log(error)
     }
 }
-exports.getProbonoCases = async () => {
+exports.getOtherItems = async () => {
     const cacheKey = generateCacheKey('feeName', 'getProbonoCases');
     const cachedData = sqlCache.get(cacheKey);
     if (cachedData) {
@@ -482,7 +482,7 @@ exports.getProbonoCases = async () => {
     }
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[probono]`)
+        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[other_chargeables]`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -804,28 +804,43 @@ exports.getPaymentData = async (worker, date, profileDates, retryCount = 0) => {
 
     try {
         await sql.connect(config)
-        let resp = await sql.query(`(SELECT fv.*, DATEFROMPARTS(fv.Year, fv.Month, fv.Day) AS FULLDATE 
-                                        FROM financial_view fv
-                                        JOIN profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName) AND p.status = 1
-                                        WHERE DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN '${date.start}' AND '${date.end}'
-                                        AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
-                                        AND (fv.superviser like '%${worker}%' OR worker like '%${worker}%')
-                                        AND (
-                                            (p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
-                                            (p.supervisor2 = fv.superviser AND p.supervisorTwoGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
-                                            (p.assessmentMoneyToSupervisorOne = 1 AND p.supervisor1 = fv.superviser AND LEFT(fv.case_program, 1) = 'A') OR
-                                            (p.assessmentMoneyToSupervisorTwo = 1 AND p.supervisor2 = fv.superviser AND LEFT(fv.case_program, 1) = 'A') 
-                                        )
-                                        
-                                        AND description NOT IN (select name from non_remittable))
-                                        UNION
-                                        (
-                                            SELECT *, DATEFROMPARTS(Year, Month , Day) AS FULLDATE from financial_view
-                                            WHERE DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'
-                                            AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
-                                            AND worker like '%${worker}%'
-                                            AND description NOT IN (select name from non_remittable)
-                                        )`)
+        let resp = await sql.query(`
+                    SELECT 
+                        fv.*, 
+                        DATEFROMPARTS(fv.Year, fv.Month, fv.Day) AS FULLDATE 
+                    FROM 
+                        financial_view fv
+                    JOIN 
+                        profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName) AND p.status = 1
+                    LEFT JOIN 
+                        non_remittable nr ON fv.description = nr.name
+                    WHERE 
+                        DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN '${date.start}' AND '${date.end}'
+                        AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                        AND (fv.superviser like '%${worker}%' OR fv.worker like '%${worker}%')
+                        AND (
+                            (p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
+                            (p.supervisor2 = fv.superviser AND p.supervisorTwoGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
+                            (p.assessmentMoneyToSupervisorOne = 1 AND p.supervisor1 = fv.superviser AND LEFT(fv.case_program, 1) = 'A') OR
+                            (p.assessmentMoneyToSupervisorTwo = 1 AND p.supervisor2 = fv.superviser AND LEFT(fv.case_program, 1) = 'A') 
+                        )
+                        AND nr.name IS NULL
+                    UNION
+                    (
+                        SELECT 
+                            fv.*, 
+                            DATEFROMPARTS(fv.Year, fv.Month , fv.Day) AS FULLDATE 
+                        FROM 
+                            financial_view fv
+                        LEFT JOIN 
+                            non_remittable nr ON fv.description = nr.name
+                        WHERE 
+                            DATEFROMPARTS(fv.Year, fv.Month , fv.Day) BETWEEN '${date.start}' AND '${date.end}'
+                            AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                            AND fv.worker like '%${worker}%'
+                            AND nr.name IS NULL
+                    )
+                `);
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset;
     } catch (error) {
