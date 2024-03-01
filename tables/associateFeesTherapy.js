@@ -31,7 +31,7 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
 
     let headers = []
     let rows = []
-    
+
     if (superviserGetsTherapyMoney && workerProfile[0].isSuperviser === false) {
         headers = [
             { label: "Worker", renderer: null, align: "center" },
@@ -99,9 +99,10 @@ exports.getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
 
     if (associateFees[0] !== undefined) {
         if (getSubPrac) {
+            let amount = [(associateFees[0].associateFeeBaseRate || '0'), (associateFees[0].associateFeeBaseRateOverrideGreaterThen || '0'),
+            (associateFees[0].associateFeeBaseRateOverrideLessThen || '0')]
+
             if (associateFees[0].associateType === 'L1 (Sup Prac)' && (associateFees[0].supervisorOneGetsMoney || associateFees[0].assessmentMoneyToSupervisorOne === true)) {
-                let amount = [associateFees[0].associateFeeBaseRate, associateFees[0].associateFeeBaseRateOverrideGreaterThen,
-                associateFees[0].associateFeeBaseRateOverrideLessThen]
                 return {
                     isSuperviser: false,
                     isZero: Number(associateFees[0].associateFeeBaseRateOverrideLessThen) == 0,
@@ -127,8 +128,6 @@ exports.getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
                 }
             }
             else {
-                let amount = [associateFees[0].associateFeeBaseRate, associateFees[0].associateFeeBaseRateOverrideGreaterThen,
-                associateFees[0].associateFeeBaseRateOverrideLessThen]
                 return {
                     isSuperviser: true,
                     isZero: Number(associateFees[0].associateFeeBaseRate) == 0,
