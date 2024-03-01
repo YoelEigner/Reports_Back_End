@@ -149,7 +149,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 //***************other chargable items ******************/
                 const otherChargableItemsFilterd = data.filter(x => otherChargableItems.includes(x.event_service_item_name))
                 const otherItemsTable = OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, workerProfile[0])
-                
+
                 //***************adjustment fees *****************/
                 let adjustmentFeeTableData = adjustmentFeeTable(date, reportType === PDFTYPE.SINGLEPDF ? adjustmentFees : await getAdjustmentsFeesInvoice(worker, profileDates))
                 let chargeVideoFee = workerProfile.map(x => x.cahrgeVideoFee)[0]
@@ -171,14 +171,16 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 let superviseeFeeCalculationTemp = async (tableType, supervisors) => {
                     if (respSuperviser.length >= 0 && reportType !== PDFTYPE.SINGLEPDF) {
                         return (await calculateSuperviseeFeeFunc(dateUnformatted, supervisors, non_chargeablesArr, nonChargeableItems,
-                            proccessingFeeTypes, videoFee, tableType, profileDates, worker, otherChargableItemsFilterd.length))
+                            proccessingFeeTypes, videoFee, tableType, profileDates, worker,
+                            otherChargableItems, otherChargableItemsFilterd, otherItems))
                     }
                     else return ([])
                 }
 
                 let superviseeAssessmentFeeCalculation = async (tableType) => {
                     if (respSuperviser.length >= 0 && reportType !== PDFTYPE.SINGLEPDF) {
-                        return (await calcSuperviseeAssessmentFeeFunc(dateUnformatted, respSuperviserAssessments, tableType, profileDates, worker, proccessingFeeTypes))
+                        return (await calcSuperviseeAssessmentFeeFunc(dateUnformatted, respSuperviserAssessments, tableType, profileDates, worker, proccessingFeeTypes,
+                            otherChargableItems, otherChargableItemsFilterd, otherItems))
                     }
                     else return ([])
                 }

@@ -7,16 +7,12 @@ const formatterCurrency = new Intl.NumberFormat('en-US', {
 
 
 exports.calculateAssociateFeeForSupervisee = async (workerName, reportedItems, rate, videoFee, superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge,
-    superviseeAdjustmentFee, chargeVideoFee, tableType, probonoRate, probonoItems, supervisorsProbono, l1SupPrac) => {
+    superviseeAdjustmentFee, chargeVideoFee, tableType, otherItemsRate, otherItemsQty, supervisorsOtherItems, l1SupPrac) => {
+
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
     let adjustmentFee = superviseeAdjustmentFee.map(x => Number(x.value)).reduce((a, b) => a + b, 0)
 
-    let probonoQty = probonoItems.length
-
-
-    let totalWoHST = ((reportedItems - probonoQty) * rate) + (probonoQty * probonoRate) + superviseeBlocksBiWeeklyCharge
-
-    // let totalWoHST = (reportedItems * rate) + superviseeBlocksBiWeeklyCharge
+    let totalWoHST = ((reportedItems - otherItemsQty) * rate) + (otherItemsQty * otherItemsRate) + superviseeBlocksBiWeeklyCharge
     let hst = totalWoHST * (process.env.HST / 100)
     if (l1SupPrac) { hst = 0 }
 
@@ -33,7 +29,7 @@ exports.calculateAssociateFeeForSupervisee = async (workerName, reportedItems, r
         formatterCurrency.format(hst),
         formatterCurrency.format(totalWoHST + hst + vidFee + superviseeFinalProccessingFee + superviseeBlocksBiWeeklyCharge + adjustmentFee)
     ]
-    if (probonoQty > 0 || supervisorsProbono > 0) { cfirArr.splice(3, 0, probonoQty, formatter.format(probonoRate),) }
+    if (otherItemsQty > 0 || supervisorsOtherItems > 0) { cfirArr.splice(3, 0, otherItemsQty, formatter.format(otherItemsRate)) }
 
     if (tableType === 'CFIR') {
         return cfirArr

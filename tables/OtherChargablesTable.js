@@ -2,6 +2,7 @@ const { formatter } = require("../pdfWriter/pdfKitFunctions");
 
 
 exports.OtherChargablesTable = (data, date, otherItems, workerProfile) => {
+    const filteredArray = data.filter((worker) => workerProfile.associateName === worker.event_primary_worker_name)
 
     data.map((item) => {
         const otherItem = otherItems.find(x => x.service_name === item.event_service_item_name);
@@ -18,11 +19,12 @@ exports.OtherChargablesTable = (data, date, otherItems, workerProfile) => {
                 : isTherapy
                     ? otherItem.therapy_rate
                     : Number(item.TOTAL.replace(/[^0-9.-]+/g, "")) * Number(workerProfile.assessmentRate) / 100
-
         item.fee = fee;
         item.otherItemTotal = fee * item.invoice_fee_qty;
     });
 
+
+    const totalsForUser = calculateTotals(filteredArray);
     const totals = calculateTotals(data);
 
     const totalAmt = Object.values(totals).reduce((a, b, index) => index % 2 === 0 ? a + b : a, 0)
@@ -31,7 +33,7 @@ exports.OtherChargablesTable = (data, date, otherItems, workerProfile) => {
     return {
         title: "Other Items",
         subtitle: "From " + date.start + " To " + date.end,
-        otherItemsTotal: totals,
+        otherItemsTotal: totalsForUser,
         headers: [
             { label: "Date", property: 'batch_date', renderer: null, align: "center" },
             { label: "Worker", property: 'event_primary_worker_name', renderer: null, align: "center" },
