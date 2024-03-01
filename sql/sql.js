@@ -498,7 +498,7 @@ exports.getSupervisers = async (name) => {
     }
     try {
         await sql.connect(config)
-        let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney FROM [CFIR].[dbo].[profiles] where
+        let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney, assessmentRate FROM [CFIR].[dbo].[profiles] where
                                       ((supervisor1='${name}' AND supervisorOneGetsMoney = 1 AND status =1)
                                       OR (supervisor2='${name}' AND supervisorTwoGetsMoney = 1 AND status =1))`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
@@ -516,7 +516,7 @@ exports.getSupervisersCFIR = async (name) => {
     try {
         await sql.connect(config)
         let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney, 
-                                    assessmentMoneyToSupervisorOne, assessmentMoneyToSupervisorTwo 
+                                    assessmentMoneyToSupervisorOne, assessmentMoneyToSupervisorTwo, assessmentRate
                                     FROM [CFIR].[dbo].[profiles] where
                                     (supervisor1='${name}' AND (supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1 ) AND status =1 
                                     OR supervisor2='${name}' AND (supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo = 1 )AND status =1)`)
@@ -536,7 +536,7 @@ exports.getSupervisersAssessments = async (name) => {
         await sql.connect(config)
         let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney, 
                                         assessmentMoneyToSupervisorOne,
-                                        assessmentMoneyToSupervisorTwo FROM [CFIR].[dbo].[profiles] where
+                                        assessmentMoneyToSupervisorTwo, assessmentRate, probono FROM [CFIR].[dbo].[profiles] where
                                         (supervisor1='${name}' AND assessmentMoneyToSupervisorOne = 1)
                                         OR (supervisor2='${name}' AND assessmentMoneyToSupervisorTwo = 1)`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
