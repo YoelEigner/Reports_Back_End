@@ -5,13 +5,19 @@ exports.OtherChargablesTable = (data, date, otherItems, workerProfile) => {
 
     data.map((item) => {
         const otherItem = otherItems.find(x => x.service_name === item.event_service_item_name);
-
         const isTherapy = item.service_name.startsWith('T_');
+        //calulating fee as follws:
+        //if the item is probono, then fee is the probono rate
+        //if the item uses a fixed fee, then fee is the fixed fee regardless of the service_file
+        //if the item is therapy, then fee is the therapy rate
+        //else (this will be a catch all/ if an item is an assessment) fee is the total of the item * the assessment rate
         const fee = otherItem.is_probono_item
             ? Number(workerProfile.probono)
-            : isTherapy
-                ? otherItem.therapy_rate
-                : Number(item.TOTAL.replace(/[^0-9.-]+/g, "")) * Number(workerProfile.assessmentRate) / 100
+            : otherItem.use_fix_assoc_fee
+                ? otherItem.assoc_rate
+                : isTherapy
+                    ? otherItem.therapy_rate
+                    : Number(item.TOTAL.replace(/[^0-9.-]+/g, "")) * Number(workerProfile.assessmentRate) / 100
 
         item.fee = fee;
         item.otherItemTotal = fee * item.invoice_fee_qty;

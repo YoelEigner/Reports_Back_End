@@ -47,7 +47,7 @@ exports.createPaymentReportTable = (res, dateUnformatted, worker, workerId, asso
                 await getPaymentData(worker, dateUnformatted, profileDates)
 
             if (!paymentData.length) {
-                resolve(404)
+                // resolve(404)
             }
 
             let proccessingFeeTypes = await getPaymentTypes()

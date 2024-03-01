@@ -47,7 +47,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                     :
                     removeNullStr(await getInvoiceData(dateUnformatted, worker, profileDates), '-')
                 if (!data.length) {
-                    resolve(404)
+                    // resolve(404)
                 }
                 let paymentData = reportType === PDFTYPE.SINGLEPDF ?
                     removeNullStr(await getPaymentDataForWorker(worker, dateUnformatted, profileDates), '-')
