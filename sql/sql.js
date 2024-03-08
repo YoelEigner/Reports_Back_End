@@ -816,7 +816,7 @@ exports.getPaymentData = async (worker, date, profileDates, retryCount = 0) => {
                         non_remittable nr ON fv.description = nr.name
                     WHERE 
                         DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN '${date.start}' AND '${date.end}'
-                        AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                        AND DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                         AND (fv.superviser like '%${worker}%' OR fv.worker like '%${worker}%')
                         AND (
                             (p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
@@ -836,7 +836,7 @@ exports.getPaymentData = async (worker, date, profileDates, retryCount = 0) => {
                             non_remittable nr ON fv.description = nr.name
                         WHERE 
                             DATEFROMPARTS(fv.Year, fv.Month , fv.Day) BETWEEN '${date.start}' AND '${date.end}'
-                            AND Cast(fv.act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                            AND DATEFROMPARTS(fv.Year, fv.Month , fv.Day) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                             AND fv.worker like '%${worker}%'
                             AND nr.name IS NULL
                     )
@@ -862,7 +862,7 @@ exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
     try {
         let resp = await sql.query(`SELECT DISTINCT *, DATEFROMPARTS(Year, Month , Day) AS FULLDATE from financial_view
                                     WHERE DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'
-                                    AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                                    AND DATEFROMPARTS(Year, Month , Day) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                    AND worker like '%${tempWorker}%'
                                    AND description NOT IN (select name from non_remittable)`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
@@ -880,7 +880,7 @@ exports.getPaymentDataForWorkerBySupervisor = async (tempWorker, date, profileDa
     try {
         let resp = await sql.query(`SELECT DISTINCT *, DATEFROMPARTS(Year, Month , Day) AS FULLDATE from financial_view
                                     WHERE DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'
-                                    AND Cast(act_date as date) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                                    AND DATEFROMPARTS(Year, Month , Day) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                    AND worker like '%${tempWorker}%' AND superviser like '${supervisor}'
                                    AND description NOT IN (select name from non_remittable)`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
