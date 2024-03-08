@@ -40,7 +40,7 @@ exports.associateFeesAssessments = async (worker, data, date, rate, tableType, s
     }
 
     else {
-        const superviseeOthers = superviseeAssessmentFees.map(x => x.length).includes(11)
+        const superviseeOthers = superviseeAssessmentFees.map(x => x.length).includes(9)
 
         const filteredData = data.filter(x => x.event_primary_worker_name
             ? x.event_primary_worker_name.includes(worker)
