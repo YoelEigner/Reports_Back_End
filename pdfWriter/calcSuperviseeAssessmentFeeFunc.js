@@ -9,7 +9,7 @@ exports.calcSuperviseeAssessmentFeeFunc = (date, respSuperviser, tableType, prof
     let arr = []
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
-            const superviseeotherItemsTable = OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, worker).otherItemsTotal
+            const superviseeotherItemsTable = ((await OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, worker)).otherItemsTotal)
 
             let superviseeReportedItemdData = removeNullStr(await getSuperviseeDataBySuperviser(date, worker.associateName, profileDates, superviser), '-')
             let workerPaymentData = await getPaymentDataForWorkerBySupervisor(worker.associateName, date, profileDates, superviser)

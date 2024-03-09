@@ -148,7 +148,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 //***************other chargable items ******************/
                 const otherChargableItemsFilterd = data.filter(x => otherChargableItems.includes(x.event_service_item_name))
-                const otherItemsTable = OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, workerProfile[0])
+                const otherItemsTable = await OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, workerProfile[0])
 
                 //***************adjustment fees *****************/
                 let adjustmentFeeTableData = adjustmentFeeTable(date, reportType === PDFTYPE.SINGLEPDF ? adjustmentFees : await getAdjustmentsFeesInvoice(worker, profileDates))
