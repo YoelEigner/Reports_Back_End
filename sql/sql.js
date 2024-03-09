@@ -154,6 +154,10 @@ exports.getAssociateTypes = async (associateType) => {
         temp = 'associateType'
         query = `SELECT * FROM [CFIR].[dbo].[profiles] WHERE isSuperviser='true'`
     }
+    else if (associateType === 'summery') {
+        temp = 'associateType'
+        query = `SELECT * FROM [CFIR].[dbo].[profiles] WHERE associateType=associateType`
+    }
     else {
         temp = `'${associateType}'`
         query = `SELECT * FROM [CFIR].[dbo].[profiles] WHERE associateType=${temp}`
@@ -792,7 +796,57 @@ exports.insertWorkerProfile = async (arr) => {
     }
 }
 
+exports.getSummerizedInvoiceData = async (date, site, retryCount = 0) => {
+    const cacheKey = generateCacheKey(`${site}-getSummerizedInvoiceData`);
+
+    // Try to get the data from the cache
+    const cachedData = sqlCache.get(cacheKey);
+    if (cachedData) {
+        return cachedData;
+    }
+
+    try {
+        let resp = await sql.query(`SELECT worker, reason_type, applied_amt, site
+                                    FROM financial_view 
+                                    WHERE site like '%${site}%' AND DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'`)
+        sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
+        return resp.recordset;
+    } catch (error) {
+        if (retryCount < MAX_RETRIES && isTimeoutError(error)) {
+            await delay(RETRY_DELAY);
+            return getSummerizedInvoiceData(date, retryCount + 1);
+        }
+        console.log('getPaymentData Function', error)
+        throw new Error(error);
+    }
+}
+
 //****************Payment querys**********************/
+exports.getSummerizedPaymentData = async (date, site, retryCount = 0) => {
+    const cacheKey = generateCacheKey(`${site}-getSummerizedPaymentData`);
+
+    // Try to get the data from the cache
+    const cachedData = sqlCache.get(cacheKey);
+    if (cachedData) {
+        return cachedData;
+    }
+
+    try {
+        let resp = await sql.query(`SELECT worker, reason_type, applied_amt, site
+                                    FROM financial_view 
+                                    WHERE site like '%${site}%' AND DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'`)
+        sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
+        return resp.recordset;
+    } catch (error) {
+        if (retryCount < MAX_RETRIES && isTimeoutError(error)) {
+            await delay(RETRY_DELAY);
+            return getSummerizedPaymentData(date, retryCount + 1);
+        }
+        console.log('getPaymentData Function', error)
+        throw new Error(error);
+    }
+}
+
 exports.getPaymentData = async (worker, date, profileDates, retryCount = 0) => {
     const cacheKey = generateCacheKey(worker, 'getPaymentData');
 
