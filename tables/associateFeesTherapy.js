@@ -22,7 +22,7 @@ exports.associateFeesTherapy = async (worker, count, date, workerId, videoFee, f
     let rate = await this.getRate(removedNonChargablesArr, workerId, false)
 
     let vidFee = chargeVideoFee ? Number(videoFee) : 0
-    let totalWoHST = ((count - otherItemsQty) * rate) + (otherItemsQty * otherItemsRate) + blockItemFees
+    let totalWoHST = ((count - otherItemsQty) * rate) + otherItemsRate + blockItemFees
     let hst = totalWoHST * (process.env.HST / 100)
     let hstRemoved = 0
     if (isl1SupPrac) { hstRemoved = hst }

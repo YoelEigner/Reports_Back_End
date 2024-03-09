@@ -11,8 +11,8 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
     let arr = []
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
-            const superviseeotherItemsTable = OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, worker).otherItemsTotal
-
+            const superviseeotherItemsTable = ((await OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, worker)).otherItemsTotal)
+            
             let superviseeWorkerProfile = await getAssociateProfileById(worker.id)
             let superviserGetsAssessmentMoney =
                 (

@@ -146,9 +146,9 @@ exports.createInvoiceTableFunc = async (doc, mainTable, othersTable, reportedIte
             },
         });
 
+
         othersTable.datas.length > 0 && doc.moveDown()
         othersTable.datas.length > 0 && othersTable.datas.map(x => {
-            x.TOTAL = this.formatter.format(x.TOTAL)
             x.fee = this.formatter.format(x.fee)
             x.otherItemTotal = this.formatter.format(x.otherItemTotal)
         }

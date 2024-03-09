@@ -1,7 +1,8 @@
 const { formatter } = require("../pdfWriter/pdfKitFunctions");
+const { getPrefixesItems } = require("../sql/sql");
 
 
-exports.OtherChargablesTable = (data, date, otherItems, workerProfile) => {
+exports.OtherChargablesTable = async (data, date, otherItems, workerProfile) => {
     const filteredArray = data.filter((worker) => workerProfile.associateName === worker.event_primary_worker_name)
 
     data.map((item) => {
@@ -24,11 +25,16 @@ exports.OtherChargablesTable = (data, date, otherItems, workerProfile) => {
     });
 
 
-    const totalsForUser = calculateTotals(filteredArray);
-    const totals = calculateTotals(data);
+    const totalsForUser = await calculateTotals(filteredArray);
+    const totals = await calculateTotals(data);
+    const totalAmt = Object.keys(totals)
+        .filter(key => key.startsWith('totalAmt'))
+        .reduce((total, key) => total + totals[key], 0);
 
-    const totalAmt = Object.values(totals).reduce((a, b, index) => index % 2 === 0 ? a + b : a, 0)
-    const totalQty = Object.values(totals).reduce((a, b, index) => index % 2 !== 0 ? a + b : a, 0)
+    const totalQty = Object.keys(totals)
+        .filter(key => key.startsWith('totalQty'))
+        .reduce((total, key) => total + totals[key], 0);
+
 
     return {
         title: "Other Items",
@@ -52,37 +58,32 @@ exports.OtherChargablesTable = (data, date, otherItems, workerProfile) => {
     }
 };
 
-const calculateTotals = (items) => {
-    let totalAmtCPRI = 0, totalQtyCPRI = 0;
-    let totalAmtCBT = 0, totalQtyCBT = 0;
-    let totalAmtCFIR = 0, totalQtyCFIR = 0;
-    let totalAmtTherapy = 0, totalQtyTherapy = 0;
+const calculateTotals = async (items) => {
+    let totals = {};
+    let prefixes = await getPrefixesItems()
+
+    prefixes.forEach(prefixInfo => {
+        const type = prefixInfo.type;
+        const totalAmtKey = `totalAmt${type}`;
+        const totalQtyKey = `totalQty${type}`;
+        totals[totalAmtKey] = 0;
+        totals[totalQtyKey] = 0;
+    });
 
     items.forEach(item => {
-        if (item.service_name.startsWith('T_')) {
-            totalAmtTherapy += item.otherItemTotal;
-            totalQtyTherapy += item.invoice_fee_qty;
-        } else if (item.service_name.startsWith('A_f_')) {
-            totalAmtCPRI += item.otherItemTotal;
-            totalQtyCPRI += item.invoice_fee_qty;
-        } else if (item.service_name.startsWith('A_c_')) {
-            totalAmtCBT += item.otherItemTotal;
-            totalQtyCBT += item.invoice_fee_qty;
-        } else if (item.service_name.startsWith('A__')) {
-            totalAmtCFIR += item.otherItemTotal;
-            totalQtyCFIR += item.invoice_fee_qty;
+        const matchingPrefix = prefixes.find(prefix => item.service_name.startsWith(prefix.prefix));
+        if (matchingPrefix) {
+            const type = matchingPrefix.type;
+            const totalAmtKey = `totalAmt${type}`;
+            const totalQtyKey = `totalQty${type}`;
+            if (!totals[totalAmtKey]) {
+                totals[totalAmtKey] = 0;
+                totals[totalQtyKey] = 0;
+            }
+            totals[totalAmtKey] += item.otherItemTotal;
+            totals[totalQtyKey] += item.invoice_fee_qty;
         }
     });
 
-    return {
-        //leave the keys as is in this order as they are used to calculate the totals on line 15
-        totalAmtCPRI,
-        totalQtyCPRI,
-        totalAmtCBT,
-        totalQtyCBT,
-        totalAmtCFIR,
-        totalQtyCFIR,
-        totalAmtTherapy,
-        totalQtyTherapy
-    };
+    return totals;
 }
