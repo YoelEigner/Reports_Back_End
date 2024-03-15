@@ -14,7 +14,7 @@ exports.paymentSummeryReport = (res, dateUnformatted, action, sites) => {
             let pdfData = Buffer.concat(buffers);
             try {
                 if (action === 'email') {
-                    reject("Cannot email summerized report")
+                    reject(403)
                 }
                 else { resolve({ pdfData }) }
             } catch (error) {
