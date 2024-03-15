@@ -1,7 +1,8 @@
 
 const PDFTYPE = {
     SINGLEPDF: 'singlepdf',
-    MULTIPDF: 'multipdf'
+    MULTIPDF: 'multipdf',
+    SUMMERY: 'summery',
 };
 
 const ACTIONTYPE = {

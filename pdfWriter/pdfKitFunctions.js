@@ -14,7 +14,13 @@ exports.generatePaymentHeader = (doc, worker) => {
         .fontSize(20)
         .text('Payment Report For : ' + worker, 0, 50, { align: 'center' })
         .font('Helvetica-Bold')
+}
 
+exports.generateSummarizedHeader = (doc, reportType) => {
+    doc
+        .fontSize(20)
+        .text(`Summarized ${reportType} Report`, 0, 50, { align: 'center' })
+        .font('Helvetica-Bold')
 }
 
 exports.generateLine = (doc, y) => {
@@ -80,6 +86,63 @@ const virticalLines = (doc, rectCell, indexColumn) => {
 
 
     doc.fontSize(10).fillColor('#292929');
+}
+
+exports.createSummertizedInvoiceReport = async (doc, transactionsTables) => {
+    this.generateSummarizedHeader(doc, 'Invoice')
+    this.generateLine(doc, 70)
+    try {
+        transactionsTables.map(async (transactionsTable) => {
+            if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
+            transactionsTable.datas.map(x => {
+                x.totalAmt = this.formatter.format(Number(x.totalAmt).toFixed(2))
+                x.tempItemTotal = this.formatter.format(Number(x.tempItemTotal).toFixed(2))
+            })
+            await doc.table(transactionsTable, {
+                prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
+                prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+                    virticalLines(doc, rectCell, indexColumn)
+                    doc.font("Helvetica").fontSize(8);
+                },
+            })
+            doc.moveDown()
+        });
+    } catch (error) {
+        console.log(error, 'error in summerized pdf')
+    }
+    // done!
+    this.addNumberTotPages(doc)
+    this.addDateToPages(doc)
+
+    doc.end();
+}
+
+exports.createSummertizedPaymentReport = async (doc, transactionsTables) => {
+    this.generateSummarizedHeader(doc, 'Payment')
+    this.generateLine(doc, 70)
+    try {
+        transactionsTables.map(async (transactionsTable) => {
+            if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
+            transactionsTable.datas.map(x => {
+                x.sum = this.formatter.format(Number(x.sum).toFixed(2))
+            })
+            await doc.table(transactionsTable, {
+                prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
+                prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+                    virticalLines(doc, rectCell, indexColumn)
+                    doc.font("Helvetica").fontSize(8);
+                },
+            })
+            doc.moveDown()
+        });
+    } catch (error) {
+        console.log(error, 'error in summerized pdf')
+    }
+    // done!
+    this.addNumberTotPages(doc)
+    this.addDateToPages(doc)
+
+    doc.end();
 }
 
 exports.createInvoiceTableFunc = async (doc, mainTable, othersTable, reportedItemsTable, duplicateTable, nonChargeables, adjustmentFeeTable, totalRemittance, non_chargeablesArr,
@@ -812,6 +875,26 @@ exports.removeDuplicates = (arr) => {
     return unique;
 }
 
+exports.getSummarizedDataByReasonType = (data) => {
+    const summarizedData = data.reduce((acc, item) => {
+        const key = `${item.reason_type}-${item.site}-${item.worker}-${item.worker}`;
+        if (!acc[key]) {
+            acc[key] = {
+                superviser: item.superviser,
+                worker: item.worker,
+                reason_type: item.reason_type,
+                site: item.site,
+                quantity: 0,
+                sum: 0
+            };
+        }
+        acc[key].quantity += 1;
+        acc[key].sum += item.applied_amt;
+        return acc;
+    }, {});
+    return summarizedData
+}
+
 exports.getSummarizedData = (data) => {
     const summarizedData = data.reduce((acc, item) => {
         const key = `${item.reason_type}-${item.applied_amt}-${item.worker}-${item.worker}`;
@@ -873,4 +956,18 @@ exports.calculateProcessingFeeTemp = (reasonTypeArray, costArray) => {
         }
     });
     return arr
+}
+
+exports.sortDataByKeys = (data, keys) => {
+    return data.sort((a, b) => {
+        for (let key of keys) {
+            if (a[key] < b[key]) {
+                return -1;
+            }
+            if (a[key] > b[key]) {
+                return 1;
+            }
+        }
+        return 0;
+    });
 }

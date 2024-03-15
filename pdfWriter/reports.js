@@ -6,7 +6,8 @@ const { getEmailPassword } = require("../sql/sql");
 const { createPaymentReportTable } = require("./PaymentReport");
 const { InvoicePromiseGenerator } = require("./invoiceReportGenerator");
 const { paymentReportGenerator } = require("./paymentReportGenerator");
-const { PDFTYPE, ACTIONTYPE} = require('../pdfWriter/commonEnums.js');
+const { PDFTYPE, ACTIONTYPE } = require('../pdfWriter/commonEnums.js');
+const { summeryReportGenerator } = require("./summarizedReports/summeryReportGenerator.js");
 
 const getDecryptedPass = async () => {
     try {
@@ -23,7 +24,7 @@ const getNetTotal = (res, date, worker, action, reportType) => {
     return createPaymentReportTable(res, date, worker.associateName, worker.id, '', '', action, reportType)
 }
 
-exports.reports = async (res, date, users, action, videoFee, reportType, actionType) => {
+exports.reports = async (res, date, users, action, videoFee, reportType, actionType, sites) => {
     let emailPassword = await getDecryptedPass()
     let archive = archiver('zip', {
         zlib: { level: 9 } // Sets the compression level.
@@ -44,6 +45,9 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
         }
     });
 
+    if (reportType === PDFTYPE.SUMMERY) {
+        summeryReportGenerator(res, date, action, sites, actionType)
+    }
     if (actionType === ACTIONTYPE.PAYMENT && reportType === PDFTYPE.SINGLEPDF) {
         paymentReportGenerator(res, date, users, emailPassword, action, reportType)
     }

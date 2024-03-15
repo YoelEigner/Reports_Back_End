@@ -63,7 +63,7 @@ router.route("/updateemailpassword", authToken).post(async (req, res) => {
 
 router.route("/generatepdf", authToken).post(async (req, res) => {
     let date = { start: req.body.start, end: req.body.end }
-    GeneratePDF(res, date, req.body.users, req.body.action, req.body.videoFee, req.body.reportType, req.body.actionType)
+    GeneratePDF(res, date, req.body.users, req.body.action, req.body.videoFee, req.body.reportType, req.body.actionType, req.body.sites)
 });
 
 router.route("/associatetypes", authToken).post(async (req, res) => {

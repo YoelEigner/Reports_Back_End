@@ -1,21 +1,8 @@
-const { sortByName, formatter } = require("../pdfWriter/pdfKitFunctions");
+const { formatter, sortDataByKeys } = require("../pdfWriter/pdfKitFunctions");
 
 exports.transactionsTable = (date, paymentData, proccessingFee, proccessingFeeQty) => {
-    paymentData.sort((a, b) => {
-        if (a.worker < b.worker) {
-            return -1;
-        }
-        if (a.worker > b.worker) {
-            return 1;
-        }
-        if (a.reason_type < b.reason_type) {
-            return -1;
-        }
-        if (a.reason_type > b.reason_type) {
-            return 1;
-        }
-        return 0;
-    });
+    const sortedData = sortDataByKeys(paymentData, ['worker', 'reason_type'])
+
     const row = ['Total fees', '-', proccessingFeeQty, '-', formatter.format(proccessingFee)]
 
     return {
@@ -29,7 +16,7 @@ exports.transactionsTable = (date, paymentData, proccessingFee, proccessingFeeQt
             { label: "total", property: 'sum', renderer: null, align: "center" },
 
         ],
-        datas: [...paymentData],
+        datas: [...sortedData],
         rows: [
             row
         ],
