@@ -1,8 +1,8 @@
 const PDFDocument = require("pdfkit-table");
 const moment = require('moment');
-const { getSummerizedPaymentData } = require("../../sql/sql");
-const { createSummertizedPaymentReport, getSummarizedDataByReasonType } = require("../pdfKitFunctions");
-const { summarizedTransactionTable } = require("../../tables/summarizedTransactionTable");
+const { getSummerizedInvoiceData } = require("../../sql/sql");
+const { getUniqueItemsMultiKey, createSummertizedInvoiceReport } = require("../pdfKitFunctions");
+const { summarizedReportedItemsTable } = require("../../tables/summarizedReportedItemsTable");
 
 
 exports.invoiceSummeryReport = (res, dateUnformatted, action, sites) => {
@@ -23,16 +23,25 @@ exports.invoiceSummeryReport = (res, dateUnformatted, action, sites) => {
         });
 
         try {
-            const summarizedTransactionTableData = [];
+            const reportedItemDataFilteredData = [];
             for (const site of sites) {
                 let date = { start: moment.utc(dateUnformatted.start).format('YYYY-MM-DD'), end: moment.utc(dateUnformatted.end).format('YYYY-MM-DD') }
-                const paymentData = await getSummerizedPaymentData(date, site);
-                const summarizedTransactions = Object.values(getSummarizedDataByReasonType(paymentData)).sort();
-                summarizedTransactionTableData.push(summarizedTransactionTable(date, summarizedTransactions, site));
+                const data = await getSummerizedInvoiceData(date, site);
+                let reportedItemDataFiltered = getUniqueItemsMultiKey(data, ['event_service_item_name', 'event_primary_worker_name'])
+                reportedItemDataFiltered.map(x => {
+                    x.qty = data.filter(i =>
+                        (i.event_primary_worker_name === x.event_primary_worker_name)
+                        &&
+                        (i.event_service_item_name === x.event_service_item_name)
+                    ).length
+                })
+
+                const summarizedTransactions = await summarizedReportedItemsTable(reportedItemDataFiltered, date, site);
+                reportedItemDataFilteredData.push(summarizedTransactions);
             }
 
-            await createSummertizedPaymentReport(doc,
-                summarizedTransactionTableData);
+            await createSummertizedInvoiceReport(doc,
+                reportedItemDataFilteredData);
         } catch (error) {
             console.log("returnnewPromise ~ error:", error)
             reject(error)

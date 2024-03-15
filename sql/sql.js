@@ -822,8 +822,8 @@ exports.getSummerizedInvoiceData = async (date, site, retryCount = 0) => {
     }
 
     try {
-        let resp = await sql.query(`SELECT worker, reason_type, applied_amt, site
-                                    FROM financial_view 
+        let resp = await sql.query(`SELECT event_primary_worker_name, event_service_item_name, event_service_item_total, event_service_item_qty, Year, Month , Day, site, invoice_fee_qty
+                                    FROM summarized_invoice_view 
                                     WHERE site like '%${site}%' AND DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset;

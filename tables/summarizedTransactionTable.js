@@ -1,23 +1,10 @@
-const { sortByName, formatter } = require("../pdfWriter/pdfKitFunctions");
+const { formatter, sortDataByKeys } = require("../pdfWriter/pdfKitFunctions");
 
 exports.summarizedTransactionTable = (date, paymentData, site) => {
     const tableTotal = paymentData.reduce((acc, curr) => acc + curr.sum, 0);
     const totalQty = paymentData.reduce((acc, curr) => acc + curr.quantity, 0);
-    paymentData.sort((a, b) => {
-        if (a.worker < b.worker) {
-            return -1;
-        }
-        if (a.worker > b.worker) {
-            return 1;
-        }
-        if (a.reason_type < b.reason_type) {
-            return -1;
-        }
-        if (a.reason_type > b.reason_type) {
-            return 1;
-        }
-        return 0;
-    });
+    const sortedData = sortDataByKeys(paymentData, ['worker', 'reason_type'])
+
     const row = ['Total', '-', totalQty , '-', formatter.format(tableTotal.toFixed(2))]
 
     return {
@@ -31,7 +18,7 @@ exports.summarizedTransactionTable = (date, paymentData, site) => {
             { label: "Total", property: 'sum', renderer: null, align: "center" },
 
         ],
-        datas: [...paymentData],
+        datas: [...sortedData],
         rows: [
             row
         ],

@@ -88,6 +88,35 @@ const virticalLines = (doc, rectCell, indexColumn) => {
     doc.fontSize(10).fillColor('#292929');
 }
 
+exports.createSummertizedInvoiceReport = async (doc, transactionsTables) => {
+    this.generateSummarizedHeader(doc, 'Invoice')
+    this.generateLine(doc, 70)
+    try {
+        transactionsTables.map(async (transactionsTable) => {
+            if (doc.y > 0.7 * doc.page.height) { doc.addPage() }
+            transactionsTable.datas.map(x => {
+                x.totalAmt = this.formatter.format(Number(x.totalAmt).toFixed(2))
+                x.tempItemTotal = this.formatter.format(Number(x.tempItemTotal).toFixed(2))
+            })
+            await doc.table(transactionsTable, {
+                prepareHeader: () => doc.font("Helvetica-Bold").fontSize(8),
+                prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+                    virticalLines(doc, rectCell, indexColumn)
+                    doc.font("Helvetica").fontSize(8);
+                },
+            })
+            doc.moveDown()
+        });
+    } catch (error) {
+        console.log(error, 'error in summerized pdf')
+    }
+    // done!
+    this.addNumberTotPages(doc)
+    this.addDateToPages(doc)
+
+    doc.end();
+}
+
 exports.createSummertizedPaymentReport = async (doc, transactionsTables) => {
     this.generateSummarizedHeader(doc, 'Payment')
     this.generateLine(doc, 70)
@@ -927,4 +956,18 @@ exports.calculateProcessingFeeTemp = (reasonTypeArray, costArray) => {
         }
     });
     return arr
+}
+
+exports.sortDataByKeys = (data, keys) => {
+    return data.sort((a, b) => {
+        for (let key of keys) {
+            if (a[key] < b[key]) {
+                return -1;
+            }
+            if (a[key] > b[key]) {
+                return 1;
+            }
+        }
+        return 0;
+    });
 }
