@@ -60,6 +60,14 @@ exports.OtherChargablesTable = async (data, date, otherItems, workerProfile) => 
 
 const calculateTotals = async (items) => {
     let totals = {};
+    totals.totalAmtTherapy = 0
+    totals.totalQtyTherapy = 0
+    totals.totalAmtCFIR = 0
+    totals.totalQtyCFIR = 0
+    totals.totalAmtCPRI = 0
+    totals.totalQtyCPRI = 0
+    totals.totalAmtCBT = 0
+    totals.totalQtyCBT = 0
     let prefixes = await getPrefixesItems()
 
     prefixes.forEach(prefixInfo => {
