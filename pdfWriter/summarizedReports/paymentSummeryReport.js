@@ -30,7 +30,7 @@ exports.paymentSummeryReport = (res, dateUnformatted, action, sites) => {
                 const summarizedTransactions = Object.values(getSummarizedDataByReasonTypeAndWorker(paymentData)).sort();
                 const summarizedTransactionsByReasonType = Object.values(getSummarizedDataByReasonType(paymentData)).sort();
                 summarizedTransactionTableData.push(summarizedTransactionTable(date, summarizedTransactions, site));
-                summarizedTransactionTableData.push(summarizedTransactionTable(date, summarizedTransactionsByReasonType, "Payment type summary"));
+                summarizedTransactionTableData.push(summarizedTransactionTable(date, summarizedTransactionsByReasonType, `Payment type summary - ${site}`));
             }
 
             await createSummertizedPaymentReport(doc,
