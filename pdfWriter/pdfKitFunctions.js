@@ -627,7 +627,7 @@ exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments
     }
 }
 
-//********************************************** */
+//********************************************** CBT */
 exports.removeOrAddAssessmentsCBT = (paymentData, assessments) => {
     return assessments ?
         paymentData.filter(x => x.case_program.startsWith('A_c_'))
@@ -668,7 +668,7 @@ exports.calculateWorkerFeeByLevalCBT = (wokrerLeval, data, paymentData, assessme
     }
 }
 
-//********************************** */
+//********************************** CPRI */
 exports.removeOrCPRI = (paymentData, assessments) => {
     return assessments ?
         paymentData.filter(x => x.case_program.startsWith('A_f_'))
