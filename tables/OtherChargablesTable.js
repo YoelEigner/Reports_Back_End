@@ -1,6 +1,4 @@
 const { formatter } = require("../pdfWriter/pdfKitFunctions");
-const { getPrefixesItems } = require("../sql/sql");
-
 
 exports.OtherChargablesTable = async (data, date, otherItems, workerProfile) => {
     const filteredArray = data.filter((worker) => workerProfile.associateName === worker.event_primary_worker_name)
@@ -24,16 +22,10 @@ exports.OtherChargablesTable = async (data, date, otherItems, workerProfile) => 
         item.otherItemTotal = fee * item.invoice_fee_qty;
     });
 
-
-    const totalsForUser = await calculateTotals(filteredArray);
-    const totals = await calculateTotals(data);
-    const totalAmt = Object.keys(totals)
-        .filter(key => key.startsWith('totalAmt'))
-        .reduce((total, key) => total + totals[key], 0);
-
-    const totalQty = Object.keys(totals)
-        .filter(key => key.startsWith('totalQty'))
-        .reduce((total, key) => total + totals[key], 0);
+    const totalsForUser = await calculateTotalsByPrefix(filteredArray);
+    const totals = await calculateTotalsByPrefix(data);
+    const totalAmt = totals.map((amt => amt.otherItemsTotal)).reduce((a, b) => a + b, 0)
+    const totalQty = totals.map((amt => amt.invoice_fee_qty)).reduce((a, b) => a + b, 0)
 
 
     return {
@@ -58,22 +50,22 @@ exports.OtherChargablesTable = async (data, date, otherItems, workerProfile) => 
     }
 };
 
-const calculateTotals = async (items) => {
-    let totals = {};
-    totals.totalAmtTherapy = 0
-    totals.totalQtyTherapy = 0
-    totals.totalAmtCFIR = 0
-    totals.totalQtyCFIR = 0
-    totals.totalAmtCPRI = 0
-    totals.totalQtyCPRI = 0
-    totals.totalAmtCBT = 0
-    totals.totalQtyCBT = 0
-    let prefixes = await getPrefixesItems()
+const prefixes = [
+    { prefix: 'A__', org: 'CFIR', type: 'assessment' },
+    { prefix: 'A_c_', org: 'CBT', type: 'assessment' },
+    { prefix: 'A_f_', org: 'CPRI', type: 'assessment' },
+    { prefix: 'T__', org: 'CFIR', type: 'therapy' },
+    { prefix: 'T_c_', org: 'CBT', type: 'therapy' },
+    { prefix: 'T_f_', org: 'CPRI', type: 'therapy' },
+];
 
+const calculateTotalsByPrefix = async (items) => {
+    let totals = {}
     prefixes.forEach(prefixInfo => {
         const type = prefixInfo.type;
-        const totalAmtKey = `totalAmt${type}`;
-        const totalQtyKey = `totalQty${type}`;
+        const org = prefixInfo.org;
+        const totalAmtKey = `totalAmt${type}_${org}`;
+        const totalQtyKey = `totalQty${type}_${org}`;
         totals[totalAmtKey] = 0;
         totals[totalQtyKey] = 0;
     });
@@ -82,8 +74,9 @@ const calculateTotals = async (items) => {
         const matchingPrefix = prefixes.find(prefix => item.service_name.startsWith(prefix.prefix));
         if (matchingPrefix) {
             const type = matchingPrefix.type;
-            const totalAmtKey = `totalAmt${type}`;
-            const totalQtyKey = `totalQty${type}`;
+            const org = matchingPrefix.org;
+            const totalAmtKey = `totalAmt${type}_${org}`;
+            const totalQtyKey = `totalQty${type}_${org}`;
             if (!totals[totalAmtKey]) {
                 totals[totalAmtKey] = 0;
                 totals[totalQtyKey] = 0;
@@ -93,5 +86,18 @@ const calculateTotals = async (items) => {
         }
     });
 
-    return totals;
-}
+    const totalsByPrefix = prefixes.map(prefixInfo => {
+        const type = prefixInfo.type;
+        const org = prefixInfo.org;
+        const totalAmtKey = `totalAmt${type}_${org}`;
+        const totalQtyKey = `totalQty${type}_${org}`;
+        return {
+            type,
+            org,
+            otherItemsTotal: totals[totalAmtKey] ?? 0,
+            invoice_fee_qty: totals[totalQtyKey] ?? 0
+        };
+    });
+
+    return totalsByPrefix;
+};

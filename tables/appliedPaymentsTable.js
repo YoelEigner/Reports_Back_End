@@ -1,4 +1,4 @@
-const { formatter, sortByDate, sortByJustDate, sortByName, sortByDateAndName } = require("../pdfWriter/pdfKitFunctions")
+const { formatter, sortByDateAndName } = require("../pdfWriter/pdfKitFunctions")
 const { getRate } = require("./associateFeesTherapy")
 const moment = require('moment')
 

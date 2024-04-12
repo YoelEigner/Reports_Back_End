@@ -4,7 +4,7 @@ const { sendEmail } = require("../email/sendEmail");
 const { getNonChargeables, getPaymentTypes, getAssociateProfileById, getSupervisers, getPaymentData, getPaymentDataForWorker, getAdjustmentsFeesWorkerOnlyInvoice, getAdjustmentsFeesInvoice, getProfileDates, getInvoiceDataForWorker, getInvoiceData, getSupervisersAssessments, getSupervisersCFIR, getOtherItems } = require("../sql/sql");
 const { adjustmentFeeTable } = require("../tables/adjustmentTable");
 const { associateFeesAssessments } = require("../tables/associateFeesAssessments");
-const { associateFeesTherapy, getRate } = require("../tables/associateFeesTherapy");
+const { associateFeesTherapy } = require("../tables/associateFeesTherapy");
 const { associateFeesTherapyCBT } = require("../tables/associateFeesTherapyCBT");
 const { associateFeesTherapyCPRI } = require("../tables/associateFeesTherapyCPRI");
 const { duplicateTable } = require("../tables/duplicateTable");
@@ -148,7 +148,17 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 //***************other chargable items ******************/
                 const otherChargableItemsFilterd = data.filter(x => otherChargableItems.includes(x.event_service_item_name))
-                const otherItemsTable = await OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, workerProfile[0])
+                const otherItemsTable = await (await OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, workerProfile[0]))
+                const otherItemsTableTotals = otherItemsTable.otherItemsTotal
+                    .reduce((acc, item) => {
+                        if (!acc[item.org]) {
+                            acc[item.org] = {};
+                        }
+                        if (!acc[item.org][item.type]) {
+                            acc[item.org][item.type] = item;
+                        }
+                        return acc;
+                    }, {});
 
                 //***************adjustment fees *****************/
                 let adjustmentFeeTableData = adjustmentFeeTable(date, reportType === PDFTYPE.SINGLEPDF ? adjustmentFees : await getAdjustmentsFeesInvoice(worker, profileDates))
@@ -170,17 +180,16 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                 //***********calculate supervisee fee********************/
                 let superviseeFeeCalculationTemp = async (tableType, supervisors) => {
                     if (respSuperviser.length >= 0 && reportType !== PDFTYPE.SINGLEPDF) {
-                        return (await calculateSuperviseeFeeFunc(dateUnformatted, supervisors, non_chargeablesArr, nonChargeableItems,
+                        return (await calculateSuperviseeFeeFunc(dateUnformatted, supervisors, nonChargeableItems,
                             proccessingFeeTypes, videoFee, tableType, profileDates, worker,
-                            otherChargableItems, otherChargableItemsFilterd, otherItems))
+                            otherChargableItems, otherChargableItemsFilterd, otherItemsTableTotals))
                     }
                     else return ([])
                 }
 
                 let superviseeAssessmentFeeCalculation = async (tableType) => {
                     if (respSuperviser.length >= 0 && reportType !== PDFTYPE.SINGLEPDF) {
-                        return (await calcSuperviseeAssessmentFeeFunc(dateUnformatted, respSuperviserAssessments, tableType, profileDates, worker, proccessingFeeTypes,
-                            otherChargableItems, otherChargableItemsFilterd, otherItems))
+                        return (await calcSuperviseeAssessmentFeeFunc(dateUnformatted, respSuperviserAssessments, tableType, profileDates, worker, otherChargableItemsFilterd, otherItemsTableTotals))
                     }
                     else return ([])
                 }
@@ -190,22 +199,25 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 let associateFeeBaseRateTables = await associateFeesTherapy(worker, invoiceQty, date, workerId, videoFee, proccessingFee, Number(workerProfile[0].blocksBiWeeklyCharge),
                     Number(finalAdjustmentFee), await superviseeFeeCalculationTemp('CFIR', respSupervisersCFIR), chargeVideoFee, removedNonChargablesArr.length,
-                    otherItemsTable.otherItemsTotal.totalAmtTherapy, otherItemsTable.otherItemsTotal.totalQtyTherapy, isl1SupPrac, workerProfile)
+                    otherItemsTableTotals['CFIR'].therapy.otherItemsTotal, otherItemsTableTotals['CFIR'].therapy.invoice_fee_qty, isl1SupPrac, workerProfile)
 
                 let associateFeeBaseRateTablesCBT = await associateFeesTherapyCBT(worker, invoiceQtyCBT, date, workerId,
-                    await superviseeFeeCalculationTemp('CBT', respSuperviser), removedNonChargablesArr.length, isl1SupPrac, workerProfile)
+                    await superviseeFeeCalculationTemp('CBT', respSuperviser), removedNonChargablesArr.length, isl1SupPrac, workerProfile,
+                    otherItemsTableTotals['CBT'].therapy.otherItemsTotal, otherItemsTableTotals['CBT'].therapy.invoice_fee_qty)
+
                 let associateFeeBaseRateTablesCPRI = await associateFeesTherapyCPRI(worker, invoiceQtyCPRI, date, workerId,
-                    await superviseeFeeCalculationTemp('CPRI', respSuperviser), removedNonChargablesArr.length, isl1SupPrac, workerProfile)
+                    await superviseeFeeCalculationTemp('CPRI', respSuperviser), removedNonChargablesArr.length, isl1SupPrac, workerProfile,
+                    otherItemsTableTotals['CPRI'].therapy.otherItemsTotal, otherItemsTableTotals['CPRI'].therapy.invoice_fee_qty)
 
                 let associateFeeAssessmentTable = await associateFeesAssessments(worker, calculateWorkerFeeByLeval(wokrerLeval, duplicateItemsAndSplitFeesRemoved, removedNonChargablesArrPayment, true),
                     date, associateFeeAssessmentRate, 'CFIR', await superviseeAssessmentFeeCalculation('CFIR'), workerProfile,
-                    otherItemsTable.otherItemsTotal.totalAmtCFIR, otherItemsTable.otherItemsTotal.totalQtyCFIR, otherChargableItems)
+                    otherItemsTableTotals['CFIR'].assessment.otherItemsTotal, otherItemsTableTotals['CFIR'].assessment.invoice_fee_qty, otherChargableItems)
                 let associateFeeAssessmentTableCBT = await associateFeesAssessments(worker, calculateWorkerFeeByLevalCBT(wokrerLeval, duplicateItemsAndSplitFeesRemoved, removedNonChargablesArrPayment, true),
                     date, associateFeeAssessmentRateCBT, 'CBT', await superviseeAssessmentFeeCalculation('CBT'), workerProfile,
-                    otherItemsTable.otherItemsTotal.totalAmtCBT, otherItemsTable.otherItemsTotal.totalQtyCBT, otherChargableItems)
+                    otherItemsTableTotals['CBT'].assessment.otherItemsTotal, otherItemsTableTotals['CBT'].assessment.invoice_fee_qty, otherChargableItems)
                 let associateFeeAssessmentTableCPRI = await associateFeesAssessments(worker, calculateWorkerFeeByLevalCPRI(wokrerLeval, duplicateItemsAndSplitFeesRemoved, removedNonChargablesArrPayment, true),
                     date, associateFeeAssessmentRateCPRI, 'CPRI', await superviseeAssessmentFeeCalculation('CPRI'), workerProfile,
-                    otherItemsTable.otherItemsTotal.totalAmtCPRI, otherItemsTable.otherItemsTotal.totalQtyCPRI, otherChargableItems)
+                    otherItemsTableTotals['CPRI'].assessment.otherItemsTotal, otherItemsTableTotals['CPRI'].assessment.invoice_fee_qty, otherChargableItems)
 
                 let finalTotalRemittence = associateFeeBaseRateTables.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
                     + associateFeeBaseRateTablesCBT.rows.map(x => Number(x.slice(-1)[0].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)

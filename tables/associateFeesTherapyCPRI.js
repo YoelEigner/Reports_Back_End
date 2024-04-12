@@ -98,7 +98,7 @@ const getRate = async (count, workerId, getSubPrac, L1AssociateFee) => {
         }
     }
 }
-exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, superviseeFeeCalculation, removedNonChargablesArr, isl1SupPrac, workerProfile) => {
+exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, superviseeFeeCalculation, removedNonChargablesArr, isl1SupPrac, workerProfile, otherItemsRate, otherItemsQty) => {
     let superviserGetsTherapyMoney =
         (workerProfile[0].supervisorOneGetsMoney === true)
         ||
@@ -106,11 +106,13 @@ exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, supervi
 
     let rate = await getRate_CPRI(removedNonChargablesArr, workerId, false)
 
-    let totalWoHST = (count * rate)
+    let totalWoHST = ((count - otherItemsQty) * rate) + otherItemsRate
     let hst = totalWoHST * (process.env.HST / 100)
     let tableTotal = totalWoHST + hst + superviseeFeeCalculation.map(x => Number(x[4].replace(/[^0-9.-]+/g, ""))).reduce((a, b) => a + b, 0)
     let hstRemoved = 0
     if (isl1SupPrac) { hstRemoved = hst }
+
+    let superviseeOthers = superviseeFeeCalculation.map(x => x.length).includes(11)
 
     let headers = []
     let rows = []
@@ -140,11 +142,13 @@ exports.associateFeesTherapyCPRI = async (worker, count, date, workerId, supervi
         ]
         rows = [
             worker,
-            count,
+            (count - otherItemsQty),
             formatter.format(rate),
             formatter.format(hst),
             formatter.format(totalWoHST + hst - hstRemoved)
         ]
+        if (otherItemsQty > 0 || superviseeOthers) { headers.splice(3, 0, { label: "SU Qty", renderer: null, align: "center" }, { label: "SU Fees", renderer: null, align: "center" }) }
+        if (otherItemsQty > 0 || superviseeOthers) { rows.splice(3, 0, otherItemsQty, formatter.format(otherItemsRate),) }
     }
 
     return {

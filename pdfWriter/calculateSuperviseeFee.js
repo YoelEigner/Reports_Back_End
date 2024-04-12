@@ -1,18 +1,17 @@
-const { getAssociateProfileById, getPaymentDataForWorker, getDataDate, getSuperviseeDataBySuperviser, getPaymentDataForWorkerBySupervisor } = require("../sql/sql")
-const { OtherChargablesTable } = require("../tables/OtherChargablesTable.js")
+const { getAssociateProfileById, getSuperviseeDataBySuperviser, getPaymentDataForWorkerBySupervisor } = require("../sql/sql")
 const { getRate, getRate_CBT, getRate_CPRI } = require("../tables/associateFeesTherapy")
 const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js")
-const { removeNullStr, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI, calculateProcessingFeeTemp, getSummarizedData, formatter } = require("./pdfKitFunctions")
+const { removeNullStr, calculateWorkerFeeByLeval, calculateProcessingFeeTemp, getSummarizedData, formatter } = require("./pdfKitFunctions")
 const { duplicateAndSplitFees, duplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees")
 
 
-exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, nonChargeableItems, proccessingFeeTypes, videoFee, tableType, profileDates, superviser,
-    otherChargableItems, otherChargableItemsFilterd, otherItems) => {
+exports.calculateSuperviseeFeeFunc = (date, respSuperviser, nonChargeableItems, proccessingFeeTypes, videoFee, tableType, profileDates, superviser,
+    otherChargableItems, otherChargableItemsFilterd, otherItemsTableTotals) => {
     let arr = []
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
-            const superviseeotherItemsTable = ((await OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, worker)).otherItemsTotal)
-            
+            const superviseeotherItemsTable = otherItemsTableTotals[tableType].therapy
+
             let superviseeWorkerProfile = await getAssociateProfileById(worker.id)
             let superviserGetsAssessmentMoney =
                 (
@@ -66,15 +65,9 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
 
 
                 let superviseeReportedItemsCount = () => {
-                    if (tableType === 'CFIR') return calculateWorkerFeeByLeval(associateType, duplicateItemsAndSplitFeesRemoved,
-                        workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length - (superviseeotherItemsTable.totalQtyTherapy > 0
-                            ? superviseeotherItemsTable.totalQtyTherapy : 0);
-                    else if (tableType === 'CBT') return calculateWorkerFeeByLevalCBT(associateType, duplicateItemsAndSplitFeesRemoved,
-                        workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length - (superviseeotherItemsTable.totalQtyCBT > 0
-                            ? superviseeotherItemsTable.totalQtyCBT : 0);
-                    else if (tableType === 'CPRI') return calculateWorkerFeeByLevalCPRI(associateType, duplicateItemsAndSplitFeesRemoved,
-                        workerPaymentData, false, isSuperviser, isSupervised, IsSupervisedByNonDirector).length - (superviseeotherItemsTable.totalQtyCPRI > 0
-                            ? superviseeotherItemsTable.totalQtyCPRI : 0);
+                    return calculateWorkerFeeByLeval(associateType, duplicateItemsAndSplitFeesRemoved,
+                        workerPaymentData, false, isSuperviser, isSupervised,
+                        IsSupervisedByNonDirector).length - (superviseeotherItemsTable.invoice_fee_qty ?? 0);
                 }
 
                 let SuperviseeRate = async () => {
@@ -83,26 +76,15 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, non_chargeablesArr, 
                     else if (tableType === 'CPRI') return await getRate_CPRI(superviseeReportedItemsCount(), worker.id)
                 }
 
-                let otherItemsFee = () => {
-                    if (tableType === 'CFIR') return superviseeotherItemsTable.totalAmtTherapy
-                    else if (tableType === 'CBT') return superviseeotherItemsTable.totalAmtCBT
-                    else if (tableType === 'CPRI') return superviseeotherItemsTable.totalAmtCPRI
-                }
-
-                let otherItemsQty = () => {
-                    if (tableType === 'CFIR') return superviseeotherItemsTable.totalQtyTherapy
-                    else if (tableType === 'CBT') return superviseeotherItemsTable.totalQtyCBT
-                    else if (tableType === 'CPRI') return superviseeotherItemsTable.totalQtyCPRI
-                }
                 let chargeVideoFee = tableType === 'CFIR' ? superviseeWorkerProfile.map(x => x.cahrgeVideoFee)[0] : false
 
 
                 let superviseeBlocksBiWeeklyCharge = tableType === 'CFIR' ? parseFloat(superviseeWorkerProfile.map(x => x.blocksBiWeeklyCharge)[0]) : 0
 
                 let superviseeAdjustmentFee = tableType === 'CFIR' ? JSON.parse(superviseeWorkerProfile.map(x => x.adjustmentFee)) : [{ name: 'rtest', value: '0' }]
-                // console.log(superviser, superviseeReportedItemsCount(), '--', superviseeReportedItemdData.length, '---', workerPaymentData.length)
                 arr.push(await calculateAssociateFeeForSupervisee(worker.associateName, superviseeReportedItemsCount(), parseFloat(await SuperviseeRate()), videoFee,
-                    superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge, superviseeAdjustmentFee, chargeVideoFee, tableType, otherItemsFee(), otherItemsQty(),
+                    superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge, superviseeAdjustmentFee, chargeVideoFee, tableType,
+                    superviseeotherItemsTable.otherItemsTotal, superviseeotherItemsTable.invoice_fee_qty,
                     otherChargableItemsFilterd.length, l1SupPrac))
             }
             else if (superviserGetsAssessmentMoney) {

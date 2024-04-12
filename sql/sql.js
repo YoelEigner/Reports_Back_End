@@ -494,22 +494,6 @@ exports.getOtherItems = async () => {
     }
 }
 
-exports.getPrefixesItems = async () => {
-    const cacheKey = generateCacheKey('feeName', 'getPrefixesItems');
-    const cachedData = sqlCache.get(cacheKey);
-    if (cachedData) {
-        return cachedData;
-    }
-    try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT service_name, prefix, type FROM [CFIR].[dbo].[other_chargeables] WHERE is_probono_item = 'false'`)
-        sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
-        return resp.recordset
-    } catch (error) {
-        console.log(error)
-    }
-}
-
 exports.getSupervisers = async (name) => {
     const cacheKey = generateCacheKey(name, 'getSupervisers');
     const cachedData = sqlCache.get(cacheKey);
