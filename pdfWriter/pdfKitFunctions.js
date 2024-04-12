@@ -875,9 +875,29 @@ exports.removeDuplicates = (arr) => {
     return unique;
 }
 
+exports.getSummarizedDataByReasonTypeAndWorker = (data) => {
+    const summarizedData = data.reduce((acc, item) => {
+        const key = `${item.reason_type}-${item.site}-${item.worker}`;
+        if (!acc[key]) {
+            acc[key] = {
+                superviser: item.superviser,
+                worker: item.worker,
+                reason_type: item.reason_type,
+                site: item.site,
+                quantity: 0,
+                sum: 0
+            };
+        }
+        acc[key].quantity += 1;
+        acc[key].sum += item.applied_amt;
+        return acc;
+    }, {});
+    return summarizedData
+}
+
 exports.getSummarizedDataByReasonType = (data) => {
     const summarizedData = data.reduce((acc, item) => {
-        const key = `${item.reason_type}-${item.site}-${item.worker}-${item.worker}`;
+        const key = `${item.reason_type}-${item.site}`;
         if (!acc[key]) {
             acc[key] = {
                 superviser: item.superviser,
