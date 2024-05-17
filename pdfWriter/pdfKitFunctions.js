@@ -900,8 +900,6 @@ exports.getSummarizedDataByReasonType = (data) => {
         const key = `${item.reason_type}-${item.site}`;
         if (!acc[key]) {
             acc[key] = {
-                superviser: item.superviser,
-                worker: item.worker,
                 reason_type: item.reason_type,
                 site: item.site,
                 quantity: 0,
