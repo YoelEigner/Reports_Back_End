@@ -27,9 +27,7 @@ exports.paymentSummeryReport = (res, dateUnformatted, action, sites) => {
             for (const site of sites) {
                 let date = { start: moment.utc(dateUnformatted.start).format('YYYY-MM-DD'), end: moment.utc(dateUnformatted.end).format('YYYY-MM-DD') }
                 const paymentData = await getSummerizedPaymentData(date, site);
-                const summarizedTransactions = Object.values(getSummarizedDataByReasonTypeAndWorker(paymentData)).sort();
                 const summarizedTransactionsByReasonType = Object.values(getSummarizedDataByReasonType(paymentData)).sort();
-                summarizedTransactionTableData.push(summarizedTransactionTable(date, summarizedTransactions, site));
                 summarizedTransactionTableData.push(summarizedTransactionTable(date, summarizedTransactionsByReasonType, `Payment type summary - ${site}`));
             }
 
