@@ -4,7 +4,7 @@ exports.OtherChargablesTable = async (data, date, otherItems, workerProfile) => 
     const filteredArray = data.filter((worker) => workerProfile.associateName === worker.event_primary_worker_name)
 
     data.map((item) => {
-        const otherItem = otherItems.find(x => x.service_name === item.event_service_item_name);
+        const otherItem = otherItems.find(x => x.service_name === item.event_service_item_name && item.service_name.startsWith(x.prefix));
         const isTherapy = item.service_name.startsWith('T_');
         //calulating fee as follws:
         //if the item is probono, then fee is the probono rate
@@ -13,10 +13,10 @@ exports.OtherChargablesTable = async (data, date, otherItems, workerProfile) => 
         //else (this will be a catch all/ if an item is an assessment) fee is the total of the item * the assessment rate
         const fee = otherItem.is_probono_item
             ? Number(workerProfile.probono)
-            : otherItem.use_fix_assoc_fee
-                ? otherItem.assoc_rate
-                : isTherapy
-                    ? otherItem.therapy_rate
+            : isTherapy
+                ? otherItem.therapy_rate
+                : otherItem.use_fix_assoc_fee
+                    ? otherItem.assoc_rate
                     : Number(item.TOTAL.replace(/[^0-9.-]+/g, "")) * Number(workerProfile.assessmentRate) / 100
         item.fee = fee;
         item.otherItemTotal = fee * item.invoice_fee_qty;
