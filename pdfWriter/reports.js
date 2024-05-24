@@ -95,6 +95,7 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
                         }
                     }).catch(err => {
                         console.log(err, 'Multi Invoice report error')
+                        res.status(400).json(err);
                         return err
                     })
 
