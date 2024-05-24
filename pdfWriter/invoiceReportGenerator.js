@@ -15,7 +15,7 @@ exports.InvoicePromiseGenerator = (res, date, users, netAppliedTotal, reportType
                 'Content-disposition': `attachment;filename=file.pdf`
             }).end(invoicePDF);
         }).catch(err => {
-            console.log(err)
+            res.status(400).json(err);
         })
     });
 }

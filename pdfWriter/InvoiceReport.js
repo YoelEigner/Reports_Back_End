@@ -148,7 +148,14 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 //***************other chargable items ******************/
                 const otherChargableItemsFilterd = data.filter(x => otherChargableItems.includes(x.event_service_item_name))
-                const otherItemsTable = await (await OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, workerProfile[0]))
+                const otherItemsTable = await (await OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, workerProfile[0]))                
+                if (otherItemsTable.errorCode === 400) {
+                    reject(
+                        `${400} No record found in the database for ${otherItemsTable.item.event_service_item_name}. service_name: ${otherItemsTable.item.service_name}.`
+                    );
+                    return 400;
+                }
+
                 const otherItemsTableTotals = otherItemsTable.otherItemsTotal
                     .reduce((acc, item) => {
                         if (!acc[item.org]) {
