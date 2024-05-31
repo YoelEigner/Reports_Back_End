@@ -18,7 +18,7 @@ const { createInvoiceTableFunc, sortByDate, removeNullStr, getUniqueItemsMultiKe
 const { duplicateAndSplitFees, duplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees");
 const moment = require('moment');
 const { calcSuperviseeAssessmentFeeFunc } = require("./calcSuperviseeAssessmentFeeFunc");
-const { OtherChargablesTable } = require("../tables/OtherChargablesTable.js");
+const { OtherChargablesTable, otherItemsTableTotalsCalculation } = require("../tables/OtherChargablesTable.js");
 const { PDFTYPE, ACTIONTYPE } = require('../pdfWriter/commonEnums.js');
 exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netAppliedTotal, duration_hrs, videoFee, paymentQty, proccessingFee, action, associateEmail, emailPassword, reportType, index) => {
     return new Promise(async (resolve, reject) => {
@@ -148,24 +148,13 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
                 //***************other chargable items ******************/
                 const otherChargableItemsFilterd = data.filter(x => otherChargableItems.includes(x.event_service_item_name))
-                const otherItemsTable = await (await OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, workerProfile[0]))                
-                if (otherItemsTable.errorCode === 400) {
-                    reject(
-                        `${400} No record found in the database for ${otherItemsTable.item.event_service_item_name}. service_name: ${otherItemsTable.item.service_name}.`
-                    );
-                    return 400;
-                }
+                const otherItemsTable = await OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, workerProfile[0])
 
-                const otherItemsTableTotals = otherItemsTable.otherItemsTotal
-                    .reduce((acc, item) => {
-                        if (!acc[item.org]) {
-                            acc[item.org] = {};
-                        }
-                        if (!acc[item.org][item.type]) {
-                            acc[item.org][item.type] = item;
-                        }
-                        return acc;
-                    }, {});
+                const otherItemsTableTotals = await otherItemsTableTotalsCalculation(reject, otherItemsTable, res)
+                    .catch(error => {
+                        reject(error)
+                        throw error;
+                    });
 
                 //***************adjustment fees *****************/
                 let adjustmentFeeTableData = adjustmentFeeTable(date, reportType === PDFTYPE.SINGLEPDF ? adjustmentFees : await getAdjustmentsFeesInvoice(worker, profileDates))
@@ -189,14 +178,19 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
                     if (respSuperviser.length >= 0 && reportType !== PDFTYPE.SINGLEPDF) {
                         return (await calculateSuperviseeFeeFunc(dateUnformatted, supervisors, nonChargeableItems,
                             proccessingFeeTypes, videoFee, tableType, profileDates, worker,
-                            otherChargableItems, otherChargableItemsFilterd, otherItemsTableTotals))
+                            otherChargableItems, otherChargableItemsFilterd, otherItems).catch(error => {
+                                throw error;
+                            }))
                     }
                     else return ([])
                 }
 
                 let superviseeAssessmentFeeCalculation = async (tableType) => {
                     if (respSuperviser.length >= 0 && reportType !== PDFTYPE.SINGLEPDF) {
-                        return (await calcSuperviseeAssessmentFeeFunc(dateUnformatted, respSuperviserAssessments, tableType, profileDates, worker, otherChargableItemsFilterd, otherItemsTableTotals))
+                        return (await calcSuperviseeAssessmentFeeFunc(dateUnformatted, respSuperviserAssessments,
+                            tableType, profileDates, worker, otherChargableItemsFilterd, otherItems)).catch(error => {
+                                throw error;
+                            })
                     }
                     else return ([])
                 }
@@ -260,6 +254,7 @@ exports.createInvoiceTable = async (res, dateUnformatted, worker, workerId, netA
 
             } catch (error) {
                 console.log(error)
+                reject(error)
                 return error
             }
         } catch (err) {

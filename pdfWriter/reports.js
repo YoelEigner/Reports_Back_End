@@ -103,8 +103,10 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
         })
         Promise.all(promise).then(() => {
             if (filesAppended === 0) {
-                res.writeHead(404)
-                res.send()
+                if (!res.headersSent) {
+                    res.writeHead(404);
+                }
+                res.end()
                 return;
             }
             archive.pipe(output);

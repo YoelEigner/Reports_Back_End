@@ -1,4 +1,5 @@
 const { getAssociateProfileById, getSuperviseeDataBySuperviser, getPaymentDataForWorkerBySupervisor } = require("../sql/sql")
+const { OtherChargablesTable, otherItemsTableTotalsCalculation } = require("../tables/OtherChargablesTable.js")
 const { getRate, getRate_CBT, getRate_CPRI } = require("../tables/associateFeesTherapy")
 const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js")
 const { removeNullStr, calculateWorkerFeeByLeval, calculateProcessingFeeTemp, getSummarizedData, formatter } = require("./pdfKitFunctions")
@@ -6,10 +7,16 @@ const { duplicateAndSplitFees, duplicateAndSplitFeesRemoved } = require("./remov
 
 
 exports.calculateSuperviseeFeeFunc = (date, respSuperviser, nonChargeableItems, proccessingFeeTypes, videoFee, tableType, profileDates, superviser,
-    otherChargableItems, otherChargableItemsFilterd, otherItemsTableTotals) => {
+    otherChargableItems, otherChargableItemsFilterd, otherItems) => {
     let arr = []
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
+            const otherItemsTable = await OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, worker)
+            const otherItemsTableTotals = await otherItemsTableTotalsCalculation(reject, otherItemsTable)
+                .catch(error => {
+                    throw error;
+                });
+
             const superviseeotherItemsTable = otherItemsTableTotals[tableType].therapy
 
             let superviseeWorkerProfile = await getAssociateProfileById(worker.id)
@@ -65,9 +72,12 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, nonChargeableItems, 
 
 
                 let superviseeReportedItemsCount = () => {
-                    return calculateWorkerFeeByLeval(associateType, duplicateItemsAndSplitFeesRemoved,
+                    let superviseeItemLength = calculateWorkerFeeByLeval(associateType, duplicateItemsAndSplitFeesRemoved,
                         workerPaymentData, false, isSuperviser, isSupervised,
-                        IsSupervisedByNonDirector).length - (superviseeotherItemsTable.invoice_fee_qty ?? 0);
+                        IsSupervisedByNonDirector).length ?? 0;
+                    let invoiceFeeQty = superviseeotherItemsTable.invoice_fee_qty ?? 0;
+
+                    return Math.max(0, superviseeItemLength - invoiceFeeQty);
                 }
 
                 let SuperviseeRate = async () => {

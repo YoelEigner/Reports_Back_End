@@ -112,3 +112,24 @@ const calculateTotalsByPrefix = async (items) => {
 
   return totalsByPrefix;
 };
+
+
+exports.otherItemsTableTotalsCalculation = async (reject, otherItemsTable) => {
+  if (otherItemsTable.errorCode === 400) {
+    reject(
+      `${400} No record found in the database for ${otherItemsTable.item.event_service_item_name}. service_name: ${otherItemsTable.item.service_name}.`
+    );
+    throw new Error(otherItemsTable.errorCode)
+  }
+
+  return otherItemsTable.otherItemsTotal
+    .reduce((acc, item) => {
+      if (!acc[item.org]) {
+        acc[item.org] = {};
+      }
+      if (!acc[item.org][item.type]) {
+        acc[item.org][item.type] = item;
+      }
+      return acc;
+    }, {});
+}

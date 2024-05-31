@@ -1,12 +1,18 @@
 const { getAssociateProfileById, getSuperviseeDataBySuperviser, getPaymentDataForWorkerBySupervisor } = require("../sql/sql")
+const { OtherChargablesTable, otherItemsTableTotalsCalculation } = require("../tables/OtherChargablesTable")
 const { removeNullStr, calculateWorkerFeeByLeval, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI, formatter } = require("./pdfKitFunctions")
 const { duplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees")
 
 
-exports.calcSuperviseeAssessmentFeeFunc = (date, respSuperviser, tableType, profileDates, superviser, otherChargableItemsFilterd, otherItemsTableTotals) => {
+exports.calcSuperviseeAssessmentFeeFunc = (date, respSuperviser, tableType, profileDates, superviser, otherChargableItemsFilterd, otherItems) => {
     let arr = []
     return new Promise((resolve, reject) => {
         let loop = respSuperviser.map(async (worker) => {
+            const otherItemsTable = await OtherChargablesTable(otherChargableItemsFilterd, date, otherItems, worker)
+            const otherItemsTableTotals = await otherItemsTableTotalsCalculation(reject, otherItemsTable)
+                .catch(error => {
+                    throw error;
+                });
             const superviseeotherItemsTable = otherItemsTableTotals[tableType].assessment
 
             let superviseeReportedItemdData = removeNullStr(await getSuperviseeDataBySuperviser(date, worker.associateName, profileDates, superviser), '-')
