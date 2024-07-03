@@ -131,7 +131,7 @@ exports.getInvoiceData = async (date, worker, profileDates, retryCount = 0) => {
     } catch (err) {
         if (retryCount < MAX_RETRIES && isTimeoutError(error)) {
             await delay(RETRY_DELAY);
-            return getInvoiceData(date, worker, profileDates, retryCount + 1);
+            return this.getInvoiceData(date, worker, profileDates, retryCount + 1);
         }
         return err
     }
@@ -250,7 +250,7 @@ exports.getAssociateProfileById = async (workerId, retryCount = 0) => {
     } catch (err) {
         if (retryCount < MAX_RETRIES && isTimeoutError(err)) {
             await delay(RETRY_DELAY);
-            return getAssociateProfileById(workerId);
+            return this.getAssociateProfileById(workerId);
         }
         return err
     }
@@ -814,7 +814,7 @@ exports.getSummerizedInvoiceData = async (date, site, retryCount = 0) => {
     } catch (error) {
         if (retryCount < MAX_RETRIES && isTimeoutError(error)) {
             await delay(RETRY_DELAY);
-            return getSummerizedInvoiceData(date, retryCount + 1);
+            return this.getSummerizedInvoiceData(date, retryCount + 1);
         }
         console.log('getPaymentData Function', error)
         throw new Error(error);
@@ -840,7 +840,7 @@ exports.getSummerizedPaymentData = async (date, site, retryCount = 0) => {
     } catch (error) {
         if (retryCount < MAX_RETRIES && isTimeoutError(error)) {
             await delay(RETRY_DELAY);
-            return getSummerizedPaymentData(date, retryCount + 1);
+            return this.getSummerizedPaymentData(date, retryCount + 1);
         }
         console.log('getPaymentData Function', error)
         throw new Error(error);
@@ -900,7 +900,7 @@ exports.getPaymentData = async (worker, date, profileDates, retryCount = 0) => {
     } catch (error) {
         if (retryCount < MAX_RETRIES && isTimeoutError(error)) {
             await delay(RETRY_DELAY);
-            return getPaymentData(worker, date, profileDates, retryCount + 1);
+            return this.getPaymentData(worker, date, profileDates, retryCount + 1);
         }
         console.log('getPaymentData Function', error)
         throw new Error(error);
