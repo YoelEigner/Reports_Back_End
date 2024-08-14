@@ -17,6 +17,7 @@ async function loadPLimit() {
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 const CACHE_TTL_SECONDS = 60;
+const MAX_CONCURRENT_QUERIES = 5; 
 
 const config = {
     user: "Node",
@@ -64,10 +65,11 @@ async function closeConnectionPool() {
 }
 
 async function executeQuery(query, retryCount = 0) {
-    await loadPLimit();  // Ensure pLimit is loaded dynamically
+    await loadPLimit();  // Ensure p-limit is loaded dynamically
 
-    // Wrap the query in p-limit to ensure concurrency control
-    return pLimit(25)(async () => {
+    const limit = pLimit(MAX_CONCURRENT_QUERIES); // Create a p-limit instance with the desired concurrency
+
+    return limit(async () => {  // Apply the concurrency limit
         try {
             const pool = await getConnection();
             const request = pool.request();
