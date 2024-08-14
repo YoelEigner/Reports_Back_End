@@ -169,41 +169,71 @@ exports.getSuperviseeDataBySuperviser = async (date, worker, profileDates, super
     }
 }
 
+// exports.getInvoiceData = async (date, worker, profileDates, retryCount = 0) => {
+//     const cacheKey = generateCacheKey(worker, 'getInvoiceData');
+
+//     const cachedData = sqlCache.get(cacheKey);
+//     if (cachedData) {
+//         return cachedData;
+//     }
+//     try {
+
+//         let resp = await executeQuery(`(SELECT DISTINCT i.*, FORMAT(i.[event_service_item_total], 'C') as TOTAL, i.batch_date AS FULLDATE
+//                                         FROM [CFIR].[dbo].[invoice_data] i
+//                                         JOIN profiles p ON (i.event_primary_worker_name = p.associateName OR event_invoice_details_worker_name = p.associateName) AND p.status = 1
+//                                         WHERE i.batch_date >= '${date.start}' AND i.batch_date <= '${date.end}'
+//                                         AND i.batch_date >= '${profileDates.startDate}' AND i.batch_date <= '${profileDates.endDate}'
+//                                         AND (i.event_primary_worker_name like '%${worker}%' OR i.event_invoice_details_worker_name like '%${worker}%')
+//                                         AND ((p.supervisor1 like '%${worker}%' AND p.supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1) 
+//                                         OR (p.supervisor2 like '%${worker}%' AND p.supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo = 1))
+//                                         AND event_service_item_name NOT IN (SELECT name FROM non_remittable))
+//                                         UNION
+//                                         (
+//                                         select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
+//                                                                             FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
+//                                                                             >='${date.start}' and batch_date <='${date.end}'
+//                                                                             AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
+//                                                                             AND [event_primary_worker_name] like '%${worker}%'
+//                                                                             AND event_service_item_name NOT IN (SELECT name FROM non_remittable))`
+//         )
+//         sqlCache.set(cacheKey, resp, CACHE_TTL_SECONDS);
+//         return resp;
+//     } catch (err) {
+//         if (retryCount < MAX_RETRIES && isTimeoutError(error)) {
+//             await delay(RETRY_DELAY);
+//             return this.getInvoiceData(date, worker, profileDates, retryCount + 1);
+//         }
+//         return err
+//     }
+// }
+const sql = require('mssql');
+
 exports.getInvoiceData = async (date, worker, profileDates, retryCount = 0) => {
     const cacheKey = generateCacheKey(worker, 'getInvoiceData');
-
     const cachedData = sqlCache.get(cacheKey);
     if (cachedData) {
         return cachedData;
     }
-    try {
 
-        let resp = await executeQuery(`(SELECT DISTINCT i.*, FORMAT(i.[event_service_item_total], 'C') as TOTAL, i.batch_date AS FULLDATE
-                                        FROM [CFIR].[dbo].[invoice_data] i
-                                        JOIN profiles p ON (i.event_primary_worker_name = p.associateName OR event_invoice_details_worker_name = p.associateName) AND p.status = 1
-                                        WHERE i.batch_date >= '${date.start}' AND i.batch_date <= '${date.end}'
-                                        AND i.batch_date >= '${profileDates.startDate}' AND i.batch_date <= '${profileDates.endDate}'
-                                        AND (i.event_primary_worker_name like '%${worker}%' OR i.event_invoice_details_worker_name like '%${worker}%')
-                                        AND ((p.supervisor1 like '%${worker}%' AND p.supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1) 
-                                        OR (p.supervisor2 like '%${worker}%' AND p.supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo = 1))
-                                        AND event_service_item_name NOT IN (SELECT name FROM non_remittable))
-                                        UNION
-                                        (
-                                        select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
-                                                                            FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
-                                                                            >='${date.start}' and batch_date <='${date.end}'
-                                                                            AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
-                                                                            AND [event_primary_worker_name] like '%${worker}%'
-                                                                            AND event_service_item_name NOT IN (SELECT name FROM non_remittable))`
-        )
+    try {
+        const params = [
+            { name: 'StartDate', type: sql.Date, value: new Date(date.start) },
+            { name: 'EndDate', type: sql.Date, value: new Date(date.end) },
+            { name: 'ProfileStartDate', type: sql.Date, value: new Date(profileDates.startDate) },
+            { name: 'ProfileEndDate', type: sql.Date, value: new Date(profileDates.endDate) },
+            { name: 'Worker', type: sql.NVarChar(100), value: worker }
+        ];
+
+        const resp = await executeStoredProcedure('dbo.GetInvoiceData', params);
+
         sqlCache.set(cacheKey, resp, CACHE_TTL_SECONDS);
         return resp;
-    } catch (err) {
+    } catch (error) {
         if (retryCount < MAX_RETRIES && isTimeoutError(error)) {
             await delay(RETRY_DELAY);
             return this.getInvoiceData(date, worker, profileDates, retryCount + 1);
         }
-        return err
+        throw error; // Re-throw the error if we've exhausted retries or it's not a timeout
     }
 }
 
@@ -990,7 +1020,7 @@ async function executeStoredProcedure(procedureName, params) {
         // Execute the stored procedure
         const result = await request.execute(procedureName);
         console.log("🚀 ~ executeStoredProcedure ~ result:", result.recordset)
-        
+
         return result.recordset;
     } catch (err) {
         console.error('SQL error', err);

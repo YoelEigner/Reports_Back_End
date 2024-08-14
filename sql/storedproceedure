@@ -1,74 +1,35 @@
--- Create or alter the stored procedure
-CREATE OR ALTER PROCEDURE GetFinancialData
-    @worker NVARCHAR(100),
-    @startDate DATE,
-    @endDate DATE,
-    @profileStartDate DATE,
-    @profileEndDate DATE
+CREATE PROCEDURE [dbo].[GetInvoiceData]
+    @StartDate DATE,
+    @EndDate DATE,
+    @ProfileStartDate DATE,
+    @ProfileEndDate DATE,
+    @Worker NVARCHAR(100)
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    DECLARE @workerPattern NVARCHAR(102) = '%' + @worker + '%';
+    SELECT DISTINCT 
+        i.*, 
+        FORMAT(i.[event_service_item_total], 'C') as TOTAL, 
+        i.batch_date AS FULLDATE
+    FROM [CFIR].[dbo].[invoice_data] i
+    JOIN profiles p ON (i.event_primary_worker_name = p.associateName OR event_invoice_details_worker_name = p.associateName) AND p.status = 1
+    WHERE i.batch_date >= @StartDate AND i.batch_date <= @EndDate
+    AND i.batch_date >= @ProfileStartDate AND i.batch_date <= @ProfileEndDate
+    AND (i.event_primary_worker_name LIKE '%' + @Worker + '%' OR i.event_invoice_details_worker_name LIKE '%' + @Worker + '%')
+    AND ((p.supervisor1 LIKE '%' + @Worker + '%' AND p.supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1)
+     OR (p.supervisor2 LIKE '%' + @Worker + '%' AND p.supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo = 1))
+    AND event_service_item_name NOT IN (SELECT name FROM non_remittable)
 
-    SELECT fv.*, DATEFROMPARTS(fv.Year, fv.Month, fv.Day) AS FULLDATE
-    FROM dbo.financial_view fv
-    JOIN dbo.profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName) AND p.status = 1
-    LEFT JOIN dbo.non_remittable nr ON fv.description = nr.name
-    WHERE DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN @startDate AND @endDate
-      AND DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN @profileStartDate AND @profileEndDate
-      AND (fv.superviser LIKE @workerPattern OR fv.worker LIKE @workerPattern)
-      AND nr.name IS NULL
-      AND (
-        (p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T')
-        OR (p.supervisor2 = fv.superviser AND p.supervisorTwoGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T')
-        OR (p.assessmentMoneyToSupervisorOne = 1 AND p.supervisor1 = fv.superviser AND LEFT(fv.case_program, 1) = 'A')
-        OR (p.assessmentMoneyToSupervisorTwo = 1 AND p.supervisor2 = fv.superviser AND LEFT(fv.case_program, 1) = 'A')
-      )
+    UNION
 
-    UNION ALL
-
-    SELECT fv.*, DATEFROMPARTS(fv.Year, fv.Month, fv.Day) AS FULLDATE
-    FROM dbo.financial_view fv
-    LEFT JOIN dbo.non_remittable nr ON fv.description = nr.name
-    WHERE DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN @startDate AND @endDate
-      AND DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN @profileStartDate AND @profileEndDate
-      AND fv.worker LIKE @workerPattern
-      AND nr.name IS NULL
+    SELECT 
+        *, 
+        FORMAT([event_service_item_total], 'C') as TOTAL, 
+        batch_date AS FULLDATE
+    FROM [CFIR].[dbo].[invoice_data] 
+    WHERE batch_date >= @StartDate AND batch_date <= @EndDate
+    AND batch_date >= @ProfileStartDate AND batch_date <= @ProfileEndDate
+    AND [event_primary_worker_name] LIKE '%' + @Worker + '%'
+    AND event_service_item_name NOT IN (SELECT name FROM non_remittable)
 END
-GO
-
--- Create indexes on the relevant tables
-IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_profiles_associateName' AND object_id = OBJECT_ID('dbo.profiles'))
-BEGIN
-    CREATE INDEX IX_profiles_associateName ON dbo.profiles (associateName);
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_non_remittable_name' AND object_id = OBJECT_ID('dbo.non_remittable'))
-BEGIN
-    CREATE INDEX IX_non_remittable_name ON dbo.non_remittable (name);
-END
-GO
-
--- Test execution of the stored procedure
-EXEC GetFinancialData 
-    @worker = 'Leslie (LH), Erin',
-    @startDate = '2024-04-13',
-    @endDate = '2024-12-31',
-    @profileStartDate = '2022-01-29',
-    @profileEndDate = '2999-01-01'
-GO
-
--- Update statistics for the relevant tables
-UPDATE STATISTICS dbo.profiles;
-UPDATE STATISTICS dbo.non_remittable;
-UPDATE STATISTICS dbo.payment_data;
-UPDATE STATISTICS dbo.invoice_data;
-
--- Rebuild indexes for the relevant tables
-ALTER INDEX ALL ON dbo.profiles REBUILD;
-ALTER INDEX ALL ON dbo.non_remittable REBUILD;
-ALTER INDEX ALL ON dbo.payment_data REBUILD;
-ALTER INDEX ALL ON dbo.invoice_data REBUILD;
-GO
