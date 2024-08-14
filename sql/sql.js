@@ -23,6 +23,33 @@ const config = {
     }
 };
 
+
+let pool;
+
+async function getConnection() {
+    if (!pool) {
+        pool = await new sql.ConnectionPool(config).connect();
+    }
+    return pool;
+}
+
+async function executeQuery(query, retryCount = 0) {
+    try {
+        const pool = await getConnection();
+        const request = pool.request();
+
+        const result = await request.query(query);
+        return result.recordset;
+    } catch (err) {
+        if (retryCount < MAX_RETRIES && isTimeoutError(err)) {
+            console.log(`Retrying query, attempt ${retryCount + 1}`);
+            await delay(RETRY_DELAY);
+            return executeQuery(query, params, retryCount + 1);
+        }
+        throw err;
+    }
+}
+
 exports.getProfileDates = async (workerId) => {
     const cacheKey = generateCacheKey(workerId, 'getProfileDates');
     const cachedData = sqlCache.get(cacheKey);
@@ -31,8 +58,7 @@ exports.getProfileDates = async (workerId) => {
     }
 
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`select startDate, endDate from profiles where id = ${workerId}`)
+        let resp = await executeQuery(`select startDate, endDate from profiles where id = ${workerId}`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset[0];
     } catch (err) {
@@ -42,8 +68,8 @@ exports.getProfileDates = async (workerId) => {
 
 exports.deleteprofile = async (id) => {
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`delete from profiles where id = ${id}`)
+        ;
+        let resp = await executeQuery(`delete from profiles where id = ${id}`)
         if (resp.rowsAffected[0] === 1) return 200
         else return 500
     } catch (error) {
@@ -60,9 +86,9 @@ exports.getInvoiceDataForWorker = async (date, worker, profileDates) => {
         return cachedData;
     }
     try {
-        await sql.connect(config);
+        
 
-        let resp = await sql.query(`select DISTINCT *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
+        let resp = await executeQuery(`select DISTINCT *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                     >='${date.start}' and batch_date <='${date.end}'
                                     AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
@@ -83,9 +109,9 @@ exports.getSuperviseeDataBySuperviser = async (date, worker, profileDates, super
         return cachedData;
     }
     try {
-        await sql.connect(config);
+        
 
-        let resp = await sql.query(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
+        let resp = await executeQuery(`select *, FORMAT([event_service_item_total], 'C') as TOTAL, batch_date AS FULLDATE
                                     FROM [CFIR].[dbo].[invoice_data] WHERE batch_date
                                     >='${date.start}' and batch_date <='${date.end}'
                                     AND batch_date >='${profileDates.startDate}' and batch_date <='${profileDates.endDate}'
@@ -107,8 +133,8 @@ exports.getInvoiceData = async (date, worker, profileDates, retryCount = 0) => {
         return cachedData;
     }
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`(SELECT DISTINCT i.*, FORMAT(i.[event_service_item_total], 'C') as TOTAL, i.batch_date AS FULLDATE
+        
+        let resp = await executeQuery(`(SELECT DISTINCT i.*, FORMAT(i.[event_service_item_total], 'C') as TOTAL, i.batch_date AS FULLDATE
                                         FROM [CFIR].[dbo].[invoice_data] i
                                         JOIN profiles p ON (i.event_primary_worker_name = p.associateName OR event_invoice_details_worker_name = p.associateName) AND p.status = 1
                                         WHERE i.batch_date >= '${date.start}' AND i.batch_date <= '${date.end}'
@@ -163,8 +189,8 @@ exports.getAssociateTypes = async (associateType) => {
         query = `SELECT * FROM [CFIR].[dbo].[profiles] WHERE associateType=${temp}`
     }
     try {
-        await sql.connect(config);
-        let resp = await sql.query(query)
+        
+        let resp = await executeQuery(query)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset;
     } catch (err) {
@@ -178,8 +204,8 @@ exports.getAssociateFeeBaseRate = async (workerId) => {
         return cachedData;
     }
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`SELECT [associateType], [isSupervised], [supervisor1], [supervisor2], [supervisorOneGetsMoney], [supervisorTwoGetsMoney] ,[associateFeeBaseRate],
+        
+        let resp = await executeQuery(`SELECT [associateType], [isSupervised], [supervisor1], [supervisor2], [supervisorOneGetsMoney], [supervisorTwoGetsMoney] ,[associateFeeBaseRate],
                                     [associateFeeBaseRateOverrideLessThen],[associateFeeBaseRateOverrideGreaterThen],[associateFeeBaseRateTwo],
                                     [associateFeeBaseRateOverrideLessThenTwo],[associateFeeBaseRateOverrideGreaterThenTwo],[assessmentRate_c],
                                     [assessmentRate_f],
@@ -212,8 +238,8 @@ exports.getAssociateLeval = async () => {
         return cachedData;
     }
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[associate_type]`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[associate_type]`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset;
     } catch (err) {
@@ -227,8 +253,8 @@ exports.getAssociateVideoFee = async (workerId) => {
         return cachedData;
     }
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`SELECT [videoTechMonthlyFee] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
+        
+        let resp = await executeQuery(`SELECT [videoTechMonthlyFee] FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset;
     } catch (err) {
@@ -243,8 +269,8 @@ exports.getAssociateProfileById = async (workerId, retryCount = 0) => {
         return cachedData;
     }
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset;
     } catch (err) {
@@ -262,8 +288,8 @@ exports.getAllSuperviseeProfiles = async () => {
         return cachedData;
     }
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE supervisorOneGetsMoney = 'true' or supervisorTwoGetsMoney = 'true'`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE supervisorOneGetsMoney = 'true' or supervisorTwoGetsMoney = 'true'`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset;
     } catch (err) {
@@ -278,8 +304,8 @@ exports.getphysicians = async () => {
         return cachedData;
     }
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`SELECT [id],[associateName],[status], [startDate], [endDate], [associateType] FROM [CFIR].[dbo].[profiles]`)
+        
+        let resp = await executeQuery(`SELECT [id],[associateName],[status], [startDate], [endDate], [associateType] FROM [CFIR].[dbo].[profiles]`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset;
     } catch (err) {
@@ -293,8 +319,8 @@ exports.getnewphysicians = async () => {
         return cachedData;
     }
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[rpt_worker]`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[rpt_worker]`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset;
     } catch (err) {
@@ -303,8 +329,8 @@ exports.getnewphysicians = async () => {
 }
 exports.getEmailPassword = async () => {
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[email_password]`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[email_password]`)
         return resp.recordset;
     } catch (err) {
         console.log(err); return err
@@ -316,8 +342,8 @@ exports.updateEmailPassword = async (password) => {
     // console.log(CryptoJS.AES.decrypt('U2FsdGVkX1+1PEm5EO+UWbzeep3WWO8Alg0eD48U4Hh9B0mtBZRughcKf3yHcrs/', process.env.KEY).toString(CryptoJS.enc.Utf8))
     // return 200;
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`UPDATE [dbo].[email_password] SET [password] = '${result.toString()}' WHERE id = 1`)
+        
+        let resp = await executeQuery(`UPDATE [dbo].[email_password] SET [password] = '${result.toString()}' WHERE id = 1`)
         if (resp.rowsAffected[0] === 1) return 200
         else return 500
     } catch (err) {
@@ -326,8 +352,8 @@ exports.updateEmailPassword = async (password) => {
 }
 exports.resetAdjustmentFees = async () => {
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`UPDATE [dbo].[profiles] SET [adjustmentFee] = '${JSON.stringify([{ "name": "", "value": "0" }])}' ,
+        
+        let resp = await executeQuery(`UPDATE [dbo].[profiles] SET [adjustmentFee] = '${JSON.stringify([{ "name": "", "value": "0" }])}' ,
         [adjustmentPaymentFee] = '${JSON.stringify([{ "name": "", "value": "0" }])}' `)
         return 200;
     } catch (err) {
@@ -342,8 +368,8 @@ exports.getReportedItems = async (date, worker, profileDates, supervisor) => {
         return cachedData;
     }
     try {
-        await sql.connect(config);
-        let resp = await sql.query(`select  [receipt_reason],[invoice_id], [service_name], [event_service_item_name],event_primary_worker_name, FORMAT(sum([event_service_item_total]), 'c') as TOTAL, sum([event_service_item_total]) as event_service_item_total,
+        
+        let resp = await executeQuery(`select  [receipt_reason],[invoice_id], [service_name], [event_service_item_name],event_primary_worker_name, FORMAT(sum([event_service_item_total]), 'c') as TOTAL, sum([event_service_item_total]) as event_service_item_total,
                                     FORMAT([event_service_item_total], 'c') as itemTotal, COUNT([event_service_item_name]) as COUNT
                                     FROM [CFIR].[dbo].[invoice_data] 
                                     WHERE batch_date >= '${date.start}' and batch_date <= '${date.end}'
@@ -365,8 +391,8 @@ exports.getProvinces = async () => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[provinces]`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[provinces]`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -381,8 +407,8 @@ exports.getWorkerProfile = async (id) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[profiles] where id=${id}`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[profiles] where id=${id}`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -397,8 +423,8 @@ exports.getVideoTech = async () => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[video_technology]`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[video_technology]`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -412,8 +438,8 @@ exports.getServiceTypes = async () => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT *FROM [CFIR].[dbo].[service_files_names] `)
+        
+        let resp = await executeQuery(`SELECT *FROM [CFIR].[dbo].[service_files_names] `)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -427,8 +453,8 @@ exports.getPaymentTypes = async () => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[payment_types] `)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[payment_types] `)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -443,8 +469,8 @@ exports.getProcessingFee = async (feeName) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[payment_types] where name ='${feeName}'`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[payment_types] where name ='${feeName}'`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -454,8 +480,8 @@ exports.getProcessingFee = async (feeName) => {
 
 exports.UpdateServiceTypes = async (arr, id, covrage) => {
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`UPDATE [CFIR].[dbo].[profiles] SET [${covrage}] = '${arr}' WHERE id=${id}`)
+        
+        let resp = await executeQuery(`UPDATE [CFIR].[dbo].[profiles] SET [${covrage}] = '${arr}' WHERE id=${id}`)
         return resp.recordset
     } catch (error) {
         console.log(error)
@@ -470,8 +496,8 @@ exports.getNonChargeables = async () => {
     }
 
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[non_chargeables]`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[non_chargeables]`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -485,8 +511,8 @@ exports.getOtherItems = async () => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[other_chargeables]`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[other_chargeables]`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -501,8 +527,8 @@ exports.getSupervisers = async (name) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney, assessmentRate FROM [CFIR].[dbo].[profiles] where
+        
+        let resp = await executeQuery(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney, assessmentRate FROM [CFIR].[dbo].[profiles] where
                                       ((supervisor1='${name}' AND supervisorOneGetsMoney = 1 AND status =1)
                                       OR (supervisor2='${name}' AND supervisorTwoGetsMoney = 1 AND status =1))`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
@@ -518,8 +544,8 @@ exports.getSupervisersCFIR = async (name) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney, 
+        
+        let resp = await executeQuery(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney, 
                                     assessmentMoneyToSupervisorOne, assessmentMoneyToSupervisorTwo, assessmentRate
                                     FROM [CFIR].[dbo].[profiles] where
                                     (supervisor1='${name}' AND (supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1 ) AND status =1 
@@ -537,8 +563,8 @@ exports.getSupervisersAssessments = async (name) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney, 
+        
+        let resp = await executeQuery(`SELECT id, associateName, associateType,[supervisor1],[supervisor2], supervisorOneGetsMoney, supervisorTwoGetsMoney, 
                                         assessmentMoneyToSupervisorOne,
                                         assessmentMoneyToSupervisorTwo, assessmentRate, probono FROM [CFIR].[dbo].[profiles] where
                                         (supervisor1='${name}' AND assessmentMoneyToSupervisorOne = 1)
@@ -552,9 +578,9 @@ exports.getSupervisersAssessments = async (name) => {
 
 exports.UpdateWorkerPreofile = async (arr, id) => {
     try {
-        await sql.connect(config)
+        
         if (arr.associateName) {
-            let checkForDuplicate = await sql.query(`SELECT startDate, endDate, status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND id !=${id} AND status=1`)
+            let checkForDuplicate = await executeQuery(`SELECT startDate, endDate, status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND id !=${id} AND status=1`)
 
             let duplicateFound = false;
             checkForDuplicate.recordset.forEach(record => {
@@ -565,7 +591,7 @@ exports.UpdateWorkerPreofile = async (arr, id) => {
                 }
             });
             if (!duplicateFound) {
-                await sql.query(`UPDATE [CFIR].[dbo].[profiles]
+                await executeQuery(`UPDATE [CFIR].[dbo].[profiles]
                         SET status = '${arr.status}',
                         startDate = '${arr.startDate}',
                         endDate = '${arr.endDate}',
@@ -650,10 +676,10 @@ exports.insertWorkerProfile = async (arr) => {
     let date = moment.utc(arr.startDate).format('YYYY-MM-DD')
     let endDate = moment.utc(arr.endDate).format('YYYY-MM-DD')
     try {
-        await sql.connect(config)
-        let checkForOverlap = await sql.query(`SELECT * FROM profiles WHERE '${arr.startDate}' <= endDate AND '${arr.endDate}' >= startDate AND associateName='${arr.associateName}' AND associateType = '${arr.associateType}'`);
+        
+        let checkForOverlap = await executeQuery(`SELECT * FROM profiles WHERE '${arr.startDate}' <= endDate AND '${arr.endDate}' >= startDate AND associateName='${arr.associateName}' AND associateType = '${arr.associateType}'`);
         if (checkForOverlap.recordset.length === 0) {
-            let resp = await sql.query(`INSERT INTO [CFIR].[dbo].[profiles] (
+            let resp = await executeQuery(`INSERT INTO [CFIR].[dbo].[profiles] (
                 status,
                 startDate,
                 endDate,
@@ -806,7 +832,7 @@ exports.getSummerizedInvoiceData = async (date, site, retryCount = 0) => {
     }
 
     try {
-        let resp = await sql.query(`SELECT event_primary_worker_name, event_service_item_name, event_service_item_total, event_service_item_qty, Year, Month , Day, site, invoice_fee_qty
+        let resp = await executeQuery(`SELECT event_primary_worker_name, event_service_item_name, event_service_item_total, event_service_item_qty, Year, Month , Day, site, invoice_fee_qty
                                     FROM summarized_invoice_view 
                                     WHERE site like '%${site}%' AND DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
@@ -832,7 +858,7 @@ exports.getSummerizedPaymentData = async (date, site, retryCount = 0) => {
     }
 
     try {
-        let resp = await sql.query(`SELECT worker, reason_type, applied_amt, site
+        let resp = await executeQuery(`SELECT worker, reason_type, applied_amt, site
                                     FROM financial_view 
                                     WHERE site like '%${site}%' AND DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
@@ -857,8 +883,8 @@ exports.getPaymentData = async (worker, date, profileDates, retryCount = 0) => {
     }
 
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`
+        
+        let resp = await executeQuery(`
                     SELECT 
                         fv.*, 
                         DATEFROMPARTS(fv.Year, fv.Month, fv.Day) AS FULLDATE 
@@ -914,7 +940,7 @@ exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
     }
 
     try {
-        let resp = await sql.query(`SELECT DISTINCT *, DATEFROMPARTS(Year, Month , Day) AS FULLDATE from financial_view
+        let resp = await executeQuery(`SELECT DISTINCT *, DATEFROMPARTS(Year, Month , Day) AS FULLDATE from financial_view
                                     WHERE DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'
                                     AND DATEFROMPARTS(Year, Month , Day) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                    AND worker like '%${tempWorker}%'
@@ -932,7 +958,7 @@ exports.getPaymentDataForWorkerBySupervisor = async (tempWorker, date, profileDa
         return cachedData;
     }
     try {
-        let resp = await sql.query(`SELECT DISTINCT *, DATEFROMPARTS(Year, Month , Day) AS FULLDATE from financial_view
+        let resp = await executeQuery(`SELECT DISTINCT *, DATEFROMPARTS(Year, Month , Day) AS FULLDATE from financial_view
                                     WHERE DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'
                                     AND DATEFROMPARTS(Year, Month , Day) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                    AND worker like '%${tempWorker}%' AND superviser like '${supervisor}'
@@ -950,8 +976,8 @@ exports.getSuperviseeiesL1 = async (superviser) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] WHERE
+        
+        let resp = await executeQuery(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] WHERE
                                     ((supervisor1 = '${superviser}' AND supervisorOneGetsMoney = 1) AND associateType = 'L1 (Sup Prac)'
                                     OR (supervisor1 = '${superviser}' AND assessmentMoneyToSupervisorOne = 1) AND associateType = 'L1 (Sup Prac)')
                                     OR ((supervisor2 = '${superviser}' AND supervisorTwoGetsMoney = 'true') AND associateType = 'L1 (Sup Prac)'
@@ -969,8 +995,8 @@ exports.getSuperviseeiesL1Assessments = async (superviser) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] WHERE 
+        
+        let resp = await executeQuery(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] WHERE 
                                         (supervisor1 = '${superviser}' AND supervisorOneGetsMoney = 'true'AND assessmentMoneyToSupervisorOne = 'true'  AND associateType = 'L1 (Sup Prac)')
                                         or (supervisor2 = '${superviser}' AND supervisorTwoGetsMoney = 'true'AND assessmentMoneyToSupervisorTwo = 'true' AND associateType = 'L1 (Sup Prac)')`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
@@ -987,8 +1013,8 @@ exports.superviserGetsAssessmentMoney = async (workerId) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`select supervisor1, supervisor2, supervisorOneGetsMoney,
+        
+        let resp = await executeQuery(`select supervisor1, supervisor2, supervisorOneGetsMoney,
                             supervisorTwoGetsMoney,assessmentMoneyToSupervisorOne, assessmentMoneyToSupervisorTwo 
                             FROM profiles where id ='${workerId}'`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
@@ -1006,8 +1032,8 @@ exports.getNonRemittables = async () => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[non_remittable]`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[non_remittable]`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -1022,8 +1048,8 @@ exports.getWorkerId = async (partialName) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] where associateName like '%${partialName}%'`)
+        
+        let resp = await executeQuery(`SELECT id, associateName FROM [CFIR].[dbo].[profiles] where associateName like '%${partialName}%'`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -1038,8 +1064,8 @@ exports.getAssessmentItemEquivalent = async () => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`SELECT * FROM [CFIR].[dbo].[assessmentItemslookup]`)
+        
+        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[assessmentItemslookup]`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -1055,8 +1081,8 @@ exports.getAdjustmentsFees = async (worker, superviser) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`select associateName, adjustmentPaymentFee from profiles WHERE associateName like '%${worker}%' 
+        
+        let resp = await executeQuery(`select associateName, adjustmentPaymentFee from profiles WHERE associateName like '%${worker}%' 
                                 Or supervisor1 like '%${worker}%' AND supervisorOneGetsMoney =1 or supervisor2 like '%${worker}%' AND supervisorTwoGetsMoney = 1`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
@@ -1072,8 +1098,8 @@ exports.getAdjustmentsFeesWorkerOnly = async (worker, superviser) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`select associateName, adjustmentPaymentFee from profiles WHERE associateName like '%${worker}%'`)
+        
+        let resp = await executeQuery(`select associateName, adjustmentPaymentFee from profiles WHERE associateName like '%${worker}%'`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
@@ -1087,8 +1113,8 @@ exports.getAdjustmentsFeesInvoice = async (worker, superviser) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`select associateName, adjustmentFee from profiles WHERE associateName like '%${worker}%' 
+        
+        let resp = await executeQuery(`select associateName, adjustmentFee from profiles WHERE associateName like '%${worker}%' 
                                     Or supervisor1 like '%${worker}%' AND supervisorOneGetsMoney =1 or supervisor2 like '%${worker}%' AND supervisorTwoGetsMoney = 1`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
@@ -1104,8 +1130,8 @@ exports.getAdjustmentsFeesWorkerOnlyInvoice = async (workerId, superviser) => {
         return cachedData;
     }
     try {
-        await sql.connect(config)
-        let resp = await sql.query(`select associateName, adjustmentFee from profiles WHERE id = ${workerId}`)
+        
+        let resp = await executeQuery(`select associateName, adjustmentFee from profiles WHERE id = ${workerId}`)
         sqlCache.set(cacheKey, resp.recordset, CACHE_TTL_SECONDS);
         return resp.recordset
     } catch (error) {
