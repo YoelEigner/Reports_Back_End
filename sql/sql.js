@@ -17,7 +17,8 @@ async function loadPLimit() {
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 const CACHE_TTL_SECONDS = 60;
-const MAX_CONCURRENT_QUERIES = 5; 
+const MAX_CONCURRENT_QUERIES = 5;
+const queues = new Map();
 
 const config = {
     user: "Node",
@@ -68,7 +69,7 @@ async function executeQuery(query, retryCount = 0) {
     await loadPLimit();  // Ensure p-limit is loaded dynamically
 
     const limit = pLimit(MAX_CONCURRENT_QUERIES); // Create a p-limit instance with the desired concurrency
-
+    console.log(query)
     return limit(async () => {  // Apply the concurrency limit
         try {
             const pool = await getConnection();
@@ -94,6 +95,43 @@ async function executeQuery(query, retryCount = 0) {
             throw err;
         }
     });
+}
+const requestQueue = [];
+let isProcessing = false;
+
+async function processQueue() {
+    if (isProcessing || requestQueue.length === 0) return;
+
+    isProcessing = true;
+    const { workerId, retryCount, resolve, reject } = requestQueue.shift();
+
+    try {
+        const result = await handleQuery(workerId, retryCount);
+        resolve(result);
+    } catch (err) {
+        reject(err);
+    } finally {
+        isProcessing = false;
+        processQueue();  // Process the next item in the queue
+    }
+}
+
+async function handleQuery(workerId, retryCount) {
+    try {
+        let query = `SELECT * FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`;
+        let resp = await executeQuery(query);
+
+        const cacheKey = generateCacheKey(workerId, 'getAssociateProfileById');
+        sqlCache.set(cacheKey, resp, CACHE_TTL_SECONDS);
+
+        return resp;
+    } catch (err) {
+        if (retryCount < MAX_RETRIES && isTimeoutError(err)) {
+            await delay(RETRY_DELAY);
+            return handleQuery(workerId, retryCount + 1);
+        }
+        throw err;
+    }
 }
 
 exports.getProfileDates = async (workerId) => {
@@ -337,25 +375,43 @@ exports.getAssociateVideoFee = async (workerId) => {
     }
 }
 
+// exports.getAssociateProfileById = async (workerId, retryCount = 0) => {
+//     const cacheKey = generateCacheKey(workerId, 'getAssociateProfileById');
+//     const cachedData = sqlCache.get(cacheKey);
+//     if (cachedData) {
+//         return cachedData;
+//     }
+//     try {
+
+//         let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
+//         sqlCache.set(cacheKey, resp, CACHE_TTL_SECONDS);
+//         return resp;
+//     } catch (err) {
+//         if (retryCount < MAX_RETRIES && isTimeoutError(err)) {
+//             await delay(RETRY_DELAY);
+//             return this.getAssociateProfileById(workerId);
+//         }
+//         return err
+//     }
+// }
+
 exports.getAssociateProfileById = async (workerId, retryCount = 0) => {
     const cacheKey = generateCacheKey(workerId, 'getAssociateProfileById');
     const cachedData = sqlCache.get(cacheKey);
+
     if (cachedData) {
         return cachedData;
     }
-    try {
 
-        let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
-        sqlCache.set(cacheKey, resp, CACHE_TTL_SECONDS);
-        return resp;
-    } catch (err) {
-        if (retryCount < MAX_RETRIES && isTimeoutError(err)) {
-            await delay(RETRY_DELAY);
-            return this.getAssociateProfileById(workerId);
-        }
-        return err
-    }
-}
+    // Create a promise to represent this request in the queue
+    const requestPromise = new Promise(async (resolve, reject) => {
+        requestQueue.push({ workerId, retryCount, resolve, reject });
+        processQueue();  // Start processing the queue
+    });
+
+    return requestPromise;
+};
+
 exports.getAllSuperviseeProfiles = async () => {
     const cacheKey = generateCacheKey('workerId', 'getAllSuperviseeProfiles');
     const cachedData = sqlCache.get(cacheKey);
@@ -1020,8 +1076,6 @@ async function executeStoredProcedure(procedureName, params) {
 
         // Execute the stored procedure
         const result = await request.execute(procedureName);
-        console.log("🚀 ~ executeStoredProcedure ~ result:", result.recordset)
-
         return result.recordset;
     } catch (err) {
         console.error('SQL error', err);
