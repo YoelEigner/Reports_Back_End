@@ -31,9 +31,28 @@ const config = {
 let pool;
 async function getConnection() {
     if (!pool) {
-        pool = await new sql.ConnectionPool(config).connect();
+        try {
+            pool = await new sql.ConnectionPool(config).connect();
+            console.log("Connected to the database.");
+        } catch (err) {
+            console.log("Error creating pool: ", err);
+            throw err;
+        }
     }
     return pool;
+}
+
+async function closeConnectionPool() {
+    if (pool) {
+        try {
+            await pool.close();
+            console.log("Connection pool closed.");
+        } catch (err) {
+            console.log("Error closing pool: ", err);
+        } finally {
+            pool = null; // Reset the pool after closing it
+        }
+    }
 }
 
 async function executeQuery(query, retryCount = 0) {
@@ -41,31 +60,28 @@ async function executeQuery(query, retryCount = 0) {
         const pool = await getConnection();
         const request = pool.request();
 
-        const result = await Promise.race([
-            request.query(query),
-            new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Query timeout')), config.options.requestTimeout)
-            )
-        ]);
+        const result = await request.query(query);
 
         return result.recordset;
+
     } catch (err) {
-        if (retryCount < MAX_RETRIES && (isTimeoutError(err) || err.message === 'Query timeout')) {
-            console.log(`Retrying query, attempt ${retryCount + 1}`);
+        if (retryCount < MAX_RETRIES && (isTimeoutError(err) || err.message.includes('timeout'))) {
+            console.log(`Query failed due to timeout. Retrying (${retryCount + 1}/${MAX_RETRIES})...`);
+
+            // Close and reconnect the pool after failure
+            await closeConnectionPool();
             await delay(RETRY_DELAY);
+
+            // Retry the query
             return executeQuery(query, retryCount + 1);
         }
+
+        // If we reached max retries or it's a different error, throw it
+        console.error(`Query failed after ${retryCount + 1} attempts:`, err);
         throw err;
     }
 }
 
-
-// function executeQuery(query, params = []) {
-//     return new Promise((resolve, reject) => {
-//         queryQueue.push({ query, resolve, reject });
-//         executeNextQuery();
-//     });
-// }
 exports.getProfileDates = async (workerId) => {
     const cacheKey = generateCacheKey(workerId, 'getProfileDates');
     const cachedData = sqlCache.get(cacheKey);
