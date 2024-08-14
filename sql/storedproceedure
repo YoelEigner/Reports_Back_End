@@ -1,35 +1,10 @@
-CREATE PROCEDURE [dbo].[GetInvoiceDataNew]
-    @StartDate DATE,
-    @EndDate DATE,
-    @ProfileStartDate DATE,
-    @ProfileEndDate DATE,
-    @Worker NVARCHAR(100)
+CREATE PROCEDURE GetAssociateProfileById
+    @WorkerId NVARCHAR(50) -- Adjust the data type and size based on your actual requirements
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    SELECT DISTINCT 
-        i.*, 
-        FORMAT(i.[event_service_item_total], 'C') as TOTAL, 
-        i.batch_date AS FULLDATE
-    FROM [CFIR].[dbo].[invoice_data] i
-    JOIN profiles p ON (i.event_primary_worker_name = p.associateName OR event_invoice_details_worker_name = p.associateName) AND p.status = 1
-    WHERE i.batch_date >= @StartDate AND i.batch_date <= @EndDate
-    AND i.batch_date >= @ProfileStartDate AND i.batch_date <= @ProfileEndDate
-    AND (i.event_primary_worker_name LIKE '%' + @Worker + '%' OR i.event_invoice_details_worker_name LIKE '%' + @Worker + '%')
-    AND ((p.supervisor1 LIKE '%' + @Worker + '%' AND p.supervisorOneGetsMoney = 1 OR assessmentMoneyToSupervisorOne = 1)
-     OR (p.supervisor2 LIKE '%' + @Worker + '%' AND p.supervisorTwoGetsMoney = 1 OR assessmentMoneyToSupervisorTwo = 1))
-    AND event_service_item_name NOT IN (SELECT name FROM non_remittable)
-
-    UNION
-
-    SELECT 
-        *, 
-        FORMAT([event_service_item_total], 'C') as TOTAL, 
-        batch_date AS FULLDATE
-    FROM [CFIR].[dbo].[invoice_data] 
-    WHERE batch_date >= @StartDate AND batch_date <= @EndDate
-    AND batch_date >= @ProfileStartDate AND batch_date <= @ProfileEndDate
-    AND [event_primary_worker_name] LIKE '%' + @Worker + '%'
-    AND event_service_item_name NOT IN (SELECT name FROM non_remittable)
-END
+    SELECT *
+    FROM [CFIR].[dbo].[profiles]
+    WHERE [id] = @WorkerId;
+END;

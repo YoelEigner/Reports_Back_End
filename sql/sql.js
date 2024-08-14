@@ -375,42 +375,45 @@ exports.getAssociateVideoFee = async (workerId) => {
     }
 }
 
-// exports.getAssociateProfileById = async (workerId, retryCount = 0) => {
-//     const cacheKey = generateCacheKey(workerId, 'getAssociateProfileById');
-//     const cachedData = sqlCache.get(cacheKey);
-//     if (cachedData) {
-//         return cachedData;
-//     }
-//     try {
-
-//         let resp = await executeQuery(`SELECT * FROM [CFIR].[dbo].[profiles] WHERE [id]='${workerId}'`)
-//         sqlCache.set(cacheKey, resp, CACHE_TTL_SECONDS);
-//         return resp;
-//     } catch (err) {
-//         if (retryCount < MAX_RETRIES && isTimeoutError(err)) {
-//             await delay(RETRY_DELAY);
-//             return this.getAssociateProfileById(workerId);
-//         }
-//         return err
-//     }
-// }
-
 exports.getAssociateProfileById = async (workerId, retryCount = 0) => {
+    console.log("🚀 ~ exports.getAssociateProfileById= ~ workerId:", workerId)
     const cacheKey = generateCacheKey(workerId, 'getAssociateProfileById');
     const cachedData = sqlCache.get(cacheKey);
-
     if (cachedData) {
         return cachedData;
     }
+    try {
 
-    // Create a promise to represent this request in the queue
-    const requestPromise = new Promise(async (resolve, reject) => {
-        requestQueue.push({ workerId, retryCount, resolve, reject });
-        processQueue();  // Start processing the queue
-    });
+        const params = [
+            { name: 'WorkerId', type: sql.NVarChar(50), value: `${workerId}` }
+        ];
+        const resp = await executeStoredProcedure('GetAssociateProfileById', params);
+        return resp;
+    } catch (err) {
+        if (retryCount < MAX_RETRIES && isTimeoutError(err)) {
+            await delay(RETRY_DELAY);
+            return this.getAssociateProfileById(workerId);
+        }
+        return err
+    }
+}
 
-    return requestPromise;
-};
+// exports.getAssociateProfileById = async (workerId, retryCount = 0) => {
+//     const cacheKey = generateCacheKey(workerId, 'getAssociateProfileById');
+//     const cachedData = sqlCache.get(cacheKey);
+
+//     if (cachedData) {
+//         return cachedData;
+//     }
+
+//     // Create a promise to represent this request in the queue
+//     const requestPromise = new Promise(async (resolve, reject) => {
+//         requestQueue.push({ workerId, retryCount, resolve, reject });
+//         processQueue();  // Start processing the queue
+//     });
+
+//     return requestPromise;
+// };
 
 exports.getAllSuperviseeProfiles = async () => {
     const cacheKey = generateCacheKey('workerId', 'getAllSuperviseeProfiles');
