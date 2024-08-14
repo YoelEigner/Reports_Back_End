@@ -19,7 +19,8 @@ const config = {
     options: {
         trustedConnection: false,
         trustServerCertificate: true,
-        requestTimeout: 600000
+        requestTimeout: 600000,
+        connectionTimeout: 600000,
     },
     pool: {
         max: 500,
@@ -27,9 +28,7 @@ const config = {
     },
 };
 
-
 let pool;
-
 async function getConnection() {
     if (!pool) {
         pool = await new sql.ConnectionPool(config).connect();
@@ -60,6 +59,13 @@ async function executeQuery(query, retryCount = 0) {
     }
 }
 
+
+// function executeQuery(query, params = []) {
+//     return new Promise((resolve, reject) => {
+//         queryQueue.push({ query, resolve, reject });
+//         executeNextQuery();
+//     });
+// }
 exports.getProfileDates = async (workerId) => {
     const cacheKey = generateCacheKey(workerId, 'getProfileDates');
     const cachedData = sqlCache.get(cacheKey);
@@ -883,6 +889,87 @@ exports.getSummerizedPaymentData = async (date, site, retryCount = 0) => {
     }
 }
 
+// exports.getPaymentData = async (worker, date, profileDates, retryCount = 0) => {
+//     const cacheKey = generateCacheKey(worker, 'getPaymentData');
+
+//     // Try to get the data from the cache
+//     const cachedData = sqlCache.get(cacheKey);
+//     if (cachedData) {
+//         return cachedData;
+//     }
+
+//     try {
+
+//         let resp = await executeQuery(`
+//                     SELECT 
+//                         fv.*, 
+//                         DATEFROMPARTS(fv.Year, fv.Month, fv.Day) AS FULLDATE 
+//                     FROM 
+//                         financial_view fv
+//                     JOIN 
+//                         profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName) AND p.status = 1
+//                     LEFT JOIN 
+//                         non_remittable nr ON fv.description = nr.name
+//                     WHERE 
+//                         DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN '${date.start}' AND '${date.end}'
+//                         AND DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+//                         AND (fv.superviser like '%${worker}%' OR fv.worker like '%${worker}%')
+//                         AND (
+//                             (p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
+//                             (p.supervisor2 = fv.superviser AND p.supervisorTwoGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
+//                             (p.assessmentMoneyToSupervisorOne = 1 AND p.supervisor1 = fv.superviser AND LEFT(fv.case_program, 1) = 'A') OR
+//                             (p.assessmentMoneyToSupervisorTwo = 1 AND p.supervisor2 = fv.superviser AND LEFT(fv.case_program, 1) = 'A') 
+//                         )
+//                         AND nr.name IS NULL
+//                     UNION
+//                     (
+//                         SELECT 
+//                             fv.*, 
+//                             DATEFROMPARTS(fv.Year, fv.Month , fv.Day) AS FULLDATE 
+//                         FROM 
+//                             financial_view fv
+//                         LEFT JOIN 
+//                             non_remittable nr ON fv.description = nr.name
+//                         WHERE 
+//                             DATEFROMPARTS(fv.Year, fv.Month , fv.Day) BETWEEN '${date.start}' AND '${date.end}'
+//                             AND DATEFROMPARTS(fv.Year, fv.Month , fv.Day) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+//                             AND fv.worker like '%${worker}%'
+//                             AND nr.name IS NULL
+//                     )
+//                 `);
+//         sqlCache.set(cacheKey, resp, CACHE_TTL_SECONDS);
+//         return resp;
+//     } catch (error) {
+//         if (retryCount < MAX_RETRIES && isTimeoutError(error)) {
+//             await delay(RETRY_DELAY);
+//             return this.getPaymentData(worker, date, profileDates, retryCount + 1);
+//         }
+//         console.log('getPaymentData Function', error)
+//         throw new Error(error);
+//     }
+// }
+
+async function executeStoredProcedure(procedureName, params) {
+    try {
+        const pool = await sql.connect(config);
+        const request = pool.request();
+
+        // Add parameters to the request
+        params.forEach(param => {
+            request.input(param.name, param.type, param.value);
+        });
+
+        // Execute the stored procedure
+        const result = await request.execute(procedureName);
+        console.log("🚀 ~ executeStoredProcedure ~ result:", result.recordset)
+        
+        return result.recordset;
+    } catch (err) {
+        console.error('SQL error', err);
+        throw err;
+    }
+}
+
 exports.getPaymentData = async (worker, date, profileDates, retryCount = 0) => {
     const cacheKey = generateCacheKey(worker, 'getPaymentData');
 
@@ -893,44 +980,18 @@ exports.getPaymentData = async (worker, date, profileDates, retryCount = 0) => {
     }
 
     try {
+        // Prepare the parameters for the stored procedure
+        const params = [
+            { name: 'worker', type: sql.NVarChar(100), value: worker },
+            { name: 'startDate', type: sql.Date, value: new Date(date.start) },
+            { name: 'endDate', type: sql.Date, value: new Date(date.end) },
+            { name: 'profileStartDate', type: sql.Date, value: new Date(profileDates.startDate) },
+            { name: 'profileEndDate', type: sql.Date, value: new Date(profileDates.endDate) }
+        ];
 
-        let resp = await executeQuery(`
-                    SELECT 
-                        fv.*, 
-                        DATEFROMPARTS(fv.Year, fv.Month, fv.Day) AS FULLDATE 
-                    FROM 
-                        financial_view fv
-                    JOIN 
-                        profiles p ON (fv.superviser = p.associateName OR fv.worker = p.associateName) AND p.status = 1
-                    LEFT JOIN 
-                        non_remittable nr ON fv.description = nr.name
-                    WHERE 
-                        DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN '${date.start}' AND '${date.end}'
-                        AND DATEFROMPARTS(fv.Year, fv.Month, fv.Day) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
-                        AND (fv.superviser like '%${worker}%' OR fv.worker like '%${worker}%')
-                        AND (
-                            (p.supervisor1 = fv.superviser AND p.supervisorOneGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
-                            (p.supervisor2 = fv.superviser AND p.supervisorTwoGetsMoney = 1 AND LEFT(fv.case_program, 1) = 'T') OR
-                            (p.assessmentMoneyToSupervisorOne = 1 AND p.supervisor1 = fv.superviser AND LEFT(fv.case_program, 1) = 'A') OR
-                            (p.assessmentMoneyToSupervisorTwo = 1 AND p.supervisor2 = fv.superviser AND LEFT(fv.case_program, 1) = 'A') 
-                        )
-                        AND nr.name IS NULL
-                    UNION
-                    (
-                        SELECT 
-                            fv.*, 
-                            DATEFROMPARTS(fv.Year, fv.Month , fv.Day) AS FULLDATE 
-                        FROM 
-                            financial_view fv
-                        LEFT JOIN 
-                            non_remittable nr ON fv.description = nr.name
-                        WHERE 
-                            DATEFROMPARTS(fv.Year, fv.Month , fv.Day) BETWEEN '${date.start}' AND '${date.end}'
-                            AND DATEFROMPARTS(fv.Year, fv.Month , fv.Day) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
-                            AND fv.worker like '%${worker}%'
-                            AND nr.name IS NULL
-                    )
-                `);
+        // Execute the stored procedure
+        let resp = await executeStoredProcedure('GetFinancialData', params);
+
         sqlCache.set(cacheKey, resp, CACHE_TTL_SECONDS);
         return resp;
     } catch (error) {
@@ -938,7 +999,7 @@ exports.getPaymentData = async (worker, date, profileDates, retryCount = 0) => {
             await delay(RETRY_DELAY);
             return this.getPaymentData(worker, date, profileDates, retryCount + 1);
         }
-        console.log('getPaymentData Function', error)
+        console.log('getPaymentData Function', error);
         throw new Error(error);
     }
 }
