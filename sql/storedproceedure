@@ -1,4 +1,4 @@
-CREATE PROCEDURE [dbo].[GetInvoiceData]
+CREATE PROCEDURE [dbo].[GetInvoiceDataNew]
     @StartDate DATE,
     @EndDate DATE,
     @ProfileStartDate DATE,

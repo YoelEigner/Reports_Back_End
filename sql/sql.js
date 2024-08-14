@@ -206,7 +206,6 @@ exports.getSuperviseeDataBySuperviser = async (date, worker, profileDates, super
 //         return err
 //     }
 // }
-const sql = require('mssql');
 
 exports.getInvoiceData = async (date, worker, profileDates, retryCount = 0) => {
     const cacheKey = generateCacheKey(worker, 'getInvoiceData');
@@ -224,7 +223,7 @@ exports.getInvoiceData = async (date, worker, profileDates, retryCount = 0) => {
             { name: 'Worker', type: sql.NVarChar(100), value: worker }
         ];
 
-        const resp = await executeStoredProcedure('dbo.GetInvoiceData', params);
+        const resp = await executeStoredProcedure('dbo.GetInvoiceDataNew', params);
 
         sqlCache.set(cacheKey, resp, CACHE_TTL_SECONDS);
         return resp;
