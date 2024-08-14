@@ -4,7 +4,15 @@ var CryptoJS = require("crypto-js");
 const { generateCacheKey, isTimeoutError, delay } = require("./cacheHandler");
 const sqlCache = require('./cacheHandler').globalCache
 
+let pLimit;
 
+// Dynamically load p-limit (since it is an ES Module)
+async function loadPLimit() {
+    if (!pLimit) {
+        const module = await import('p-limit');
+        pLimit = module.default;
+    }
+}
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
@@ -56,30 +64,34 @@ async function closeConnectionPool() {
 }
 
 async function executeQuery(query, retryCount = 0) {
-    try {
-        const pool = await getConnection();
-        const request = pool.request();
+    await loadPLimit();  // Ensure pLimit is loaded dynamically
 
-        const result = await request.query(query);
+    // Wrap the query in p-limit to ensure concurrency control
+    return pLimit(25)(async () => {
+        try {
+            const pool = await getConnection();
+            const request = pool.request();
 
-        return result.recordset;
+            const result = await request.query(query);
+            return result.recordset;
 
-    } catch (err) {
-        if (retryCount < MAX_RETRIES && (isTimeoutError(err) || err.message.includes('timeout'))) {
-            console.log(`Query failed due to timeout. Retrying (${retryCount + 1}/${MAX_RETRIES})...`);
+        } catch (err) {
+            if (retryCount < MAX_RETRIES && (isTimeoutError(err) || err.message.includes('timeout'))) {
+                console.log(`Query failed due to timeout. Retrying (${retryCount + 1}/${MAX_RETRIES})...`);
 
-            // Close and reconnect the pool after failure
-            await closeConnectionPool();
-            await delay(RETRY_DELAY);
+                // Close and reconnect the pool after failure
+                await closeConnectionPool();
+                await delay(RETRY_DELAY);
 
-            // Retry the query
-            return executeQuery(query, retryCount + 1);
+                // Retry the query
+                return executeQuery(query, retryCount + 1);
+            }
+
+            // If we reached max retries or it's a different error, throw it
+            console.error(`Query failed after ${retryCount + 1} attempts:`, err);
+            throw err;
         }
-
-        // If we reached max retries or it's a different error, throw it
-        console.error(`Query failed after ${retryCount + 1} attempts:`, err);
-        throw err;
-    }
+    });
 }
 
 exports.getProfileDates = async (workerId) => {
