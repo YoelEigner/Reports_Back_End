@@ -66,11 +66,10 @@ async function closeConnectionPool() {
 }
 
 async function executeQuery(query, retryCount = 0) {
-    await loadPLimit();  // Ensure p-limit is loaded dynamically
+    await loadPLimit(); 
 
-    const limit = pLimit(MAX_CONCURRENT_QUERIES); // Create a p-limit instance with the desired concurrency
-    console.log(query)
-    return limit(async () => {  // Apply the concurrency limit
+    const limit = pLimit(MAX_CONCURRENT_QUERIES); 
+    return limit(async () => {
         try {
             const pool = await getConnection();
             const request = pool.request();
@@ -95,25 +94,6 @@ async function executeQuery(query, retryCount = 0) {
             throw err;
         }
     });
-}
-const requestQueue = [];
-let isProcessing = false;
-
-async function processQueue() {
-    if (isProcessing || requestQueue.length === 0) return;
-
-    isProcessing = true;
-    const { workerId, retryCount, resolve, reject } = requestQueue.shift();
-
-    try {
-        const result = await handleQuery(workerId, retryCount);
-        resolve(result);
-    } catch (err) {
-        reject(err);
-    } finally {
-        isProcessing = false;
-        processQueue();  // Process the next item in the queue
-    }
 }
 
 async function handleQuery(workerId, retryCount) {
@@ -376,7 +356,6 @@ exports.getAssociateVideoFee = async (workerId) => {
 }
 
 exports.getAssociateProfileById = async (workerId, retryCount = 0) => {
-    console.log("🚀 ~ exports.getAssociateProfileById= ~ workerId:", workerId)
     const cacheKey = generateCacheKey(workerId, 'getAssociateProfileById');
     const cachedData = sqlCache.get(cacheKey);
     if (cachedData) {

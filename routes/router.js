@@ -5,6 +5,13 @@ const { getphysicians, getProvinces, getWorkerProfile, insertWorkerProfile, getV
 const { getSupervisiesFunc } = require("../pdfWriter/pdfKitFunctions");
 const { GeneratePDF } = require("../pdfWriter/generatePDF");
 const { invalidateCache } = require("../MidWear/InvalidateCache");
+const { addClient } = require("../sseManager");
+
+
+
+router.route('/progress').get((req, res) => {
+    addClient(res);
+});
 
 //middlewaer
 router.use(invalidateCache)
@@ -93,7 +100,5 @@ router.route("/updateworkerprofile", authToken).post(async (req, res) => {
     let resp = await UpdateWorkerPreofile(req.body.obj, req.body.id)
     res.json(resp)
 })
-
-
 
 module.exports = router;
