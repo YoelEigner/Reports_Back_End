@@ -696,7 +696,7 @@ exports.UpdateWorkerPreofile = async (arr, id) => {
             let checkForDuplicate = await executeQuery(`SELECT startDate, endDate, status, associateName, associateType from profiles WHERE associateName='${arr.associateName}' AND id !=${id} AND status=1`)
 
             let duplicateFound = false;
-            checkForDuplicate.recordset.forEach(record => {
+            checkForDuplicate.forEach(record => {
                 if (record.associateName === arr.associateName) {
                     if ((new Date(arr.startDate) >= record.startDate && new Date(arr.startDate) <= record.endDate) || (new Date(arr.endDate) >= record.startDate && new Date(arr.endDate) <= record.endDate)) {
                         duplicateFound = true;
@@ -791,7 +791,7 @@ exports.insertWorkerProfile = async (arr) => {
     try {
 
         let checkForOverlap = await executeQuery(`SELECT * FROM profiles WHERE '${arr.startDate}' <= endDate AND '${arr.endDate}' >= startDate AND associateName='${arr.associateName}' AND associateType = '${arr.associateType}'`);
-        if (checkForOverlap.recordset.length === 0) {
+        if (checkForOverlap.length === 0) {
             let resp = await executeQuery(`INSERT INTO [CFIR].[dbo].[profiles] (
                 status,
                 startDate,
@@ -1046,7 +1046,7 @@ exports.getSummerizedPaymentData = async (date, site, retryCount = 0) => {
 //     }
 // }
 
-async function executeStoredProcedure(procedureName, params) {
+async function executeStoredProcedure(procedureName, params, cacheKey = null) {
     try {
         const pool = await sql.connect(config);
         const request = pool.request();
@@ -1057,7 +1057,8 @@ async function executeStoredProcedure(procedureName, params) {
         });
 
         // Execute the stored procedure
-        const result = await request.execute(procedureName);
+        const result = await request.execute(procedureName)
+        cacheKey && sqlCache.set(cacheKey, result.recordset, CACHE_TTL_SECONDS);
         return result.recordset;
     } catch (err) {
         console.error('SQL error', err);
