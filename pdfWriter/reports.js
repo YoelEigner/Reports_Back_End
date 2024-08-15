@@ -107,7 +107,7 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
         InvoicePromiseGenerator(res, date, users, paymentData.netAppliedTotal, reportType, paymentData.duration_hrs, videoFee, paymentData.qty, paymentData.proccessingFee)
     }
     if (reportType === PDFTYPE.MULTIPDF) {
-        const chunkSize = 50; // Number of users to process at a time
+        const chunkSize = 50;
         const userChunks = chunkArray(users, chunkSize);
         let totalFilesAppended = 0;
 
@@ -127,6 +127,7 @@ exports.reports = async (res, date, users, action, videoFee, reportType, actionT
 
             archive.pipe(output);
             archive.finalize();
+            chunkIndex = 0;
         } catch (err) {
             console.error('Error processing multi-user reports:', err);
             res.sendStatus(500);
