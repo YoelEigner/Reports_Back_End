@@ -1110,6 +1110,7 @@ exports.getPaymentDataForWorker = async (tempWorker, date, profileDates) => {
         let resp = await executeQuery(`SELECT DISTINCT *, DATEFROMPARTS(Year, Month , Day) AS FULLDATE from financial_view
                                     WHERE DATEFROMPARTS(Year, Month , Day) BETWEEN '${date.start}' AND '${date.end}'
                                     AND DATEFROMPARTS(Year, Month , Day) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
+                                    AND CONVERT(DATE, act_date, 100) BETWEEN '${profileDates.startDate}' AND '${profileDates.endDate}'
                                    AND worker like '%${tempWorker}%'
                                    AND description NOT IN (select name from non_remittable)`)
         sqlCache.set(cacheKey, resp, CACHE_TTL_SECONDS);
