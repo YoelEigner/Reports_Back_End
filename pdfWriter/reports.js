@@ -48,6 +48,8 @@ const processChunk = async (res, date, chunk, actionType, emailPassword, videoFe
                     archive.append(resp.pdfData, { name: worker.associateName + '_Payment.pdf' });
                     filesAppended++;
                 }
+                sendProgressUpdate({ processed: chunkIndex, total: totalChunks });
+                chunkIndex++;
             } else if (actionType === ACTIONTYPE.INVOICE) {
                 const paymentData = await getNetTotal(res, date, worker, ACTIONTYPE.INVOICE, PDFTYPE.MULTIPDF);
                 if (paymentData === 404) continue; // Skip if not found
