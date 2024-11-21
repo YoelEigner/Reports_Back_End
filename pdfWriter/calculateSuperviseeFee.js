@@ -2,7 +2,7 @@ const { getAssociateProfileById, getSuperviseeDataBySuperviser, getPaymentDataFo
 const { OtherChargablesTable, otherItemsTableTotalsCalculation } = require("../tables/OtherChargablesTable.js")
 const { getRate, getRate_CBT, getRate_CPRI } = require("../tables/associateFeesTherapy")
 const { calculateAssociateFeeForSupervisee } = require("../tables/calculateAssociateFeeForSupervisee.js")
-const { removeNullStr, calculateWorkerFeeByLeval, calculateProcessingFeeTemp, getSummarizedData, formatter } = require("./pdfKitFunctions")
+const { removeNullStr, calculateWorkerFeeByLeval, calculateProcessingFeeTemp, getSummarizedData, formatter, calculateWorkerFeeByLevalCBT, calculateWorkerFeeByLevalCPRI } = require("./pdfKitFunctions")
 const { duplicateAndSplitFees, duplicateAndSplitFeesRemoved } = require("./removeDuplicateAndSplitFees")
 
 
@@ -54,7 +54,6 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, nonChargeableItems, 
             else if (!superviserGetsAssessmentMoney && superviserGetsTherapyMoney) {
                 filteredItems = reportedItemDataFiltered.filter(x => !x.service_name.startsWith('A__') && !x.service_name.startsWith('aa_'))
             }
-            // console.log(filteredItems)
 
             let summarizedTransactions = Object.values(getSummarizedData(filteredItems)).sort()
             let superviseeFinalProccessingFee = tableType === 'CFIR' ? calculateProcessingFeeTemp(proccessingFeeTypes, summarizedTransactions).filter(x => x.worker === superviseeWorkerProfile[0].associateName).map(x => x.proccessingFee).reduce((a, b) => a + b, 0) : 0
@@ -72,10 +71,17 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, nonChargeableItems, 
 
 
                 let superviseeReportedItemsCount = () => {
-                    let superviseeItemLength = calculateWorkerFeeByLeval(associateType, duplicateItemsAndSplitFeesRemoved,
-                        workerPaymentData, false, isSuperviser, isSupervised,
-                        IsSupervisedByNonDirector).length ?? 0;
-                    let invoiceFeeQty = superviseeotherItemsTable.invoice_fee_qty ?? 0;
+                    const calculationToUse = tableType === 'CFIR'
+                        ? calculateWorkerFeeByLeval
+                        : tableType === 'CBT'
+                            ? calculateWorkerFeeByLevalCBT
+                            : tableType === 'CPRI'
+                                ? calculateWorkerFeeByLevalCPRI
+                                : calculateWorkerFeeByLeval
+
+                    let superviseeItemLength = calculationToUse(associateType, duplicateItemsAndSplitFeesRemoved, workerPaymentData, false,
+                        isSuperviser, isSupervised, IsSupervisedByNonDirector).length ?? 0;
+                    let invoiceFeeQty = superviseeotherItemsTable?.invoice_fee_qty ?? 0;
 
                     return Math.max(0, superviseeItemLength - invoiceFeeQty);
                 }
@@ -91,11 +97,12 @@ exports.calculateSuperviseeFeeFunc = (date, respSuperviser, nonChargeableItems, 
 
                 let superviseeBlocksBiWeeklyCharge = tableType === 'CFIR' ? parseFloat(superviseeWorkerProfile.map(x => x.blocksBiWeeklyCharge)[0]) : 0
 
-                let superviseeAdjustmentFee = tableType === 'CFIR' ? JSON.parse(superviseeWorkerProfile.map(x => x.adjustmentFee)) : [{ name: 'rtest', value: '0' }]
-                arr.push(await calculateAssociateFeeForSupervisee(worker.associateName, superviseeReportedItemsCount(), parseFloat(await SuperviseeRate()), videoFee,
+                let superviseeAdjustmentFee = tableType === 'CFIR' ? JSON.parse(superviseeWorkerProfile.map(x => x.adjustmentFee)) : [{ name: '', value: '0' }]
+                let rowItem = await calculateAssociateFeeForSupervisee(worker.associateName, superviseeReportedItemsCount(), parseFloat(await SuperviseeRate()), videoFee,
                     superviseeFinalProccessingFee, superviseeBlocksBiWeeklyCharge, superviseeAdjustmentFee, chargeVideoFee, tableType,
                     superviseeotherItemsTable.otherItemsTotal, superviseeotherItemsTable.invoice_fee_qty,
-                    otherChargableItemsFilterd.length, l1SupPrac))
+                    otherChargableItemsFilterd.length, l1SupPrac)
+                arr.push(rowItem)
             }
             else if (superviserGetsAssessmentMoney) {
                 let row = [
