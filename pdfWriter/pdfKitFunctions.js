@@ -580,14 +580,19 @@ exports.calculateWorkerFeeByLeval = (wokrerLeval, data, paymentData, assessments
                 && !(x.service_name.startsWith('A_c_') || x.service_name.startsWith('T_c_')
                     || x.service_name.startsWith('A_f_') || x.service_name.startsWith('T_f_')))
     }
-    else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && IsSupervisedByNonDirector) {
+    else if (wokrerLeval === 'L3' && IsSupervisedByNonDirector) {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A__') || x.service_name.startsWith('aa_'))
             : data.filter(x => !x.service_name.startsWith('A__') && !x.service_name.startsWith('aa_')
                 && !(x.service_name.startsWith('A_c_') || x.service_name.startsWith('T_c_')
                     || x.service_name.startsWith('A_f_') || x.service_name.startsWith('T_f_')))
     }
-    else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && !IsSupervisedByNonDirector) {
+    else if (wokrerLeval === 'L3' && !IsSupervisedByNonDirector) {
+        return assessments ?
+            paymentData.filter(x => x.case_program.startsWith('A__'))
+            : paymentData.filter(x => x.case_program.startsWith('T__'))
+    }
+    else if (wokrerLeval === 'L4') {
         return assessments ?
             paymentData.filter(x => x.case_program.startsWith('A__'))
             : paymentData.filter(x => x.case_program.startsWith('T__'))
@@ -630,12 +635,17 @@ exports.calculateWorkerFeeByLevalCBT = (wokrerLeval, data, paymentData, assessme
             data.filter(x => x.service_name.startsWith('A_c_'))
             : data.filter(x => x.service_name.startsWith('T_c_'))
     }
-    else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && !IsSupervisedByNonDirector) {
+    else if (wokrerLeval === 'L3' && IsSupervisedByNonDirector) {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A_c_'))
             : data.filter(x => x.service_name.startsWith('T_c_'))
     }
-    else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && IsSupervisedByNonDirector) {
+    else if (wokrerLeval === 'L3' && !IsSupervisedByNonDirector) {
+        return assessments ?
+            paymentData.filter(x => x.case_program.startsWith('A_c_'))
+            : paymentData.filter(x => x.case_program.startsWith('T_c_'))
+    }
+    else if (wokrerLeval === 'L4') {
         return assessments ?
             paymentData.filter(x => x.case_program.startsWith('A_c_'))
             : paymentData.filter(x => x.case_program.startsWith('T_c_'))
@@ -670,12 +680,17 @@ exports.calculateWorkerFeeByLevalCPRI = (wokrerLeval, data, paymentData, assessm
             data.filter(x => x.service_name.startsWith('A_f_'))
             : data.filter(x => x.service_name.startsWith('T_f_'))
     }
-    else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && !IsSupervisedByNonDirector) {
+    else if (wokrerLeval === 'L3' && IsSupervisedByNonDirector) {
         return assessments ?
             data.filter(x => x.service_name.startsWith('A_f_'))
             : data.filter(x => x.service_name.startsWith('T_f_'))
     }
-    else if ((wokrerLeval === 'L3' || wokrerLeval === 'L4') && IsSupervisedByNonDirector) {
+    else if (wokrerLeval === 'L3' && !IsSupervisedByNonDirector) {
+        return assessments ?
+            paymentData.filter(x => x.case_program.startsWith('A_f_'))
+            : paymentData.filter(x => x.case_program.startsWith('T_f_'))
+    }
+    else if (wokrerLeval === 'L4') {
         return assessments ?
             paymentData.filter(x => x.case_program.startsWith('A_f_'))
             : paymentData.filter(x => x.case_program.startsWith('T_f_'))
