@@ -28,9 +28,9 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
     }
 
     sortByDateAndName(paymentData)
-
     let headers = [
         { label: "Date", property: 'batch_date', align: "center" },
+        { label: "Invoice Date", property: 'act_date', align: "center" },
         { label: "Individual Name", property: 'service_file_presenting_individual_name', align: "center" },
         { label: "Service Name", property: 'case_program', align: "center" },
         { label: "Cart Item", property: 'description', align: "center" },
@@ -42,7 +42,7 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
         { label: "Applied Amount", property: 'applied_amt', align: "center" },
     ]
 
-    let rows = ['Total', "-", "-", "-", "-", "-", "-", "-", totalDuration_hrs, formatter.format(totalAppliedAmt)]
+    let rows = ['Total', "-", "-", "-", "-", "-", "-", "-", "-", totalDuration_hrs, formatter.format(totalAppliedAmt)]
 
     if (subPracTotal !== 0 && !rate.isSuperviser) {
         // headers.push({ label: "Go Home Total", property: 'subPracAmount', renderer: null, align: "center" })
@@ -57,6 +57,5 @@ exports.appliedPaymentsTable = async (date, paymentData, workerId) => {
         rows: [rows],
         L1AssociateFee: associateFee,
         L1AssociateGoHomeTotal: subPracTotal,
-        
     }
 }
